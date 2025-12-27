@@ -8,6 +8,7 @@ export type Variant = {
   color: string;
   colorHex: string;
   price: number;
+  oldPrice?: number;
   images: string[];
   sizes: SizeInfo[];
 };

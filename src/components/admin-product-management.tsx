@@ -113,7 +113,7 @@ const ProductForm = ({
     gender: product?.gender || 'masculino',
     category: product?.category || 'calçados',
     subCategory: product?.subCategory || '',
-    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, images: [''], sizes: [] }],
+    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], sizes: [] }],
     status: product?.status || 'ativo',
   });
 
@@ -201,7 +201,7 @@ const ProductForm = ({
       ...prev,
       variants: [
         ...prev.variants,
-        { id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, images: [''], sizes: [] },
+        { id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], sizes: [] },
       ],
     }));
   };
@@ -372,16 +372,28 @@ const ProductForm = ({
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Preço da Variante</Label>
-                            <Input
-                                type="number"
-                                placeholder="Preço"
-                                value={variant.price}
-                                onChange={(e) => handleVariantChange(variant.id, 'price', parseFloat(e.target.value))}
-                                required
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                               <Label>Preço da Variante</Label>
+                               <Input
+                                   type="number"
+                                   placeholder="Preço"
+                                   value={variant.price}
+                                   onChange={(e) => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)}
+                                   required
+                               />
+                           </div>
+                           <div className="space-y-2">
+                               <Label>Preço Antigo (Opcional)</Label>
+                               <Input
+                                   type="number"
+                                   placeholder="Preço antigo"
+                                   value={variant.oldPrice || ''}
+                                   onChange={(e) => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)}
+                               />
+                           </div>
                         </div>
+
 
                         <div className="space-y-3">
                           <Label>Links das Imagens para esta Cor</Label>

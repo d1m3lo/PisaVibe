@@ -93,15 +93,43 @@ export const megaMenuData: MenuCategory[] = [
   {
     title: "Lançamentos",
     columns: [
-        { title: "Masculino", links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&genero=masculino" }] },
-        { title: "Feminino", links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&genero=feminino" }] },
-    ]
+      {
+        title: "Calçados",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=calcados" }],
+      },
+      {
+        title: "Roupas",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=roupas" }],
+      },
+      {
+        title: "Acessórios",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=acessorios" }],
+      },
+      {
+        title: "Perfumes",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=perfumes" }],
+      },
+    ],
   },
   {
     title: "Ofertas",
     columns: [
-        { title: "Masculino", links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&genero=masculino" }] },
-        { title: "Feminino", links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&genero=feminino" }] },
-    ]
+      {
+        title: "Calçados",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=calcados" }],
+      },
+      {
+        title: "Roupas",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=roupas" }],
+      },
+      {
+        title: "Acessórios",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=acessorios" }],
+      },
+      {
+        title: "Perfumes",
+        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=perfumes" }],
+      },
+    ],
   }
 ];

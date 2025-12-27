@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -79,7 +80,7 @@ const CartButton = () => {
       variant="ghost"
       size="icon"
       asChild
-      className="transition-transform duration-200 hover:-translate-y-1"
+      className="relative transition-transform duration-200 hover:-translate-y-1"
     >
       <Link href="/carrinho" aria-label="Carrinho de compras">
         <ShoppingCart className="h-5 w-5" />
@@ -137,50 +138,66 @@ const subcategories = [
   { name: "Perfumes", href: "perfumes" },
 ];
 
-const NavMenu = ({ category }: { category: { name: string; href: string } }) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground">
-        {category.name}
-        <ChevronDown className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent>
-      {subcategories.map((sub) => (
-        <DropdownMenuItem key={sub.href} asChild>
-          <Link href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}>{sub.name}</Link>
-        </DropdownMenuItem>
-      ))}
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
+const NavMenu = ({ category }: { category: { name: string; href: string } }) => {
+    const [open, setOpen] = React.useState(false);
 
-const LabeledNavMenu = ({ label, href }: { label: string; href: string }) => (
-    <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground">
-                {label}
-                <ChevronDown className="h-4 w-4" />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-            {mainCategories.map((cat) => (
-                <DropdownMenuSub key={cat.href}>
-                    <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            {subcategories.map((sub) => (
-                                <DropdownMenuItem key={sub.href} asChild>
-                                    <Link href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}>{sub.name}</Link>
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
-            ))}
-        </DropdownMenuContent>
-    </DropdownMenu>
-);
+    return (
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger asChild>
+                <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground"
+                    onMouseEnter={() => setOpen(true)}
+                >
+                    {category.name}
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent onMouseLeave={() => setOpen(false)}>
+                {subcategories.map((sub) => (
+                    <DropdownMenuItem key={sub.href} asChild>
+                        <Link href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}>{sub.name}</Link>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
+
+const LabeledNavMenu = ({ label, href }: { label: string; href: string }) => {
+    const [open, setOpen] = React.useState(false);
+    
+    return (
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger asChild>
+                 <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground"
+                    onMouseEnter={() => setOpen(true)}
+                >
+                    {label}
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent onMouseLeave={() => setOpen(false)}>
+                {mainCategories.map((cat) => (
+                    <DropdownMenuSub key={cat.href}>
+                        <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {subcategories.map((sub) => (
+                                    <DropdownMenuItem key={sub.href} asChild>
+                                        <Link href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}>{sub.name}</Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
 
 
 const MobileSubMenu = ({
@@ -314,4 +331,5 @@ export default function Header() {
     </header>
   );
 }
+
 

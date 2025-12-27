@@ -7,7 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, ShoppingCart, User, Sun, Moon } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, Sun, Moon, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,15 +25,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "./ui/collapsible";
-import { ChevronDown } from "lucide-react";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -57,7 +48,6 @@ function ModeToggle() {
   }, []);
 
   if (!mounted) {
-    // Render a placeholder or null on the server and initial client render
     return <div className="h-10 w-10" />;
   }
 
@@ -78,7 +68,6 @@ function ModeToggle() {
     </Button>
   );
 }
-
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -178,7 +167,6 @@ const SearchBar = () => {
     setQueryValue("");
     inputRef.current?.blur();
   }
-
 
   return (
     <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
@@ -280,10 +268,10 @@ const MobileSubMenu = ({
   </Collapsible>
 );
 
-
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [openMenu, setOpenMenu] = React.useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -306,47 +294,51 @@ export default function Header() {
           >
             PISA VIBE
           </Link>
-           <NavigationMenu className="hidden md:flex">
-            <NavigationMenuList>
-              {megaMenuData.map((category) => {
-                const isSpecialCategory = category.title === 'Lançamentos' || category.title === 'Ofertas';
-                
-                const gridClass = isSpecialCategory ? "grid-cols-2" : "grid-cols-4";
-                const widthClass = isSpecialCategory ? "w-[400px] lg:w-[450px]" : "w-[600px] lg:w-[800px]";
-                const gapClass = isSpecialCategory ? "gap-x-4" : "gap-x-8";
-
-                return (
-                 <NavigationMenuItem key={category.title}>
-                    <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                        <div className={cn("grid gap-y-4 p-6", gridClass, widthClass, gapClass)}>
-                        {category.columns.map((column) => (
-                            <div key={column.title} className="flex flex-col">
-                            <h3 className="mb-4 text-sm font-bold text-foreground">
-                                {column.title}
-                            </h3>
-                            <ul className="flex flex-col gap-2">
-                                {column.links.map((link) => (
-                                <li key={link.title + link.href}>
-                                    <NavigationMenuLink asChild>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-muted-foreground hover:text-foreground"
-                                    >
-                                        {link.title}
-                                    </Link>
-                                    </NavigationMenuLink>
-                                </li>
-                                ))}
-                            </ul>
-                            </div>
-                        ))}
+          <nav className="hidden md:flex gap-1 items-center">
+            {megaMenuData.map((category) => (
+              <DropdownMenu 
+                key={category.title} 
+                open={openMenu === category.title} 
+                onOpenChange={(isOpen) => setOpenMenu(isOpen ? category.title : null)}
+              >
+                <div
+                  onMouseEnter={() => setOpenMenu(category.title)}
+                  onMouseLeave={() => setOpenMenu(null)}
+                  className="group"
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="text-sm font-medium text-muted-foreground hover:text-primary data-[state=open]:text-primary"
+                    >
+                      {category.title}
+                      <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="start"
+                    className="w-auto rounded-lg p-2"
+                    onMouseLeave={() => setOpenMenu(null)}
+                  >
+                    <div className="flex gap-4 p-2">
+                      {category.columns.map((column) => (
+                        <div key={column.title} className="flex flex-col">
+                          <DropdownMenuLabel>{column.title}</DropdownMenuLabel>
+                          {column.links.length > 0 ? column.links.map((link) => (
+                            <DropdownMenuItem key={link.href} asChild>
+                              <Link href={link.href}>{link.title}</Link>
+                            </DropdownMenuItem>
+                          )) : (
+                            <DropdownMenuItem disabled>Em breve</DropdownMenuItem>
+                          )}
                         </div>
-                    </NavigationMenuContent>
-                </NavigationMenuItem>
-              )})}
-            </NavigationMenuList>
-          </NavigationMenu>
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </div>
+              </DropdownMenu>
+            ))}
+          </nav>
         </div>
 
         <div className="flex items-center justify-end gap-2">

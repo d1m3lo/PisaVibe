@@ -69,7 +69,13 @@ export default function ProductsPage() {
   } else {
     let titleParts = [];
     if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
-    if (category) titleParts.push(category.charAt(0).toUpperCase() + category.slice(1));
+    if (category) {
+        let categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
+        if (categoryTitle.toLowerCase() === 'calcados') {
+            categoryTitle = 'Calçados';
+        }
+        titleParts.push(categoryTitle);
+    }
     if (subCategory) titleParts.push(subCategory.charAt(0).toUpperCase() + subCategory.slice(1));
     if (titleParts.length > 0) title = titleParts.join(' - ');
   }

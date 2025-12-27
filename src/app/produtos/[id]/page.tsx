@@ -9,6 +9,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useDoc, useMemoFirebase } from "@/firebase";
@@ -81,13 +82,14 @@ export default function ProductPage() {
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [activeImage, setActiveImage] = useState<string | null>(null);
+  
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     if (product && product.variants.length > 0 && !selectedVariant) {
       const defaultVariant = product.variants[0];
       setSelectedVariant(defaultVariant);
-      setActiveImage(defaultVariant.images[0]);
       
       const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
       if (firstAvailableSize) {
@@ -95,11 +97,27 @@ export default function ProductPage() {
       }
     }
   }, [product, selectedVariant]);
+  
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+
+    const handleSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+
+    carouselApi.on("select", handleSelect);
+
+    return () => {
+      carouselApi.off("select", handleSelect);
+    };
+  }, [carouselApi]);
 
 
   const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant);
-    setActiveImage(variant.images[0]);
+    carouselApi?.scrollTo(0, true);
     // Reset size selection or pick first available
     const firstAvailableSize = variant.sizes.find(s => s.stock > 0);
     setSelectedSize(firstAvailableSize ? firstAvailableSize.size : null);
@@ -139,40 +157,59 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <div className="relative aspect-square w-full overflow-hidden rounded-lg">
-                {activeImage ? (
-                    <Image
-                      src={activeImage}
-                      alt={`${product.name} - Imagem Principal`}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
+            <Carousel setApi={setCarouselApi} className="w-full">
+              <CarouselContent>
+                {allImages.length > 0 ? (
+                  allImages.map((img, index) => (
+                    <CarouselItem key={index}>
+                      <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                        <Image
+                          src={img}
+                          alt={`${product.name} - Imagem ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          priority={index === 0}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-secondary">
+                  <CarouselItem>
+                    <div className="flex h-full aspect-square w-full items-center justify-center rounded-lg bg-secondary">
                         <span className="text-muted-foreground">Sem imagem</span>
                     </div>
+                  </CarouselItem>
                 )}
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-                {allImages.map((img, index) => (
-                    <button
-                        key={index}
-                        className={cn(
-                            "relative aspect-square w-full overflow-hidden rounded-md transition-all",
-                            activeImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
-                        )}
-                        onClick={() => setActiveImage(img)}
-                    >
-                        <Image
-                            src={img}
-                            alt={`${product.name} - Miniatura ${index + 1}`}
-                            fill
-                            className="object-cover"
-                        />
-                    </button>
-                ))}
-            </div>
+              </CarouselContent>
+               {allImages.length > 1 && (
+                  <>
+                    <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                    <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                  </>
+                )}
+            </Carousel>
+
+            {allImages.length > 1 && (
+                <div className="grid grid-cols-5 gap-2">
+                    {allImages.map((img, index) => (
+                        <button
+                            key={index}
+                            className={cn(
+                                "relative aspect-square w-full overflow-hidden rounded-md transition-all",
+                                currentSlide === index ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
+                            )}
+                            onClick={() => carouselApi?.scrollTo(index)}
+                        >
+                            <Image
+                                src={img}
+                                alt={`${product.name} - Miniatura ${index + 1}`}
+                                fill
+                                className="object-cover"
+                            />
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
 
         {/* Product Info */}
@@ -253,3 +290,4 @@ export default function ProductPage() {
     </div>
   );
 }
+

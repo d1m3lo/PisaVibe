@@ -17,7 +17,7 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product, Variant } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
@@ -81,31 +81,16 @@ export default function ProductPage() {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  // Set default selections once data is loaded
-  useState(() => {
-    if (product && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
-      const firstAvailableSize = product.variants[0].sizes.find(s => s.stock > 0);
+  useEffect(() => {
+    if (product && product.variants.length > 0 && !selectedVariant) {
+      const defaultVariant = product.variants[0];
+      setSelectedVariant(defaultVariant);
+      const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
       if (firstAvailableSize) {
         setSelectedSize(firstAvailableSize.size);
       }
     }
-  });
-  
-  // This effect handles changes if the product data itself changes after initial load
-  // Or if the initial state setting runs before product is available
-  useState(() => {
-    if (product && !selectedVariant) {
-      const defaultVariant = product.variants[0];
-      setSelectedVariant(defaultVariant);
-      if (defaultVariant) {
-        const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
-        if (firstAvailableSize) {
-          setSelectedSize(firstAvailableSize.size);
-        }
-      }
-    }
-  });
+  }, [product, selectedVariant]);
 
 
   const handleVariantSelect = (variant: Variant) => {
@@ -128,7 +113,15 @@ export default function ProductPage() {
   }
 
   if (!product) {
-    notFound();
+    return (
+        <div className="container mx-auto px-4 py-12 text-center">
+            <h1 className="text-2xl font-bold">Produto não encontrado</h1>
+            <p className="text-muted-foreground">O produto que você está procurando não existe ou foi removido.</p>
+            <Button asChild className="mt-8">
+                <Link href="/produtos">Voltar para a loja</Link>
+            </Button>
+        </div>
+    )
   }
 
   const imagesToShow = selectedVariant ? selectedVariant.images : (product.variants[0]?.images || []);

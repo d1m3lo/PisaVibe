@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Twitter, Instagram, Facebook } from "lucide-react";
 import { Input } from "./ui/input";
@@ -67,7 +68,7 @@ export default function Footer() {
                  <div>
                     <h4 className="font-semibold">Institucional</h4>
                     <ul className="mt-4 space-y-2">
-                        <FooterLink href="#">Sobre Nós</FooterLink>
+                        <FooterLink href="/sobre-nos">Sobre Nós</FooterLink>
                         <FooterLink href="#">Política de Privacidade</FooterLink>
                         <FooterLink href="#">Termos de Uso</FooterLink>
                     </ul>

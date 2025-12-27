@@ -1,14 +1,26 @@
+export type SizeInfo = {
+  size: string;
+  stock: number;
+};
+
+export type Variant = {
+  id: string;
+  color: string;
+  colorHex: string;
+  price: number;
+  images: string[];
+  sizes: SizeInfo[];
+};
+
 export type Product = {
   id: string;
   name: string;
-  description: string;
+  description: string; // Short description for cards
   longDescription: string;
-  price: number;
-  images: string[];
+  gender: 'masculino' | 'feminino' | 'unissex';
   category: 'calçados' | 'roupas' | 'acessorios' | 'perfumes';
   subCategory?: string;
-  gender: 'masculino' | 'feminino' | 'unissex';
-  tags?: ('lancamentos' | 'ofertas')[];
+  variants: Variant[];
   rating: number;
   reviews: number;
   status: 'ativo' | 'inativo';
@@ -16,7 +28,7 @@ export type Product = {
 
 export type CartItem = {
   product: Product;
+  variant: Variant;
+  size: string;
   quantity: number;
 };
-
-    

@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -46,10 +45,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X } from 'lucide-react';
+import { Product, Variant, SizeInfo } from '@/lib/types';
+import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,30 +61,42 @@ import {
 } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { ScrollArea } from './ui/scroll-area';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from './ui/accordion';
 
 type ProductWithId = Product & { firestoreId: string };
 
 const categoryMappings = {
-    masculino: {
-        'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-        'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
-        'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
-        'perfumes': ['Perfumes'],
-    },
-    feminino: {
-        'calçados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
-        'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
-        'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
-        'perfumes': ['Perfumes'],
-    },
-    unissex: {
-        'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-        'roupas': ['Camisetas', 'Streetwear'],
-        'acessorios': ['Bonés', 'Mochilas'],
-        'perfumes': ['Perfumes'],
-    }
-}
+  masculino: {
+    'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
+    'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
+    'perfumes': [],
+  },
+  feminino: {
+    'calçados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
+    'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
+    'perfumes': [],
+  },
+  unissex: {
+    'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'roupas': ['Camisetas', 'Streetwear'],
+    'acessorios': ['Bonés', 'Mochilas'],
+    'perfumes': [],
+  }
+};
 
+const allSizes = {
+    roupas: ['P', 'M', 'G', 'GG'],
+    calçados: ['38', '39', '40', '41', '42', '43', '44'],
+    acessorios: ['U'],
+    perfumes: ['U']
+};
 
 const ProductForm = ({
   product,
@@ -99,31 +109,33 @@ const ProductForm = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    price: product?.price || 0,
     longDescription: product?.longDescription || '',
     gender: product?.gender || 'masculino',
     category: product?.category || 'calçados',
     subCategory: product?.subCategory || '',
-    images: product?.images?.length ? product.images : [''],
+    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, images: [''], sizes: [] }],
     status: product?.status || 'ativo',
   });
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
 
   useEffect(() => {
     const gender = formData.gender as keyof typeof categoryMappings;
     const category = formData.category as keyof typeof categoryMappings[typeof gender];
     const mappings = categoryMappings[gender];
-    
+
     if (mappings && category in mappings) {
       setSubCategoryOptions((mappings as any)[category]);
     } else {
       setSubCategoryOptions([]);
     }
-    
-    if(product?.gender !== formData.gender || product?.category !== formData.category) {
-        setFormData(prev => ({...prev, subCategory: ''}));
+
+    if (product?.gender !== formData.gender || product?.category !== formData.category) {
+      setFormData(prev => ({ ...prev, subCategory: '' }));
     }
+    
+    setAvailableSizes(allSizes[formData.category as keyof typeof allSizes] || []);
 
   }, [formData.gender, formData.category, product]);
 
@@ -133,46 +145,116 @@ const ProductForm = ({
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
-  
+
   const handleSelectChange = (id: keyof typeof formData, value: string) => {
-     setFormData((prev) => ({ ...prev, [id]: value }));
-  }
-
-  const handleImageChange = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData(prev => ({ ...prev, images: newImages }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const addImageInput = () => {
-    setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+  const handleVariantChange = <T extends keyof Variant>(
+    variantId: string,
+    field: T,
+    value: Variant[T]
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(v =>
+        v.id === variantId ? { ...v, [field]: value } : v
+      ),
+    }));
+  };
+  
+  const handleImageChange = (variantId: string, index: number, value: string) => {
+    const newVariants = formData.variants.map(v => {
+      if (v.id === variantId) {
+        const newImages = [...v.images];
+        newImages[index] = value;
+        return { ...v, images: newImages };
+      }
+      return v;
+    });
+    setFormData(prev => ({ ...prev, variants: newVariants }));
+  };
+  
+  const addImageInput = (variantId: string) => {
+     const newVariants = formData.variants.map(v => {
+      if (v.id === variantId) {
+        return { ...v, images: [...v.images, ''] };
+      }
+      return v;
+    });
+    setFormData(prev => ({ ...prev, variants: newVariants }));
+  };
+  
+  const removeImageInput = (variantId: string, index: number) => {
+    const newVariants = formData.variants.map(v => {
+      if (v.id === variantId) {
+         const newImages = v.images.filter((_, i) => i !== index);
+         return { ...v, images: newImages };
+      }
+      return v;
+    });
+    setFormData(prev => ({ ...prev, variants: newVariants }));
   };
 
-  const removeImageInput = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, images: newImages }));
+  const addVariant = () => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [
+        ...prev.variants,
+        { id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, images: [''], sizes: [] },
+      ],
+    }));
+  };
+
+  const removeVariant = (variantId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter(v => v.id !== variantId),
+    }));
+  };
+
+  const handleSizeStockChange = (variantId: string, size: string, stock: number) => {
+    const newVariants = formData.variants.map(v => {
+        if (v.id === variantId) {
+            const existingSize = v.sizes.find(s => s.size === size);
+            let newSizes: SizeInfo[];
+            if (existingSize) {
+                newSizes = v.sizes.map(s => s.size === size ? { ...s, stock: Math.max(0, stock) } : s);
+            } else {
+                newSizes = [...v.sizes, { size, stock: Math.max(0, stock) }];
+            }
+            // Filter out sizes with 0 stock if you want to remove them when stock is 0
+            // newSizes = newSizes.filter(s => s.stock > 0);
+            return { ...v, sizes: newSizes };
+        }
+        return v;
+    });
+    setFormData(prev => ({ ...prev, variants: newVariants }));
   };
 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const images = formData.images.filter(Boolean); // Filter out empty strings
+    
+    const finalVariants = formData.variants.map(v => ({
+      ...v,
+      images: v.images.filter(Boolean)
+    }));
 
-    if (images.length === 0) {
-        alert("Por favor, adicione pelo menos uma imagem.");
+    if (finalVariants.some(v => v.images.length === 0)) {
+        alert("Cada variante de cor deve ter pelo menos uma imagem.");
         return;
     }
 
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
-      description: formData.longDescription.substring(0, 100), // Auto-generate short description
+      description: formData.longDescription.substring(0, 100),
       longDescription: formData.longDescription,
-      price: Number(formData.price),
       gender: formData.gender as Product['gender'],
       category: formData.category as Product['category'],
       subCategory: formData.subCategory,
-      images: images,
+      variants: finalVariants,
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
       reviews: product?.reviews || 0,
@@ -189,37 +271,11 @@ const ProductForm = ({
             <Input id="name" value={formData.name} onChange={handleChange} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="price">Preço</Label>
-            <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="longDescription">Descrição</Label>
             <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
           </div>
           
-          <div className="space-y-3">
-            <Label>Links das Imagens</Label>
-            {formData.images.map((image, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  placeholder={`URL da Imagem ${index + 1}`}
-                  value={image}
-                  onChange={(e) => handleImageChange(index, e.target.value)}
-                  required={index === 0}
-                />
-                {formData.images.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(index)} className="text-destructive">
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={addImageInput}>
-              Adicionar mais uma imagem
-            </Button>
-          </div>
-
-          <div className="space-y-4">
+           <div className="space-y-4">
               <div className="space-y-2">
                     <Label htmlFor="gender">Gênero</Label>
                     <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
@@ -275,13 +331,127 @@ const ProductForm = ({
                     </Select>
                 </div>
           </div>
+
+          <div className="space-y-4">
+            <Label>Variantes de Cor</Label>
+            <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
+              {formData.variants.map((variant, vIndex) => (
+                <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
+                   <AccordionTrigger className="p-4 hover:no-underline">
+                        <div className="flex items-center gap-4">
+                            <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: variant.colorHex }}/>
+                            <span className="font-semibold">{variant.color || "Nova Cor"}</span>
+                        </div>
+                   </AccordionTrigger>
+                   <AccordionContent className="p-4 pt-0">
+                     <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nome da Cor</Label>
+                                <Input 
+                                    placeholder="Ex: Preto, Branco, Azul" 
+                                    value={variant.color}
+                                    onChange={(e) => handleVariantChange(variant.id, 'color', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cor Hexadecimal</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input 
+                                        type="color" 
+                                        value={variant.colorHex}
+                                        onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
+                                        className="p-1 h-10"
+                                    />
+                                    <Input 
+                                        value={variant.colorHex}
+                                        onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Preço da Variante</Label>
+                            <Input
+                                type="number"
+                                placeholder="Preço"
+                                value={variant.price}
+                                onChange={(e) => handleVariantChange(variant.id, 'price', parseFloat(e.target.value))}
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label>Links das Imagens para esta Cor</Label>
+                          {variant.images.map((image, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Input
+                                placeholder={`URL da Imagem ${index + 1}`}
+                                value={image}
+                                onChange={(e) => handleImageChange(variant.id, index, e.target.value)}
+                                required={index === 0}
+                              />
+                              {variant.images.length > 1 && (
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(variant.id, index)} className="text-destructive">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          <Button type="button" variant="outline" size="sm" onClick={() => addImageInput(variant.id)}>
+                            Adicionar Imagem
+                          </Button>
+                        </div>
+                        
+                         {availableSizes.length > 0 && (
+                            <div className="space-y-3">
+                                <Label>Tamanhos e Estoque</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {availableSizes.map(size => {
+                                    const sizeInfo = variant.sizes.find(s => s.size === size);
+                                    return (
+                                        <div key={size} className="space-y-1">
+                                            <Label htmlFor={`stock-${variant.id}-${size}`}>{size}</Label>
+                                            <Input 
+                                                id={`stock-${variant.id}-${size}`}
+                                                type="number"
+                                                placeholder="Estoque"
+                                                value={sizeInfo?.stock || ''}
+                                                onChange={(e) => handleSizeStockChange(variant.id, size, parseInt(e.target.value, 10) || 0)}
+                                                min="0"
+                                            />
+                                        </div>
+                                    )
+                                })}
+                                </div>
+                            </div>
+                         )}
+
+
+                         {formData.variants.length > 1 && (
+                            <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variant.id)} className="mt-4">
+                                Remover Variante de Cor
+                            </Button>
+                         )}
+                     </div>
+                   </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
+                <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
+            </Button>
+          </div>
         </div>
       </ScrollArea>
       <DialogFooter className="pt-6">
         <DialogClose asChild>
-            <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-            </Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
         </DialogClose>
         <Button type="submit">Salvar</Button>
       </DialogFooter>
@@ -303,7 +473,7 @@ export default function ProductManagement() {
         const productsData = snapshot.docs.map((doc) => ({
           firestoreId: doc.id,
           ...(doc.data() as Product),
-        }));
+        })).filter(p => p.name && p.variants); // Basic data validation
         setProducts(productsData);
       }
     );
@@ -339,7 +509,7 @@ export default function ProductManagement() {
         description: 'O produto foi removido com sucesso.',
       });
     } catch (error) {
-       console.error('Erro ao remover produto:', error);
+      console.error('Erro ao remover produto:', error);
       toast({
         variant: 'destructive',
         title: 'Erro!',
@@ -347,44 +517,44 @@ export default function ProductManagement() {
       });
     }
   };
-  
+
   const openFormToEdit = (product: ProductWithId) => {
     setEditingProduct(product);
     setIsFormOpen(true);
-  }
+  };
 
   const closeForm = () => {
     setEditingProduct(null);
     setIsFormOpen(false);
   };
-  
+
   const openFormToCreate = () => {
     setEditingProduct(null);
     setIsFormOpen(true);
-  }
+  };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-            <CardTitle>Gerenciamento de Produtos</CardTitle>
-            <CardDescription>Adicione, edite ou remova produtos da sua loja.</CardDescription>
+          <CardTitle>Gerenciamento de Produtos</CardTitle>
+          <CardDescription>Adicione, edite ou remova produtos da sua loja.</CardDescription>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
-            if (!isOpen) closeForm();
-            else setIsFormOpen(true);
+          if (!isOpen) closeForm();
+          else setIsFormOpen(true);
         }}>
-            <DialogTrigger asChild>
-                 <Button onClick={openFormToCreate}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[625px]">
-                <DialogHeader>
-                    <DialogTitle>{editingProduct ? 'Editar' : 'Adicionar'} Produto</DialogTitle>
-                </DialogHeader>
-                <ProductForm product={editingProduct} onSave={handleSave} onClose={closeForm} />
-            </DialogContent>
+          <DialogTrigger asChild>
+            <Button onClick={openFormToCreate}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{editingProduct ? 'Editar' : 'Adicionar'} Produto</DialogTitle>
+            </DialogHeader>
+            <ProductForm product={editingProduct} onSave={handleSave} onClose={closeForm} />
+          </DialogContent>
         </Dialog>
       </CardHeader>
       <CardContent>
@@ -393,7 +563,7 @@ export default function ProductManagement() {
             <TableRow>
               <TableHead className="w-[80px]">Imagem</TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Preço</TableHead>
+              <TableHead>Preço Base</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -402,47 +572,52 @@ export default function ProductManagement() {
             {products.map((product) => (
               <TableRow key={product.firestoreId}>
                 <TableCell>
-                    {product.images?.[0] ? (
-                        <Image src={product.images[0]} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
-                    ) : (
-                        <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center text-muted-foreground">
-                            ?
-                        </div>
-                    )}
+                  {product.variants?.[0]?.images?.[0] ? (
+                    <Image src={product.variants[0].images[0]} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center text-muted-foreground">
+                      ?
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>R$ {product.price.toFixed(2).replace('.', ',')}</TableCell>
                 <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {product.status}
-                    </span>
+                    {product.variants.length > 0 
+                        ? `R$ ${product.variants[0].price.toFixed(2).replace('.', ',')}`
+                        : 'N/A'
+                    }
+                </TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {product.status}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openFormToEdit(product)}>
-                        <Edit className="h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" size="icon" onClick={() => openFormToEdit(product)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
 
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. Isso irá remover permanentemente o produto do seu banco de dados.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(product.firestoreId)} className="bg-destructive hover:bg-destructive/90">
-                                Sim, remover
-                            </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Essa ação não pode ser desfeita. Isso irá remover permanentemente o produto do seu banco de dados.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(product.firestoreId)} className="bg-destructive hover:bg-destructive/90">
+                          Sim, remover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}
@@ -452,7 +627,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    
-    
-    

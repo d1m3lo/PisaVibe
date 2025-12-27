@@ -117,9 +117,10 @@ export default function Header() {
             PISA VIBE
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-            <NavLink href="/#novidades">Novidades</NavLink>
-            <NavLink href="/produtos?categoria=tênis">Tênis</NavLink>
-            <NavLink href="/produtos?categoria=roupas">Roupas</NavLink>
+            <NavLink href="/produtos?categoria=masculino">Masculino</NavLink>
+            <NavLink href="/produtos?categoria=feminino">Feminino</NavLink>
+            <NavLink href="/produtos?categoria=lancamentos">Lançamentos</NavLink>
+            <NavLink href="/produtos?categoria=ofertas">Ofertas</NavLink>
           </nav>
         </div>
 
@@ -142,9 +143,10 @@ export default function Header() {
                   PISA VIBE
                 </Link>
                 <nav className="flex flex-col gap-4 text-lg">
-                  <NavLink href="/#novidades">Novidades</NavLink>
-                  <NavLink href="/produtos?categoria=tênis">Tênis</NavLink>
-                  <NavLink href="/produtos?categoria=roupas">Roupas</NavLink>
+                  <NavLink href="/produtos?categoria=masculino">Masculino</NavLink>
+                  <NavLink href="/produtos?categoria=feminino">Feminino</NavLink>
+                  <NavLink href="/produtos?categoria=lancamentos">Lançamentos</NavLink>
+                  <NavLink href="/produtos?categoria=ofertas">Ofertas</NavLink>
                 </nav>
                  <div className="border-t pt-4">
                   <UserMenu />

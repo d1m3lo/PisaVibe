@@ -12,7 +12,8 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-1');
+  const heroImages = PlaceHolderImages.filter(img => img.id.startsWith('hero-'));
+  const heroImage = heroImages[0];
   
   const allLancamentos = products.filter(p => p.tags?.includes('lancamentos'));
   const allDestaques = products;
@@ -55,9 +56,13 @@ export default function Home() {
           </div>
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 transform">
             <div className="flex space-x-2">
-              <button className="h-3 w-3 rounded-full bg-white"></button>
-              <button className="h-3 w-3 rounded-full bg-white/50"></button>
-              <button className="h-3 w-3 rounded-full bg-white/50"></button>
+              {heroImages.length > 1 ? (
+                heroImages.map((_, index) => (
+                  <button key={index} className={`h-3 w-3 rounded-full ${index === 0 ? 'bg-white' : 'bg-white/50'}`}></button>
+                ))
+              ) : (
+                 <button className="h-3 w-3 rounded-full bg-white"></button>
+              )}
             </div>
           </div>
         </div>

@@ -60,7 +60,7 @@ export default function Footer() {
                         <FooterLink href="/duvidas-frequentes">Dúvidas Frequentes</FooterLink>
                         <FooterLink href="/entregas-e-envios">Entregas e Frete</FooterLink>
                         <FooterLink href="/trocas-e-devolucoes">Trocas e Devoluções</FooterLink>
-                        <FooterLink href="#">Fale Conosco</FooterLink>
+                        <FooterLink href="/fale-conosco">Fale Conosco</FooterLink>
                     </ul>
                 </div>
                 

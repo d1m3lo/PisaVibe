@@ -211,7 +211,7 @@ export default function ProductPage() {
                   key={variant.id}
                   onClick={() => handleVariantSelect(variant)}
                   className={cn(
-                    "h-8 w-8 rounded-full border-2 transition-all",
+                    "h-6 w-6 rounded-full border-2 transition-all",
                     selectedVariant?.id === variant.id ? "border-primary scale-110 ring-2 ring-offset-2 ring-primary" : "border-border"
                   )}
                    title={variant.color}

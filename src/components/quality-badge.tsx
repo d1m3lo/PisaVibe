@@ -1,5 +1,5 @@
 
-import { Award, CheckCircle, Star } from "lucide-react";
+import { Gem, CheckCircle, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/types";
 
@@ -14,13 +14,13 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
     const qualityStyles: Record<NonNullable<Product['quality']>, string> = {
         Essential: "bg-green-100 text-green-800 border-green-200",
         Select: "bg-blue-100 text-blue-800 border-blue-200",
-        Elite: "bg-yellow-100 text-yellow-800 border-yellow-200",
+        Elite: "bg-purple-100 text-purple-800 border-purple-200",
     };
 
     const icon: Record<NonNullable<Product['quality']>, React.ReactNode> = {
         Essential: <CheckCircle className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
         Select: <Star className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
-        Elite: <Award className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
+        Elite: <Gem className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
     };
 
     const sizeClasses = size === 'sm' 

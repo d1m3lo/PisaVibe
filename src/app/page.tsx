@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/product-card';
 import { products } from '@/lib/products';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Recommendations from '@/components/recommendations';
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -125,8 +124,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <Recommendations />
     </div>
   );
 }

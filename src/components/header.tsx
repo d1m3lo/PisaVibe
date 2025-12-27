@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Menu, Search, ShoppingCart, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +17,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useCart } from "@/context/cart-context";
 import { Input } from "./ui/input";
@@ -31,22 +27,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "./ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-
-const NavLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => (
-  <Link
-    href={href}
-    className="text-foreground/80 transition-colors hover:text-foreground"
-  >
-    {children}
-  </Link>
-);
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -127,8 +118,8 @@ const SearchBar = () => {
 };
 
 const mainCategories = [
-  { name: "Masculino", href: "masculino" },
-  { name: "Feminino", href: "feminino" },
+  { name: "Masculino", href: "masculino", description: "Roupas e calçados para homens." },
+  { name: "Feminino", href: "feminino", description: "Roupas e calçados para mulheres." },
 ];
 
 const subcategories = [
@@ -138,67 +129,37 @@ const subcategories = [
   { name: "Perfumes", href: "perfumes" },
 ];
 
-const NavMenu = ({ category }: { category: { name: string; href: string } }) => {
-    const [open, setOpen] = React.useState(false);
+const specialCategories = [
+  { name: "Lançamentos", href: "lancamentos", description: "Veja os últimos lançamentos." },
+  { name: "Ofertas", href: "ofertas", description: "Produtos com preços especiais." }
+];
 
-    return (
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger asChild>
-                <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground"
-                    onMouseEnter={() => setOpen(true)}
-                >
-                    {category.name}
-                    <ChevronDown className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent onMouseLeave={() => setOpen(false)}>
-                {subcategories.map((sub) => (
-                    <DropdownMenuItem key={sub.href} asChild>
-                        <Link href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}>{sub.name}</Link>
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
 
-const LabeledNavMenu = ({ label, href }: { label: string; href: string }) => {
-    const [open, setOpen] = React.useState(false);
-    
-    return (
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger asChild>
-                 <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground"
-                    onMouseEnter={() => setOpen(true)}
-                >
-                    {label}
-                    <ChevronDown className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent onMouseLeave={() => setOpen(false)}>
-                {mainCategories.map((cat) => (
-                    <DropdownMenuSub key={cat.href}>
-                        <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                                {subcategories.map((sub) => (
-                                    <DropdownMenuItem key={sub.href} asChild>
-                                        <Link href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}>{sub.name}</Link>
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
-
+const ListItem = React.forwardRef<
+  React.ElementRef<typeof Link>,
+  React.ComponentPropsWithoutRef<typeof Link> & { title: string }
+>(({ className, title, children, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link
+          ref={ref}
+          className={cn(
+            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+            className
+          )}
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+});
+ListItem.displayName = 'ListItem';
 
 const MobileSubMenu = ({
   category,
@@ -286,13 +247,64 @@ export default function Header() {
           >
             PISA VIBE
           </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-             {mainCategories.map((cat) => (
-              <NavMenu key={cat.href} category={cat} />
-            ))}
-            <LabeledNavMenu label="Lançamentos" href="lancamentos" />
-            <LabeledNavMenu label="Ofertas" href="ofertas" />
-          </nav>
+           <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+              {mainCategories.map((category) => (
+                 <NavigationMenuItem key={category.name}>
+                  <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                       <li className="row-span-3">
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                            href={`/produtos?categoria=${category.href}`}
+                          >
+                            <div className="mb-2 mt-4 text-lg font-medium">
+                              {category.name}
+                            </div>
+                            <p className="text-sm leading-tight text-muted-foreground">
+                              {category.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                      {subcategories.map((sub) => (
+                        <ListItem key={sub.name} href={`/produtos?categoria=${category.href}&tipo=${sub.href}`} title={sub.name} />
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              ))}
+              {specialCategories.map((category) => (
+                 <NavigationMenuItem key={category.name}>
+                  <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                       <li className="row-span-3">
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                            href={`/produtos?categoria=${category.href}`}
+                          >
+                            <div className="mb-2 mt-4 text-lg font-medium">
+                              {category.name}
+                            </div>
+                            <p className="text-sm leading-tight text-muted-foreground">
+                              {category.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                      {mainCategories.map((mainCat) => (
+                        <ListItem key={mainCat.name} href={`/produtos?categoria=${category.href}&genero=${mainCat.href}`} title={mainCat.name} />
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
 
         <div className="flex items-center justify-end gap-2">
@@ -331,5 +343,6 @@ export default function Header() {
     </header>
   );
 }
+
 
 

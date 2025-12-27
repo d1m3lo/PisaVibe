@@ -75,10 +75,6 @@ export default function ProductPage({ params }: ProductPageProps) {
           <div className="mt-8">
              <AddToCartButton product={product} />
           </div>
-          <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <Truck className="h-5 w-5" />
-            <span>Frete grátis para todo o Brasil.</span>
-          </div>
         </div>
       </div>
     </div>

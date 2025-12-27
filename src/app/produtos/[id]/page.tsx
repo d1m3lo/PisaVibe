@@ -65,15 +65,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           <h1 className="font-headline text-3xl font-bold md:text-4xl">
             {product.name}
           </h1>
-          <div className="mt-2 flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <Star className="h-5 w-5 fill-primary text-primary" />
-              <span className="font-semibold">{product.rating}</span>
-              <span className="text-sm text-muted-foreground">
-                ({product.reviews} avaliações)
-              </span>
-            </div>
-          </div>
+          
           <p className="mt-4 text-3xl font-bold">
             R$ {product.price.toFixed(2).replace(".", ",")}
           </p>

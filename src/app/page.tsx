@@ -33,17 +33,28 @@ export default function Home() {
     isExpanded: boolean,
     nextSectionRef: React.RefObject<HTMLDivElement>
   ) => {
-    setExpanded(!isExpanded);
-    if (!isExpanded && nextSectionRef.current) {
+    if (isExpanded) {
+        // If it's expanded, we are collapsing it. We don't scroll.
+        setExpanded(false);
+    } else {
+        // If it's collapsed, we are expanding it.
+        setExpanded(true);
+        // We need a timeout to allow the new items to render before scrolling.
         setTimeout(() => {
-            nextSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const element = {
+                'lancamentos': lancamentosRef.current,
+                'destaques': destaquesRef.current,
+                'ofertas': ofertasRef.current,
+            }[section];
+            
+            element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
   };
 
 
   const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 8);
-  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 8);
+  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 12);
   const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 8);
 
   return (
@@ -131,7 +142,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Ofertas
             </h2>
-            <button onClick={() => setOfertasExpanded(!ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded, lancamentosRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />
             </button>

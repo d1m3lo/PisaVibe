@@ -40,8 +40,7 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
                 <TooltipTrigger>
                     <Badge variant="outline" className={`select-none transition-transform duration-200 hover:-translate-y-1 ${sizeClasses} ${qualityStyles[quality]}`}>
                         {icon[quality]}
-                        {size === 'default' && <span className="font-semibold">Qualidade {quality}</span>}
-                        {size === 'sm' && <span className="font-semibold">{quality}</span>}
+                        <span className="font-semibold">{quality}</span>
                     </Badge>
                 </TooltipTrigger>
                 <TooltipContent>

@@ -39,7 +39,11 @@ const NavLink = ({
 const UserMenu = () => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <Button variant="ghost" size="icon">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="transition-transform duration-200 hover:-translate-y-1"
+      >
         <User className="h-5 w-5" />
         <span className="sr-only">Menu do usuário</span>
       </Button>

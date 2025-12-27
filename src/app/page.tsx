@@ -30,32 +30,25 @@ export default function Home() {
   const handleToggle = (
     section: 'lancamentos' | 'destaques' | 'ofertas', 
     setExpanded: React.Dispatch<React.SetStateAction<boolean>>,
-    isExpanded: boolean,
-    nextSectionRef: React.RefObject<HTMLDivElement>
+    isExpanded: boolean
   ) => {
     if (isExpanded) {
-        // If it's expanded, we are collapsing it. We don't scroll.
         setExpanded(false);
+        const element = {
+            'lancamentos': lancamentosRef.current,
+            'destaques': destaquesRef.current,
+            'ofertas': ofertasRef.current,
+        }[section];
+        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-        // If it's collapsed, we are expanding it.
         setExpanded(true);
-        // We need a timeout to allow the new items to render before scrolling.
-        setTimeout(() => {
-            const element = {
-                'lancamentos': lancamentosRef.current,
-                'destaques': destaquesRef.current,
-                'ofertas': ofertasRef.current,
-            }[section];
-            
-            element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
     }
   };
 
 
-  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 8);
-  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 12);
-  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 8);
+  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
+  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 4);
+  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
 
   return (
     <div className="flex flex-col">
@@ -104,7 +97,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Lançamentos
             </h2>
-            <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded, destaquesRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
             </button>
@@ -123,7 +116,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Destaques
             </h2>
-             <button onClick={() => handleToggle('destaques', setDestaquesExpanded, destaquesExpanded, ofertasRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+             <button onClick={() => handleToggle('destaques', setDestaquesExpanded, destaquesExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{destaquesExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", destaquesExpanded && "rotate-180")} />
             </button>
@@ -142,7 +135,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Ofertas
             </h2>
-            <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded, lancamentosRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />
             </button>

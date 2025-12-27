@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/product-card';
 import { products } from '@/lib/products';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Recommendations from '@/components/recommendations';
 
 export default function Home() {
   const heroImages = PlaceHolderImages.filter(img => img.id.startsWith('hero-'));
@@ -24,9 +23,28 @@ export default function Home() {
   const [destaquesExpanded, setDestaquesExpanded] = useState(false);
   const [ofertasExpanded, setOfertasExpanded] = useState(false);
 
-  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
-  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 4);
-  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
+  const lancamentosRef = useRef<HTMLDivElement>(null);
+  const destaquesRef = useRef<HTMLDivElement>(null);
+  const ofertasRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = (
+    section: 'lancamentos' | 'destaques' | 'ofertas', 
+    setExpanded: React.Dispatch<React.SetStateAction<boolean>>,
+    isExpanded: boolean,
+    nextSectionRef: React.RefObject<HTMLDivElement>
+  ) => {
+    setExpanded(!isExpanded);
+    if (!isExpanded && nextSectionRef.current) {
+        setTimeout(() => {
+            nextSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+  };
+
+
+  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 8);
+  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 8);
+  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 8);
 
   return (
     <div className="flex flex-col">
@@ -69,13 +87,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="lancamentos" className="w-full bg-background py-16 md:py-24">
+      <section id="lancamentos" ref={lancamentosRef} className="w-full bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mb-10 flex items-baseline justify-between">
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Lançamentos
             </h2>
-            <button onClick={() => setLancamentosExpanded(!lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded, destaquesRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
             </button>
@@ -88,13 +106,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="destaques" className="w-full bg-background py-16 md:py-24">
+      <section id="destaques" ref={destaquesRef} className="w-full bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mb-10 flex items-baseline justify-between">
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Destaques
             </h2>
-             <button onClick={() => setDestaquesExpanded(!destaquesExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+             <button onClick={() => handleToggle('destaques', setDestaquesExpanded, destaquesExpanded, ofertasRef)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               <span>{destaquesExpanded ? "Ver menos" : "Ver mais"}</span>
               <ChevronDown className={cn("h-4 w-4 transition-transform", destaquesExpanded && "rotate-180")} />
             </button>
@@ -107,7 +125,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="ofertas" className="w-full bg-background py-16 md:py-24">
+      <section id="ofertas" ref={ofertasRef} className="w-full bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
            <div className="mb-10 flex items-baseline justify-between">
             <h2 className="font-headline text-3xl font-bold md:text-4xl">

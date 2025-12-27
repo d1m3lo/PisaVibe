@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -71,6 +72,11 @@
         "brand": {
           "type": "string",
           "description": "Brand of the product."
+        },
+        "quality": {
+            "type": "string",
+            "description": "The quality tier of the product.",
+            "enum": ["Essential", "Select", "Elite"]
         }
       },
       "required": [

@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -47,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette, Star, Award, CheckCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +69,7 @@ import {
   AccordionTrigger,
 } from './ui/accordion';
 import { Checkbox } from './ui/checkbox';
+import { Badge } from './ui/badge';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -125,6 +127,7 @@ const ProductForm = ({
     variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], sizes: [] }],
     status: product?.status || 'ativo',
     tags: product?.tags || [],
+    quality: product?.quality || 'Select',
   });
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
@@ -283,6 +286,7 @@ const ProductForm = ({
       rating: product?.rating || 0,
       reviews: product?.reviews || 0,
       tags: formData.tags,
+      quality: formData.quality as Product['quality'],
     };
     await onSave(productData);
     onClose();
@@ -352,6 +356,19 @@ const ProductForm = ({
                         </Select>
                     </div>
                 )}
+                 <div className="space-y-2">
+                    <Label htmlFor="quality">Nível de Qualidade</Label>
+                    <Select value={formData.quality} onValueChange={(value) => handleSelectChange('quality', value)}>
+                      <SelectTrigger id="quality">
+                        <SelectValue placeholder="Selecione a qualidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Essential">Essential</SelectItem>
+                        <SelectItem value="Select">Select</SelectItem>
+                        <SelectItem value="Elite">Elite</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
                 <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
@@ -584,6 +601,30 @@ export default function ProductManagement() {
     setEditingProduct(null);
     setIsFormOpen(true);
   };
+  
+  const QualityBadge = ({ quality }: { quality?: Product['quality'] }) => {
+    if (!quality) return null;
+
+    const qualityStyles = {
+        Essential: "bg-green-100 text-green-800",
+        Select: "bg-blue-100 text-blue-800",
+        Elite: "bg-yellow-100 text-yellow-800",
+    }
+
+    const icon = {
+        Essential: <CheckCircle className="h-3 w-3" />,
+        Select: <Star className="h-3 w-3" />,
+        Elite: <Award className="h-3 w-3" />,
+    }
+
+    return (
+      <Badge variant="outline" className={`gap-1 border-0 ${qualityStyles[quality]}`}>
+          {icon[quality]}
+          {quality}
+      </Badge>
+    );
+  };
+
 
   return (
     <Card>
@@ -620,6 +661,7 @@ export default function ProductManagement() {
               <TableHead className="w-[80px]">Imagem</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Preço</TableHead>
+              <TableHead>Qualidade</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -639,6 +681,9 @@ export default function ProductManagement() {
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>
                   R$ {product.price.toFixed(2).replace('.', ',')}
+                </TableCell>
+                <TableCell>
+                  <QualityBadge quality={product.quality} />
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

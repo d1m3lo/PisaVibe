@@ -1,3 +1,4 @@
+
 export type SizeInfo = {
   size: string;
   stock: number;
@@ -26,6 +27,7 @@ export type Product = {
   reviews: number;
   status: 'ativo' | 'inativo';
   tags?: string[];
+  quality?: 'Essential' | 'Select' | 'Elite';
 };
 
 export type CartItem = {

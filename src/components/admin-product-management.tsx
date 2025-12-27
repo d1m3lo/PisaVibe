@@ -76,11 +76,12 @@ const ProductForm = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    description: product?.description || '',
     longDescription: product?.longDescription || '',
     price: product?.price || 0,
     category: product?.category || 'roupas',
-    images: product?.images.join(', ') || '',
+    image1: product?.images[0] || '',
+    image2: product?.images[1] || '',
+    image3: product?.images[2] || '',
     status: product?.status || 'ativo',
   });
 
@@ -97,14 +98,16 @@ const ProductForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const images = [formData.image1, formData.image2, formData.image3].filter(Boolean);
+
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
-      description: formData.description,
+      description: formData.longDescription.substring(0, 100), // Auto-generate short description
       longDescription: formData.longDescription,
       price: Number(formData.price),
       category: formData.category as Product['category'],
-      images: formData.images.split(',').map((url) => url.trim()),
+      images: images,
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
       reviews: product?.reviews || 0,
@@ -125,16 +128,14 @@ const ProductForm = ({
           </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição Curta</Label>
-        <Input id="description" value={formData.description} onChange={handleChange} required />
-      </div>
-      <div className="space-y-2">
         <Label htmlFor="longDescription">Descrição Longa</Label>
         <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="images">Imagens (URLs separadas por vírgula)</Label>
-        <Textarea id="images" value={formData.images} onChange={handleChange} required />
+      <div className="space-y-3">
+        <Label>Links das Imagens</Label>
+        <Input id="image1" placeholder="URL da Imagem Principal" value={formData.image1} onChange={handleChange} required />
+        <Input id="image2" placeholder="URL da Imagem 2 (opcional)" value={formData.image2} onChange={handleChange} />
+        <Input id="image3" placeholder="URL da Imagem 3 (opcional)" value={formData.image3} onChange={handleChange} />
       </div>
       <div className="grid grid-cols-2 gap-4">
            <div className="space-y-2">
@@ -330,3 +331,5 @@ export default function ProductManagement() {
     </Card>
   );
 }
+
+    

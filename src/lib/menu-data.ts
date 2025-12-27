@@ -1,3 +1,4 @@
+
 export type MenuLink = {
   title: string;
   href: string;
@@ -39,6 +40,8 @@ export const megaMenuData: MenuCategory[] = [
         title: "Acessórios",
         links: [
           { title: "Bonés", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bones" },
+          { title: "Mochila", href: "/produtos?genero=masculino&categoria=acessorios&tipo=mochilas" },
+          { title: "Relógios", href: "/produtos?genero=masculino&categoria=acessorios&tipo=relogios" },
         ],
       },
        {

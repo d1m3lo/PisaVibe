@@ -22,7 +22,7 @@ export default function ProductsPage() {
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
-    const filters = [where('status', '==', 'ativo')];
+    let filters = [where('status', '==', 'ativo')];
 
     if (category && category !== 'lancamentos' && category !== 'ofertas') {
         filters.push(where('category', '==', category));
@@ -33,13 +33,15 @@ export default function ProductsPage() {
     }
     
     const q = collection(firestore, 'products');
-
-    // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
-    if (filters.length > 1) {
-        return query(q, and(...filters));
-    }
     
-    return query(q, filters[0]);
+    if (filters.length > 1) {
+      // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
+      return query(q, and(...filters));
+    } else if (filters.length === 1) {
+      return query(q, filters[0]);
+    }
+
+    return query(q); // Fallback to query all active products if no filters
     
   }, [firestore, category, subCategory]);
 
@@ -76,12 +78,13 @@ export default function ProductsPage() {
     if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (category) {
         let categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categoryTitle.toLowerCase() === 'calcados') categoryTitle = 'Calçados';
+        if (categoryTitle.toLowerCase() === 'calcados' || categoryTitle.toLowerCase() === 'calçados') categoryTitle = 'Calçados';
         if (categoryTitle.toLowerCase() === 'lancamentos') categoryTitle = 'Lançamentos';
         titleParts.push(categoryTitle);
     }
     if (subCategory) {
        let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
+       if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
        titleParts.push(subCategoryTitle);
     }
     if (titleParts.length > 0) title = titleParts.join(' - ');

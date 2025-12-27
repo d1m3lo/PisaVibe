@@ -65,6 +65,19 @@ import Image from 'next/image';
 
 type ProductWithId = Product & { firestoreId: string };
 
+const categoryMappings = {
+    masculino: {
+        'tênis': ['Casual', 'Chinelo', 'Streetwear', 'Sneaker'],
+        'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
+        'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
+        'perfumes': [],
+    },
+    // TODO: Adicionar feminino e unissex
+    feminino: {},
+    unissex: {}
+}
+
+
 const ProductForm = ({
   product,
   onSave,
@@ -78,11 +91,28 @@ const ProductForm = ({
     name: product?.name || '',
     price: product?.price || 0,
     longDescription: product?.longDescription || '',
-    gender: product?.gender || 'unissex',
-    category: product?.category || 'roupas',
+    gender: product?.gender || 'masculino',
+    category: product?.category || 'tênis',
+    subCategory: product?.subCategory || '',
     images: product?.images?.length ? product.images : [''],
     status: product?.status || 'ativo',
   });
+
+  const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const gender = formData.gender as keyof typeof categoryMappings;
+    const category = formData.category as keyof typeof categoryMappings[typeof gender];
+    const mappings = categoryMappings[gender];
+    
+    if (mappings && category in mappings) {
+      setSubCategoryOptions(mappings[category]);
+    } else {
+      setSubCategoryOptions([]);
+    }
+    // Reset subcategory if category or gender changes
+    setFormData(prev => ({...prev, subCategory: ''}));
+  }, [formData.gender, formData.category]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -116,7 +146,6 @@ const ProductForm = ({
     const images = formData.images.filter(Boolean); // Filter out empty strings
 
     if (images.length === 0) {
-        // Maybe show a toast message here
         alert("Por favor, adicione pelo menos uma imagem.");
         return;
     }
@@ -129,6 +158,7 @@ const ProductForm = ({
       price: Number(formData.price),
       gender: formData.gender as Product['gender'],
       category: formData.category as Product['category'],
+      subCategory: formData.subCategory,
       images: images,
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
@@ -139,7 +169,7 @@ const ProductForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+       <div className="space-y-2">
         <Label htmlFor="name">Nome do Produto</Label>
         <Input id="name" value={formData.name} onChange={handleChange} required />
       </div>
@@ -174,7 +204,7 @@ const ProductForm = ({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-4">
            <div className="space-y-2">
                 <Label htmlFor="gender">Gênero</Label>
                 <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
@@ -202,6 +232,21 @@ const ProductForm = ({
                   </SelectContent>
                 </Select>
             </div>
+            {subCategoryOptions.length > 0 && (
+                 <div className="space-y-2">
+                    <Label htmlFor="subCategory">Subcategoria</Label>
+                    <Select value={formData.subCategory} onValueChange={(value) => handleSelectChange('subCategory', value)}>
+                    <SelectTrigger id="subCategory">
+                        <SelectValue placeholder="Selecione a subcategoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {subCategoryOptions.map(sub => (
+                            <SelectItem key={sub} value={sub.toLowerCase()}>{sub}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+            )}
              <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                  <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
@@ -390,7 +435,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    
-
-    

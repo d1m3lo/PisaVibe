@@ -7,7 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, Sun, Moon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
 import { useCart } from "@/context/cart-context";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -46,6 +46,39 @@ import { CartSheet } from "./cart-sheet";
 import { useCollection, useMemoFirebase, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Product } from "@/lib/types";
+import { useTheme } from "next-themes";
+
+function ModeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Render a placeholder or null on the server and initial client render
+    return <div className="h-10 w-10" />;
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      className="transition-transform duration-200 hover:-translate-y-1"
+    >
+      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Alternar tema</span>
+    </Button>
+  );
+}
+
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -250,9 +283,21 @@ const MobileSubMenu = ({
 
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
+    <header className={cn(
+        "sticky top-0 z-40 w-full transition-colors duration-300",
+        scrolled ? "border-b bg-background/95 backdrop-blur-sm" : "bg-transparent border-b border-transparent"
+    )}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link
@@ -306,8 +351,9 @@ export default function Header() {
 
         <div className="flex items-center justify-end gap-2">
           <SearchBar />
-          <div className="hidden md:flex">
+          <div className="hidden items-center md:flex">
              <UserMenu />
+             <ModeToggle />
           </div>
           <CartButton />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

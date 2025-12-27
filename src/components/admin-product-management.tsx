@@ -109,8 +109,8 @@ const ProductForm = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    price: product?.price || 0,
-    oldPrice: product?.oldPrice || 0,
+    price: product?.price || '',
+    oldPrice: product?.oldPrice || '',
     longDescription: product?.longDescription || '',
     gender: product?.gender || 'masculino',
     category: product?.category || 'calçados',
@@ -147,7 +147,7 @@ const ProductForm = ({
     const { id, value, type } = e.target;
     setFormData((prev) => ({ 
       ...prev, 
-      [id]: type === 'number' ? parseFloat(value) || 0 : value 
+      [id]: type === 'number' ? parseFloat(value) || '' : value 
     }));
   };
 
@@ -254,8 +254,8 @@ const ProductForm = ({
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
-      price: formData.price,
-      oldPrice: formData.oldPrice,
+      price: parseFloat(String(formData.price)) || 0,
+      oldPrice: parseFloat(String(formData.oldPrice)) || 0,
       description: formData.longDescription.substring(0, 100),
       longDescription: formData.longDescription,
       gender: formData.gender as Product['gender'],

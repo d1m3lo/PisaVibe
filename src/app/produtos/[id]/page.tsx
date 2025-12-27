@@ -157,7 +157,13 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <Carousel setApi={setCarouselApi} className="w-full">
+            <Carousel 
+              setApi={setCarouselApi} 
+              className="w-full"
+              opts={{
+                loop: true,
+              }}
+            >
               <CarouselContent>
                 {allImages.length > 0 ? (
                   allImages.map((img, index) => (
@@ -290,4 +296,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
 

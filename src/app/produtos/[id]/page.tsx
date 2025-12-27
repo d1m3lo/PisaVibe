@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
 import Link from "next/link";
+import { ColorSwatch } from "@/components/color-swatch";
 
 
 const ProductPageSkeleton = () => (
@@ -151,6 +152,26 @@ export default function ProductPage() {
   const categoryTitle = product.category.charAt(0).toUpperCase() + product.category.slice(1);
   const subCategoryTitle = product.subCategory ? ' / ' + product.subCategory.charAt(0).toUpperCase() + product.subCategory.slice(1) : '';
 
+  const sortedSizes = useMemo(() => {
+    if (!selectedVariant?.sizes) return [];
+    
+    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
+    
+    return [...selectedVariant.sizes].sort((a, b) => {
+        const aIsNumeric = !isNaN(parseFloat(a.size));
+        const bIsNumeric = !isNaN(parseFloat(b.size));
+
+        if (aIsNumeric && bIsNumeric) {
+            return parseFloat(a.size) - parseFloat(b.size);
+        }
+        if (!aIsNumeric && !bIsNumeric) {
+            return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
+        }
+        // Keep numeric and non-numeric sizes grouped
+        return aIsNumeric ? -1 : 1;
+    });
+  }, [selectedVariant?.sizes]);
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
@@ -254,13 +275,14 @@ export default function ProductPage() {
                   key={variant.id}
                   onClick={() => handleVariantSelect(variant)}
                   className={cn(
-                    "h-6 w-6 rounded-full border-2 transition-all",
-                    selectedVariant?.id === variant.id ? "border-primary scale-110 ring-2 ring-offset-2 ring-primary" : "border-border"
+                    "relative rounded-full transition-all",
+                    selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
                   )}
-                   title={variant.color}
-                   style={{ backgroundColor: variant.colorHex }}
                 >
-                  <span className="sr-only">{variant.color}</span>
+                  <ColorSwatch
+                    colorHex={variant.colorHex}
+                    title={variant.color}
+                  />
                 </button>
               ))}
             </div>
@@ -269,7 +291,7 @@ export default function ProductPage() {
           <div className="mt-8">
              <h3 className="mb-2 text-sm font-semibold">Tamanho:</h3>
              <div className="flex flex-wrap gap-2">
-              {selectedVariant?.sizes.sort((a,b) => a.size.localeCompare(b.size, undefined, { numeric: true })).map(({ size, stock }) => (
+              {sortedSizes.map(({ size, stock }) => (
                 <Button
                   key={size}
                   variant={selectedSize === size ? "default" : "outline"}
@@ -296,5 +318,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-

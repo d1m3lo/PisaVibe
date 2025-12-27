@@ -70,6 +70,7 @@ import {
 } from './ui/accordion';
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
+import { ColorSwatch } from './color-swatch';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -407,7 +408,7 @@ const ProductForm = ({
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
                    <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4">
-                            <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: variant.colorHex }}/>
+                            <ColorSwatch colorHex={variant.colorHex} />
                             <span className="font-semibold">{variant.color || "Nova Cor"}</span>
                         </div>
                    </AccordionTrigger>
@@ -428,11 +429,16 @@ const ProductForm = ({
                                 <div className="flex items-center gap-2">
                                     <Input 
                                         type="color" 
-                                        value={variant.colorHex}
-                                        onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
+                                        value={variant.colorHex.split('/')[0]}
+                                        onChange={(e) => {
+                                            const colors = variant.colorHex.split('/');
+                                            colors[0] = e.target.value;
+                                            handleVariantChange(variant.id, 'colorHex', colors.join('/'))
+                                        }}
                                         className="p-1 h-10"
                                     />
                                     <Input 
+                                        placeholder="#000000 ou #FFFFFF/#000000"
                                         value={variant.colorHex}
                                         onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
                                     />

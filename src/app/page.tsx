@@ -48,13 +48,17 @@ export default function Home() {
     } else {
       // If it's collapsed, we are expanding it.
       setExpanded(true);
+      // Scroll to the element after a short delay to ensure it's rendered
+      setTimeout(() => {
+        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
 
-  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 8);
-  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 8);
-  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 8);
+  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
+  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 4);
+  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
 
   return (
     <div className="flex flex-col">
@@ -103,7 +107,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Lançamentos
             </h2>
-            {allLancamentos.length > 8 && (
+            {allLancamentos.length > 4 && (
               <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
@@ -124,7 +128,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Destaques
             </h2>
-             {allDestaques.length > 8 && (
+             {allDestaques.length > 4 && (
               <button onClick={() => handleToggle('destaques', setDestaquesExpanded, destaquesExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 <span>{destaquesExpanded ? "Ver menos" : "Ver mais"}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", destaquesExpanded && "rotate-180")} />
@@ -145,7 +149,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Ofertas
             </h2>
-            {allOfertas.length > 8 && (
+            {allOfertas.length > 4 && (
               <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />

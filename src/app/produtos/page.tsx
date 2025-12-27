@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query, and } from 'firebase/firestore';
+import { collection, query, where, Query, and, Or, or, type WhereFilterOp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";

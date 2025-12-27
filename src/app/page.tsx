@@ -1,3 +1,5 @@
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -5,12 +7,24 @@ import { ProductCard } from '@/components/product-card';
 import { products } from '@/lib/products';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Recommendations from '@/components/recommendations';
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-1');
-  const lancamentos = products.filter(p => p.tags?.includes('lancamentos')).slice(0, 4);
-  const destaques = products.slice(0, 4);
-  const ofertas = products.filter(p => p.tags?.includes('ofertas')).slice(0, 4);
+  
+  const allLancamentos = products.filter(p => p.tags?.includes('lancamentos'));
+  const allDestaques = products;
+  const allOfertas = products.filter(p => p.tags?.includes('ofertas'));
+
+  const [lancamentosExpanded, setLancamentosExpanded] = useState(false);
+  const [destaquesExpanded, setDestaquesExpanded] = useState(false);
+  const [ofertasExpanded, setOfertasExpanded] = useState(false);
+
+  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
+  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 4);
+  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
 
   return (
     <div className="flex flex-col">
@@ -46,9 +60,10 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Lançamentos
             </h2>
-            <Link href="/produtos?categoria=lancamentos" className="text-sm font-medium text-primary hover:underline">
-              Ver mais
-            </Link>
+            <button onClick={() => setLancamentosExpanded(!lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {lancamentos.map(product => (
@@ -64,9 +79,10 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Destaques
             </h2>
-             <Link href="/produtos" className="text-sm font-medium text-primary hover:underline">
-              Ver mais
-            </Link>
+             <button onClick={() => setDestaquesExpanded(!destaquesExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <span>{destaquesExpanded ? "Ver menos" : "Ver mais"}</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", destaquesExpanded && "rotate-180")} />
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {destaques.map(product => (
@@ -82,9 +98,10 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Ofertas
             </h2>
-            <Link href="/produtos?categoria=ofertas" className="text-sm font-medium text-primary hover:underline">
-              Ver mais
-            </Link>
+            <button onClick={() => setOfertasExpanded(!ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {ofertas.map(product => (

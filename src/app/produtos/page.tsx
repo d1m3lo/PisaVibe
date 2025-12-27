@@ -76,9 +76,18 @@ export default function ProductsPage() {
         if (categoryTitle.toLowerCase() === 'calcados') {
             categoryTitle = 'Calçados';
         }
+        if (categoryTitle.toLowerCase() === 'lancamentos') {
+            categoryTitle = 'Lançamentos';
+        }
         titleParts.push(categoryTitle);
     }
-    if (subCategory) titleParts.push(subCategory.charAt(0).toUpperCase() + subCategory.slice(1));
+    if (subCategory) {
+       let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
+        if (subCategoryTitle.toLowerCase() === 'calcados') {
+            subCategoryTitle = 'Calçados';
+        }
+       titleParts.push(subCategoryTitle);
+    }
     if (titleParts.length > 0) title = titleParts.join(' - ');
   }
 

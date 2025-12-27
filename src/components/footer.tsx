@@ -70,7 +70,7 @@ export default function Footer() {
                     <ul className="mt-4 space-y-2">
                         <FooterLink href="/sobre-nos">Sobre Nós</FooterLink>
                         <FooterLink href="/politica-de-privacidade">Política de Privacidade</FooterLink>
-                        <FooterLink href="#">Termos de Uso</FooterLink>
+                        <FooterLink href="/termos-de-uso">Termos de Uso</FooterLink>
                     </ul>
                 </div>
             </div>

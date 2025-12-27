@@ -59,7 +59,8 @@ export const megaMenuData: MenuCategory[] = [
         title: "Calçados",
         links: [
           { title: "Casual", href: "/produtos?genero=feminino&categoria=calcados&tipo=casual" },
-          { title: "Corrida", href: "/produtos?genero=feminino&categoria=calcados&tipo=corrida" },
+          { title: "Sandálias", href: "/produtos?genero=feminino&categoria=calcados&tipo=sandalias" },
+          { title: "Chinelo", href: "/produtos?genero=feminino&categoria=calcados&tipo=chinelo" },
           { title: "StreetWear", href: "/produtos?genero=feminino&categoria=calcados&tipo=streetwear" },
           { title: "Sneakers", href: "/produtos?genero=feminino&categoria=calcados&tipo=sneakers" },
         ],
@@ -68,6 +69,7 @@ export const megaMenuData: MenuCategory[] = [
         title: "Roupas",
         links: [
           { title: "Camisetas", href: "/produtos?genero=feminino&categoria=roupas&tipo=camisetas" },
+          { title: "Vestidos", href: "/produtos?genero=feminino&categoria=roupas&tipo=vestidos" },
           { title: "Calças & Leggings", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
           { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },
         ],

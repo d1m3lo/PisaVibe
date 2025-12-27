@@ -77,7 +77,6 @@ const CartButton = () => {
   const { cartCount } = useCart();
   return (
     <CartSheet>
-      <SheetTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
@@ -91,7 +90,6 @@ const CartButton = () => {
             </span>
           )}
         </Button>
-      </SheetTrigger>
     </CartSheet>
   );
 };

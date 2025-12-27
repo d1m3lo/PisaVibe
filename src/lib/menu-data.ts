@@ -20,11 +20,10 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Calçados",
         links: [
-          { title: "Tênis", href: "/produtos?genero=masculino&categoria=calcados&tipo=tenis" },
           { title: "Casual", href: "/produtos?genero=masculino&categoria=calcados&tipo=casual" },
           { title: "Corrida", href: "/produtos?genero=masculino&categoria=calcados&tipo=corrida" },
-          { title: "Chuteiras", href: "/produtos?genero=masculino&categoria=calcados&tipo=chuteiras" },
-          { title: "Basquete", href: "/produtos?genero=masculino&categoria=calcados&tipo=basquete" },
+          { title: "StreetWear", href: "/produtos?genero=masculino&categoria=calcados&tipo=streetwear" },
+          { title: "Sneakers", href: "/produtos?genero=masculino&categoria=calcados&tipo=sneakers" },
         ],
       },
       {
@@ -32,17 +31,14 @@ export const megaMenuData: MenuCategory[] = [
         links: [
           { title: "Camisetas", href: "/produtos?genero=masculino&categoria=roupas&tipo=camisetas" },
           { title: "Shorts", href: "/produtos?genero=masculino&categoria=roupas&tipo=shorts" },
-          { title: "Jaquetas & Moletons", href: "/produtos?genero=masculino&categoria=roupas&tipo=moletons" },
-          { title: "Calças & Leggings", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },
           { title: "Polos", href: "/produtos?genero=masculino&categoria=roupas&tipo=polos" },
+          { title: "Streetwear", href: "/produtos?genero=masculino&categoria=roupas&tipo=streetwear" },
         ],
       },
       {
         title: "Acessórios",
         links: [
-          { title: "Bolas", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bolas" },
-          { title: "Bonés & Viseiras", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bones" },
-          { title: "Bolsas & Mochilas", href: "/produtos?genero=masculino&categoria=acessorios&tipo=mochilas" },
+          { title: "Bonés", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bones" },
         ],
       },
        {

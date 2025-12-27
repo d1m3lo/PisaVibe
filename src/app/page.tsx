@@ -10,6 +10,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Recommendations from '@/components/recommendations';
 
 export default function Home() {
   const heroImages = PlaceHolderImages.filter(img => img.id.startsWith('hero-'));
@@ -87,7 +88,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="destaques" className="w-full bg-secondary py-16 md:py-24">
+      <section id="destaques" className="w-full bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mb-10 flex items-baseline justify-between">
             <h2 className="font-headline text-3xl font-bold md:text-4xl">

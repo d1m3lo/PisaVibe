@@ -64,7 +64,12 @@ const UserMenu = () => (
 const CartButton = () => {
   const { cartCount } = useCart();
   return (
-    <Button variant="ghost" size="icon" asChild>
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      className="transition-transform duration-200 hover:-translate-y-1"
+    >
       <Link href="/carrinho" aria-label="Carrinho de compras">
         <ShoppingCart className="h-5 w-5" />
         {cartCount > 0 && (

@@ -85,7 +85,7 @@ const CartButton = () => {
         >
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {cartCount}
             </span>
           )}
@@ -111,18 +111,16 @@ const SearchBar = () => {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/produtos?q=${query}`);
-      setIsPopoverOpen(false);
-      setQuery("");
-      inputRef.current?.blur();
+      closePopover();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    if (newQuery.trim().length > 1) {
+    if (newQuery.trim().length > 1 && !isPopoverOpen) {
       setIsPopoverOpen(true);
-    } else {
+    } else if (newQuery.trim().length <= 1 && isPopoverOpen) {
       setIsPopoverOpen(false);
     }
   };
@@ -194,9 +192,11 @@ const SearchBar = () => {
             ))}
           </div>
         ) : (
-          <p className="p-4 text-center text-sm text-muted-foreground">
-            Nenhum resultado encontrado.
-          </p>
+          query.trim().length > 1 && (
+            <p className="p-4 text-center text-sm text-muted-foreground">
+              Nenhum resultado encontrado.
+            </p>
+          )
         )}
       </PopoverContent>
     </Popover>
@@ -250,7 +250,7 @@ const MobileSubMenu = ({
             <div className="flex flex-col gap-1 pl-2">
               {column.links.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.title + link.href}
                   href={link.href}
                   className="text-sm text-foreground/70"
                   onClick={onClose}
@@ -285,16 +285,15 @@ export default function Header() {
               {megaMenuData.map((category) => {
                 const isSpecialCategory = category.title === 'Lançamentos' || category.title === 'Ofertas';
                 
-                const gridClass = 
-                    category.title === 'Masculino' || category.title === 'Feminino'
-                    ? "grid-cols-4"
-                    : "grid-cols-2";
+                const gridClass = isSpecialCategory ? "grid-cols-2" : "grid-cols-4";
+                const widthClass = isSpecialCategory ? "w-[400px] lg:w-[450px]" : "w-[600px] lg:w-[800px]";
+                const gapClass = isSpecialCategory ? "gap-x-4" : "gap-x-8";
 
                 return (
                  <NavigationMenuItem key={category.title}>
                     <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
                     <NavigationMenuContent>
-                        <div className={cn("grid w-[600px] gap-x-8 gap-y-4 p-6 lg:w-[800px]", gridClass)}>
+                        <div className={cn("grid gap-y-4 p-6", gridClass, widthClass, gapClass)}>
                         {category.columns.map((column) => (
                             <div key={column.title} className="flex flex-col">
                             <h3 className="mb-4 text-sm font-bold text-foreground">

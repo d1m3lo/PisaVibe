@@ -4,7 +4,7 @@
 import { ProductCard } from "@/components/product-card";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query, and, or } from 'firebase/firestore';
+import { collection, query, where, Query, and } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,21 +24,8 @@ export default function ProductsPage() {
     
     const filters = [where('status', '==', 'ativo')];
 
-    if (gender) {
-      filters.push(
-        or(
-          where('gender', '==', gender),
-          where('gender', '==', 'unissex')
-        )
-      );
-    }
-    
-    if (category) {
-        if (category === 'lancamentos' || category === 'ofertas') {
-            filters.push(where('tags', 'array-contains', category));
-        } else {
-            filters.push(where('category', '==', category));
-        }
+    if (category && category !== 'lancamentos' && category !== 'ofertas') {
+        filters.push(where('category', '==', category));
     }
     
     if (subCategory) {
@@ -48,17 +35,37 @@ export default function ProductsPage() {
     const q = collection(firestore, 'products');
 
     // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
-    return query(q, and(...filters));
+    if (filters.length > 1) {
+        return query(q, and(...filters));
+    }
     
-  }, [firestore, category, subCategory, gender]);
+    return query(q, filters[0]);
+    
+  }, [firestore, category, subCategory]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
 
   const filteredProducts = useMemo(() => {
     if (!productsData) return [];
-    if (!searchQuery) return productsData;
-    return productsData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [productsData, searchQuery]);
+    
+    let products = [...productsData];
+
+    // Client-side filtering for complex cases
+    if (gender) {
+      products = products.filter(p => p.gender === gender || p.gender === 'unissex');
+    }
+    
+    if (category && (category === 'lancamentos' || category === 'ofertas')) {
+      products = products.filter(p => p.tags?.includes(category));
+    }
+
+    if (searchQuery) {
+      products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+
+    return products;
+
+  }, [productsData, searchQuery, gender, category]);
 
 
   let title = "Todos os Produtos";

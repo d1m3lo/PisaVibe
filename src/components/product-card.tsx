@@ -34,7 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="text-lg font-bold">
           R$ {product.price.toFixed(2).replace(".", ",")}
         </div>
-        <AddToCartButton product={product} />
+        <AddToCartButton product={product} size="icon" />
       </CardFooter>
     </Card>
   );

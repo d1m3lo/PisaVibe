@@ -59,7 +59,7 @@ export default function Footer() {
                     <ul className="mt-4 space-y-2">
                         <FooterLink href="/duvidas-frequentes">Dúvidas Frequentes</FooterLink>
                         <FooterLink href="/entregas-e-envios">Entregas e Frete</FooterLink>
-                        <FooterLink href="#">Trocas e Devoluções</FooterLink>
+                        <FooterLink href="/trocas-e-devolucoes">Trocas e Devoluções</FooterLink>
                         <FooterLink href="#">Fale Conosco</FooterLink>
                     </ul>
                 </div>

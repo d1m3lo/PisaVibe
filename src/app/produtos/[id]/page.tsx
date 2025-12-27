@@ -20,8 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
-import { Award, CheckCircle, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { QualityBadge } from "@/components/quality-badge";
+
 
 const ProductPageSkeleton = () => (
   <div className="container mx-auto max-w-5xl px-4 py-12">
@@ -64,30 +64,6 @@ const ProductPageSkeleton = () => (
     </div>
   </div>
 );
-
-const QualityBadge = ({ quality }: { quality?: Product['quality'] }) => {
-    if (!quality) return null;
-
-    const qualityStyles = {
-        Essential: "bg-green-100 text-green-800 border-green-200",
-        Select: "bg-blue-100 text-blue-800 border-blue-200",
-        Elite: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    }
-
-    const icon = {
-        Essential: <CheckCircle className="h-4 w-4" />,
-        Select: <Star className="h-4 w-4" />,
-        Elite: <Award className="h-4 w-4" />,
-    }
-
-    return (
-      <Badge variant="outline" className={`gap-2 text-sm py-1 px-3 ${qualityStyles[quality]}`}>
-          {icon[quality]}
-          <span className="font-semibold">Qualidade {quality}</span>
-      </Badge>
-    );
-  };
-
 
 export default function ProductPage() {
   const params = useParams();

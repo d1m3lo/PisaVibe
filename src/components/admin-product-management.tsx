@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette, Star, Award, CheckCircle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +69,7 @@ import {
   AccordionTrigger,
 } from './ui/accordion';
 import { Checkbox } from './ui/checkbox';
-import { Badge } from './ui/badge';
+import { QualityBadge } from './quality-badge';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -601,30 +601,6 @@ export default function ProductManagement() {
     setEditingProduct(null);
     setIsFormOpen(true);
   };
-  
-  const QualityBadge = ({ quality }: { quality?: Product['quality'] }) => {
-    if (!quality) return null;
-
-    const qualityStyles = {
-        Essential: "bg-green-100 text-green-800",
-        Select: "bg-blue-100 text-blue-800",
-        Elite: "bg-yellow-100 text-yellow-800",
-    }
-
-    const icon = {
-        Essential: <CheckCircle className="h-3 w-3" />,
-        Select: <Star className="h-3 w-3" />,
-        Elite: <Award className="h-3 w-3" />,
-    }
-
-    return (
-      <Badge variant="outline" className={`gap-1 border-0 ${qualityStyles[quality]}`}>
-          {icon[quality]}
-          {quality}
-      </Badge>
-    );
-  };
-
 
   return (
     <Card>
@@ -683,7 +659,7 @@ export default function ProductManagement() {
                   R$ {product.price.toFixed(2).replace('.', ',')}
                 </TableCell>
                 <TableCell>
-                  <QualityBadge quality={product.quality} />
+                  <QualityBadge quality={product.quality} size="sm" />
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import AddToCartButton from "./add-to-cart-button";
+import { QualityBadge } from "./quality-badge";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,11 @@ export function ProductCard({ product }: ProductCardProps) {
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
         <CardHeader className="p-0">
           <div className="relative h-64 w-full">
+            {product.quality && (
+                <div className="absolute right-2 top-2 z-10">
+                    <QualityBadge quality={product.quality} size="sm" />
+                </div>
+            )}
             {firstImage ? (
               <Image
                 src={firstImage}

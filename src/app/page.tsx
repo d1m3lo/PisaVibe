@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -50,7 +51,7 @@ export default function Home() {
               O seu estilo começa aqui. Tênis e roupas com a atitude que você
               procura.
             </p>
-            <Button asChild size="lg" className="mt-8">
+            <Button asChild size="lg" variant="outline" className="mt-8 border-white bg-transparent text-white hover:bg-white hover:text-black">
               <Link href="/produtos">Ver Coleção</Link>
             </Button>
           </div>

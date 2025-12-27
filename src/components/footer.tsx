@@ -58,7 +58,7 @@ export default function Footer() {
                     <h4 className="font-semibold">Ajuda</h4>
                     <ul className="mt-4 space-y-2">
                         <FooterLink href="/duvidas-frequentes">Dúvidas Frequentes</FooterLink>
-                        <FooterLink href="#">Entregas e Frete</FooterLink>
+                        <FooterLink href="/entregas-e-envios">Entregas e Frete</FooterLink>
                         <FooterLink href="#">Trocas e Devoluções</FooterLink>
                         <FooterLink href="#">Fale Conosco</FooterLink>
                     </ul>

@@ -28,32 +28,28 @@ export default function ProductsPage() {
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
-    let q: Query = collection(firestore, 'products');
     let filters = [where('status', '==', 'ativo')];
 
-    if (category && category !== 'lancamentos' && category !== 'ofertas' && category !== 'perfumes') {
-      filters.push(where('category', '==', category));
-      if(subCategory) {
-        filters.push(where('subCategory', '==', subCategory));
-      }
-    } else if (category === 'perfumes') {
-       filters.push(where('category', '==', 'perfumes'));
-    } else if (category) {
-      filters.push(where('tags', 'array-contains', category));
-    }
-
-    if (gender) {
-       filters.push(where('gender', '==', gender));
+    if (category) {
+        if (category === 'lancamentos' || category === 'ofertas') {
+            filters.push(where('tags', 'array-contains', category));
+        } else {
+            filters.push(where('category', '==', category));
+        }
     }
     
-    if (searchQuery) {
-        // Firestore doesn't support native text search on parts of a string field.
-        // A more robust solution would use a third-party search service like Algolia.
-        // For this example, we will filter on the client-side.
+    if (subCategory) {
+        filters.push(where('subCategory', '==', subCategory));
     }
-
+    
+    if (gender) {
+        filters.push(where('gender', '==', gender));
+    }
+    
+    const q: Query = collection(firestore, 'products');
     return query(q, ...filters);
-  }, [firestore, category, subCategory, gender, searchQuery]);
+    
+  }, [firestore, category, subCategory, gender]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
 

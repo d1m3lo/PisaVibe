@@ -85,7 +85,7 @@ const CartButton = () => {
         >
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
-            <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
               {cartCount}
             </span>
           )}
@@ -98,6 +98,7 @@ const SearchBar = () => {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const searchResults = React.useMemo(() => {
     if (query.trim().length < 2) return [];
@@ -106,42 +107,54 @@ const SearchBar = () => {
       .slice(0, 5);
   }, [query]);
 
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/produtos?q=${query}`);
       setIsPopoverOpen(false);
       setQuery("");
+      inputRef.current?.blur();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-     if (newQuery.trim().length > 1 && !isPopoverOpen) {
+    if (newQuery.trim().length > 1) {
       setIsPopoverOpen(true);
-    } else if (newQuery.trim().length <= 1 && isPopoverOpen) {
+    } else {
       setIsPopoverOpen(false);
     }
-  }
+  };
+
+  const handlePopoverOpenChange = (open: boolean) => {
+    setIsPopoverOpen(open);
+    if (!open) {
+      inputRef.current?.blur();
+    }
+  };
   
   const closePopover = () => {
     setIsPopoverOpen(false);
     setQuery("");
+    inputRef.current?.blur();
   }
 
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+    <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
       <PopoverTrigger asChild>
         <form onSubmit={handleSearch} className="relative hidden md:block">
           <Input
+            ref={inputRef}
             type="search"
             placeholder="Buscar produtos..."
             className="w-48 pr-10 lg:w-64"
             value={query}
             onChange={handleInputChange}
+            onFocus={() => {
+              if (query.trim().length > 1) setIsPopoverOpen(true);
+            }}
           />
           <Button
             type="submit"
@@ -153,7 +166,7 @@ const SearchBar = () => {
           </Button>
         </form>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-2 lg:w-[400px]" align="start">
+      <PopoverContent className="w-[320px] p-2 lg:w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
         {searchResults.length > 0 ? (
           <div className="flex flex-col gap-2">
             {searchResults.map((product) => (
@@ -271,38 +284,40 @@ export default function Header() {
             <NavigationMenuList>
               {megaMenuData.map((category) => {
                 const isSpecialCategory = category.title === 'Lançamentos' || category.title === 'Ofertas';
-                const gridClass = isSpecialCategory
-                    ? "grid w-[400px] grid-flow-col auto-cols-fr gap-x-4 gap-y-4 p-6"
-                    : "grid w-[600px] grid-flow-col auto-cols-fr gap-x-8 gap-y-4 p-6 lg:w-[800px]";
+                
+                const gridClass = 
+                    category.title === 'Masculino' || category.title === 'Feminino'
+                    ? "grid-cols-4"
+                    : "grid-cols-2";
 
                 return (
                  <NavigationMenuItem key={category.title}>
-                  <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className={cn("grid", gridClass)}>
-                      {category.columns.map((column) => (
-                        <div key={column.title} className="flex flex-col">
-                          <h3 className="mb-4 text-sm font-bold text-foreground">
-                            {column.title}
-                          </h3>
-                          <ul className="flex flex-col gap-2">
-                            {column.links.map((link) => (
-                              <li key={link.href}>
-                                 <NavigationMenuLink asChild>
-                                  <Link
-                                    href={link.href}
-                                    className="text-sm text-muted-foreground hover:text-foreground"
-                                  >
-                                    {link.title}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
+                    <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <div className={cn("grid w-[600px] gap-x-8 gap-y-4 p-6 lg:w-[800px]", gridClass)}>
+                        {category.columns.map((column) => (
+                            <div key={column.title} className="flex flex-col">
+                            <h3 className="mb-4 text-sm font-bold text-foreground">
+                                {column.title}
+                            </h3>
+                            <ul className="flex flex-col gap-2">
+                                {column.links.map((link) => (
+                                <li key={link.title + link.href}>
+                                    <NavigationMenuLink asChild>
+                                    <Link
+                                        href={link.href}
+                                        className="text-sm text-muted-foreground hover:text-foreground"
+                                    >
+                                        {link.title}
+                                    </Link>
+                                    </NavigationMenuLink>
+                                </li>
+                                ))}
+                            </ul>
+                            </div>
+                        ))}
                         </div>
-                      ))}
-                    </div>
-                  </NavigationMenuContent>
+                    </NavigationMenuContent>
                 </NavigationMenuItem>
               )})}
             </NavigationMenuList>

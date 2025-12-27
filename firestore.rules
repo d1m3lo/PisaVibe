@@ -1,0 +1,160 @@
+/**
+ * @file firestore.rules
+ * @description Firestore Security Rules for the PISA VIBE e-commerce application.
+ *
+ * @section Core Philosophy
+ * This ruleset enforces a strict user-ownership security model. All data that is private to a user,
+ * such as their profile, orders, and recommendations, is stored within a document path that
+ * includes their unique user ID. This allows for simple, performant, and secure access control
+ * based on the authenticated user's identity. Publicly accessible data, like the product catalog,
+ * is stored in a separate top-level collection.
+ *
+ * @section Data Structure
+ * The data is organized into two main branches:
+ * 1. /users/{userId}/... : A collection dedicated to user-specific data. Each user has a document,
+ *    and their private data (orders, recommendations) is stored in subcollections under that document.
+ * 2. /products/{productId} : A top-level collection for all product data, which is intended to be
+ *    publicly readable by all users and clients.
+ *
+ * @section Key Security Decisions
+ * - User Isolation: A user can only ever read or write data within their own data tree (i.e., under /users/{their-own-userId}).
+ * - No User Listing: It is not possible for any client to list all users in the database.
+ * - Public Product Catalog: All users, including unauthenticated ones, can read the list of products.
+ * - Client Write Restrictions: Clients are not permitted to write to the /products collection, as this is assumed to be managed by a backend or admin process. Client-side creation of recommendations is also disabled.
+ *
+ * @section Denormalization for Authorization
+ * The primary authorization mechanism is path-based. By placing a user's data under a path
+ * containing their UID (e.g., /users/{userId}/orders/{orderId}), we can write simple, fast rules
+ * like `isOwner(userId)` without needing extra database reads (`get()`) to check for ownership.
+ * Furthermore, documents like 'Order' contain a denormalized `userId` field, which is validated
+ * against the path on creation to ensure relational integrity.
+ *
+ * @section Structural Segregation
+ * This ruleset employs clear structural segregation. Private user data is kept entirely separate
+ * in the `/users` collection, while public product data resides in the `/products` collection.
+ * This separation prevents accidental data exposure and allows for highly efficient and secure
+ * list queries (e.g., a user can safely list their own orders without any risk of seeing another user's).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the core function for verifying ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the document exists AND the user is the owner.
+     * Used for safe update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // User Profile Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Rules for a user's own profile document.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own profile document.
+     * @deny (get) A user trying to read another user's profile.
+     * @principle Restricts access to a user's own data tree and allows self-creation of a profile.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Disallow listing all users for security.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Product Catalog Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Rules for the public product catalog.
+     * @path /products/{productId}
+     * @allow (get, list) Any user, including unauthenticated ones, reading product data.
+     * @deny (create, update, delete) Any client trying to modify the product catalog.
+     * @principle Provides public read access while protecting data integrity by disallowing client writes.
+     */
+    match /products/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false; // Products are managed by a backend/admin service.
+      allow update: if false; // Products are managed by a backend/admin service.
+      allow delete: if false; // Products are managed by a backend/admin service.
+    }
+
+    // -------------------------------------------------------------------------
+    // User Order Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Rules for a user's orders, nested under their profile.
+     * @path /users/{userId}/orders/{orderId}
+     * @allow (create, get) An authenticated user creating or reading their own order.
+     * @deny (get, list) A user trying to access another user's orders.
+     * @principle Enforces document ownership for all operations. Validates relational integrity on create.
+     */
+    match /users/{userId}/orders/{orderId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for the items within a specific order.
+       * @path /users/{userId}/orders/{orderId}/order_items/{orderItemId}
+       * @allow (create, get) An authenticated user creating or reading items in their own order.
+       * @deny (update) A user trying to modify items in another user's order.
+       * @principle Inherits ownership from the parent path. Validates relational integrity to the parent order.
+       */
+      match /order_items/{orderItemId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.orderId == orderId;
+        allow update: if isExistingOwner(userId) && request.resource.data.orderId == resource.data.orderId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // User Recommendation Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Rules for a user's product recommendations.
+     * @path /users/{userId}/recommendations/{recommendationId}
+     * @allow (get, list) An authenticated user reading their own recommendations.
+     * @deny (create, update, delete) Any client trying to create or modify recommendations.
+     * @principle Enforces read-only ownership. Recommendations are generated by a backend service, not the client.
+     */
+    match /users/{userId}/recommendations/{recommendationId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if false; // Recommendations are created by a backend service.
+      allow update: if false; // Recommendations are managed by a backend service.
+      allow delete: if false; // Recommendations are managed by a backend service.
+    }
+  }
+}

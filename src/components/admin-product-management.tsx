@@ -49,7 +49,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,9 +79,7 @@ const ProductForm = ({
     longDescription: product?.longDescription || '',
     price: product?.price || 0,
     category: product?.category || 'roupas',
-    image1: product?.images[0] || '',
-    image2: product?.images[1] || '',
-    image3: product?.images[2] || '',
+    images: product?.images?.length ? product.images : [''],
     status: product?.status || 'ativo',
   });
 
@@ -96,9 +94,31 @@ const ProductForm = ({
      setFormData((prev) => ({ ...prev, [id]: value }));
   }
 
+  const handleImageChange = (index: number, value: string) => {
+    const newImages = [...formData.images];
+    newImages[index] = value;
+    setFormData(prev => ({ ...prev, images: newImages }));
+  };
+
+  const addImageInput = () => {
+    setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+  };
+
+  const removeImageInput = (index: number) => {
+    const newImages = formData.images.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, images: newImages }));
+  };
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const images = [formData.image1, formData.image2, formData.image3].filter(Boolean);
+    const images = formData.images.filter(Boolean); // Filter out empty strings
+
+    if (images.length === 0) {
+        // Maybe show a toast message here
+        alert("Por favor, adicione pelo menos uma imagem.");
+        return;
+    }
 
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
@@ -131,12 +151,29 @@ const ProductForm = ({
         <Label htmlFor="longDescription">Descrição Longa</Label>
         <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
       </div>
+      
       <div className="space-y-3">
         <Label>Links das Imagens</Label>
-        <Input id="image1" placeholder="URL da Imagem Principal" value={formData.image1} onChange={handleChange} required />
-        <Input id="image2" placeholder="URL da Imagem 2 (opcional)" value={formData.image2} onChange={handleChange} />
-        <Input id="image3" placeholder="URL da Imagem 3 (opcional)" value={formData.image3} onChange={handleChange} />
+        {formData.images.map((image, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              placeholder={`URL da Imagem ${index + 1}`}
+              value={image}
+              onChange={(e) => handleImageChange(index, e.target.value)}
+              required={index === 0}
+            />
+            {formData.images.length > 1 && (
+              <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(index)} className="text-destructive">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={addImageInput}>
+          Adicionar mais uma imagem
+        </Button>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
            <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
@@ -258,7 +295,10 @@ export default function ProductManagement() {
             <CardTitle>Gerenciamento de Produtos</CardTitle>
             <CardDescription>Adicione, edite ou remova produtos da sua loja.</CardDescription>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+            if (!isOpen) closeForm();
+            else setIsFormOpen(true);
+        }}>
             <DialogTrigger asChild>
                  <Button onClick={openFormToCreate}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
@@ -287,7 +327,13 @@ export default function ProductManagement() {
             {products.map((product) => (
               <TableRow key={product.firestoreId}>
                 <TableCell>
-                    <Image src={product.images[0]} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                    {product.images?.[0] ? (
+                        <Image src={product.images[0]} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                    ) : (
+                        <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center text-muted-foreground">
+                            ?
+                        </div>
+                    )}
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>R$ {product.price.toFixed(2).replace('.', ',')}</TableCell>

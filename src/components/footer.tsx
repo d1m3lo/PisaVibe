@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Twitter, Instagram, Facebook } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import { megaMenuData } from "@/lib/menu-data";
 
 const SocialLink = ({
   href,
@@ -24,6 +25,15 @@ const FooterLink = ({ href, children }: { href: string; children: React.ReactNod
 );
 
 export default function Footer() {
+  const getCategoryHref = (title: string) => {
+    if (title.toLowerCase() === 'masculino') return "/produtos?categoria=masculino";
+    if (title.toLowerCase() === 'feminino') return "/produtos?categoria=feminino";
+    if (title.toLowerCase() === 'lançamentos') return "/produtos?categoria=lancamentos";
+    if (title.toLowerCase() === 'ofertas') return "/produtos?categoria=ofertas";
+    return "#";
+  }
+
+
   return (
     <footer className="border-t bg-background">
         <div className="container mx-auto px-4 py-12">
@@ -36,10 +46,11 @@ export default function Footer() {
                 <div>
                     <h4 className="font-semibold">Categorias</h4>
                     <ul className="mt-4 space-y-2">
-                        <FooterLink href="/produtos?categoria=masculino">Masculino</FooterLink>
-                        <FooterLink href="/produtos?categoria=feminino">Feminino</FooterLink>
-                        <FooterLink href="/produtos?categoria=lancamentos">Lançamentos</FooterLink>
-                        <FooterLink href="/produtos?categoria=ofertas">Ofertas</FooterLink>
+                       {megaMenuData.map((category) => (
+                           <FooterLink key={category.title} href={getCategoryHref(category.title)}>
+                                {category.title}
+                           </FooterLink>
+                       ))}
                     </ul>
                 </div>
 

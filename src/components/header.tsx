@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -15,6 +16,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useCart } from "@/context/cart-context";
 import { Input } from "./ui/input";
@@ -120,6 +125,11 @@ const SearchBar = () => {
   );
 };
 
+const mainCategories = [
+  { name: "Masculino", href: "masculino" },
+  { name: "Feminino", href: "feminino" },
+];
+
 const subcategories = [
   { name: "Calçados", href: "calcados" },
   { name: "Roupas", href: "roupas" },
@@ -144,6 +154,34 @@ const NavMenu = ({ category }: { category: { name: string; href: string } }) => 
     </DropdownMenuContent>
   </DropdownMenu>
 );
+
+const LabeledNavMenu = ({ label, href }: { label: string; href: string }) => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center gap-1 p-0 text-sm font-medium text-foreground/80 hover:bg-transparent hover:text-foreground">
+                {label}
+                <ChevronDown className="h-4 w-4" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+            {mainCategories.map((cat) => (
+                <DropdownMenuSub key={cat.href}>
+                    <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                            {subcategories.map((sub) => (
+                                <DropdownMenuItem key={sub.href} asChild>
+                                    <Link href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}>{sub.name}</Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
+            ))}
+        </DropdownMenuContent>
+    </DropdownMenu>
+);
+
 
 const MobileSubMenu = ({
   category,
@@ -174,13 +212,52 @@ const MobileSubMenu = ({
   </Collapsible>
 );
 
+const MobileLabeledSubMenu = ({
+  label,
+  href,
+  onClose,
+}: {
+  label: string;
+  href: string;
+  onClose: () => void;
+}) => (
+  <Collapsible>
+    <CollapsibleTrigger className="flex w-full items-center justify-between text-lg text-foreground/80 transition-colors hover:text-foreground">
+      {label}
+      <ChevronDown className="h-5 w-5" />
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+      <div className="mt-2 flex flex-col gap-2 pl-4">
+        {mainCategories.map((cat) => (
+          <Collapsible key={cat.href}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-base text-foreground/70">
+              {cat.name}
+              <ChevronDown className="h-4 w-4" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-2 flex flex-col gap-2 pl-4">
+                {subcategories.map((sub) => (
+                  <Link
+                    key={sub.href}
+                    href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}
+                    className="text-sm text-foreground/60"
+                    onClick={onClose}
+                  >
+                    {sub.name}
+                  </Link>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+      </div>
+    </CollapsibleContent>
+  </Collapsible>
+);
+
+
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-
-  const mainCategories = [
-    { name: "Masculino", href: "masculino" },
-    { name: "Feminino", href: "feminino" },
-  ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
@@ -196,8 +273,8 @@ export default function Header() {
              {mainCategories.map((cat) => (
               <NavMenu key={cat.href} category={cat} />
             ))}
-            <NavLink href="/produtos?categoria=lancamentos">Lançamentos</NavLink>
-            <NavLink href="/produtos?categoria=ofertas">Ofertas</NavLink>
+            <LabeledNavMenu label="Lançamentos" href="lancamentos" />
+            <LabeledNavMenu label="Ofertas" href="ofertas" />
           </nav>
         </div>
 
@@ -223,12 +300,8 @@ export default function Header() {
                    {mainCategories.map((cat) => (
                     <MobileSubMenu key={cat.href} category={cat} onClose={() => setIsSheetOpen(false)} />
                   ))}
-                  <NavLink href="/produtos?categoria=lancamentos" onClick={() => setIsSheetOpen(false)}>
-                    <span className="text-lg">Lançamentos</span>
-                  </NavLink>
-                  <NavLink href="/produtos?categoria=ofertas" onClick={() => setIsSheetOpen(false)}>
-                    <span className="text-lg">Ofertas</span>
-                  </NavLink>
+                  <MobileLabeledSubMenu label="Lançamentos" href="lancamentos" onClose={() => setIsSheetOpen(false)} />
+                  <MobileLabeledSubMenu label="Ofertas" href="ofertas" onClose={() => setIsSheetOpen(false)} />
                 </nav>
                  <div className="border-t pt-4">
                   <UserMenu />
@@ -241,3 +314,4 @@ export default function Header() {
     </header>
   );
 }
+

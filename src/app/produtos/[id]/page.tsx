@@ -86,6 +86,26 @@ export default function ProductPage() {
   
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const sortedSizes = useMemo(() => {
+    if (!selectedVariant?.sizes) return [];
+    
+    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
+    
+    return [...selectedVariant.sizes].sort((a, b) => {
+        const aIsNumeric = !isNaN(parseFloat(a.size));
+        const bIsNumeric = !isNaN(parseFloat(b.size));
+
+        if (aIsNumeric && bIsNumeric) {
+            return parseFloat(a.size) - parseFloat(b.size);
+        }
+        if (!aIsNumeric && !bIsNumeric) {
+            return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
+        }
+        // Keep numeric and non-numeric sizes grouped
+        return aIsNumeric ? -1 : 1;
+    });
+  }, [selectedVariant?.sizes]);
 
   useEffect(() => {
     if (product && product.variants.length > 0 && !selectedVariant) {
@@ -151,26 +171,6 @@ export default function ProductPage() {
   const allImages = selectedVariant?.images ?? [];
   const categoryTitle = product.category.charAt(0).toUpperCase() + product.category.slice(1);
   const subCategoryTitle = product.subCategory ? ' / ' + product.subCategory.charAt(0).toUpperCase() + product.subCategory.slice(1) : '';
-
-  const sortedSizes = useMemo(() => {
-    if (!selectedVariant?.sizes) return [];
-    
-    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
-    
-    return [...selectedVariant.sizes].sort((a, b) => {
-        const aIsNumeric = !isNaN(parseFloat(a.size));
-        const bIsNumeric = !isNaN(parseFloat(b.size));
-
-        if (aIsNumeric && bIsNumeric) {
-            return parseFloat(a.size) - parseFloat(b.size);
-        }
-        if (!aIsNumeric && !bIsNumeric) {
-            return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
-        }
-        // Keep numeric and non-numeric sizes grouped
-        return aIsNumeric ? -1 : 1;
-    });
-  }, [selectedVariant?.sizes]);
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">

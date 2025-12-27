@@ -11,7 +11,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
-import AddToCartButton from "@/components/add-to-cart-button";
 import { useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
@@ -21,6 +20,7 @@ import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
+import Link from "next/link";
 
 
 const ProductPageSkeleton = () => (
@@ -28,15 +28,16 @@ const ProductPageSkeleton = () => (
     <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
       <div>
         <Skeleton className="aspect-square w-full rounded-lg" />
-        <div className="mt-4 flex gap-2">
-          <Skeleton className="h-16 w-16 rounded-md" />
-          <Skeleton className="h-16 w-16 rounded-md" />
-          <Skeleton className="h-16 w-16 rounded-md" />
+        <div className="mt-4 grid grid-cols-5 gap-2">
+          <Skeleton className="aspect-square w-full rounded-md" />
+          <Skeleton className="aspect-square w-full rounded-md" />
+          <Skeleton className="aspect-square w-full rounded-md" />
         </div>
       </div>
       <div className="flex flex-col">
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="mt-4 h-8 w-1/4" />
+        <Skeleton className="h-6 w-1/4" />
+        <Skeleton className="mt-4 h-10 w-3/4" />
+        <Skeleton className="mt-4 h-8 w-1/3" />
         <div className="mt-6 space-y-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
@@ -80,11 +81,14 @@ export default function ProductPage() {
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (product && product.variants.length > 0 && !selectedVariant) {
       const defaultVariant = product.variants[0];
       setSelectedVariant(defaultVariant);
+      setActiveImage(defaultVariant.images[0]);
+      
       const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
       if (firstAvailableSize) {
         setSelectedSize(firstAvailableSize.size);
@@ -95,6 +99,7 @@ export default function ProductPage() {
 
   const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant);
+    setActiveImage(variant.images[0]);
     // Reset size selection or pick first available
     const firstAvailableSize = variant.sizes.find(s => s.stock > 0);
     setSelectedSize(firstAvailableSize ? firstAvailableSize.size : null);
@@ -108,13 +113,13 @@ export default function ProductPage() {
   
   const isAddToCartDisabled = !selectedSize || (selectedVariant?.sizes.find(s => s.size === selectedSize)?.stock || 0) === 0;
 
-  if (isLoading) {
+  if (isLoading || !id) {
     return <ProductPageSkeleton />;
   }
 
   if (!product) {
     return (
-        <div className="container mx-auto px-4 py-12 text-center">
+        <div className="container mx-auto px-4 py-12 text-center h-96 flex flex-col items-center justify-center">
             <h1 className="text-2xl font-bold">Produto não encontrado</h1>
             <p className="text-muted-foreground">O produto que você está procurando não existe ou foi removido.</p>
             <Button asChild className="mt-8">
@@ -124,65 +129,99 @@ export default function ProductPage() {
     )
   }
 
-  const imagesToShow = selectedVariant ? selectedVariant.images : (product.variants[0]?.images || []);
+  const allImages = selectedVariant?.images ?? [];
+  const categoryTitle = product.category.charAt(0).toUpperCase() + product.category.slice(1);
+  const subCategoryTitle = product.subCategory ? ' / ' + product.subCategory.charAt(0).toUpperCase() + product.subCategory.slice(1) : '';
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-12">
-      <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-        <div>
-          <Carousel className="w-full">
-            <CarouselContent>
-              {imagesToShow.map((img, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+    <div className="container mx-auto max-w-6xl px-4 py-12">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+        
+        {/* Image Gallery */}
+        <div className="grid grid-cols-1 gap-4">
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                {activeImage ? (
                     <Image
-                      src={img}
-                      alt={`${product.name} - Imagem ${index + 1}`}
+                      src={activeImage}
+                      alt={`${product.name} - Imagem Principal`}
                       fill
                       className="object-cover"
-                      priority={index === 0}
+                      priority
                     />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-             {imagesToShow.length > 1 && (
-              <>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </>
-            )}
-          </Carousel>
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-secondary">
+                        <span className="text-muted-foreground">Sem imagem</span>
+                    </div>
+                )}
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+                {allImages.map((img, index) => (
+                    <button
+                        key={index}
+                        className={cn(
+                            "relative aspect-square w-full overflow-hidden rounded-md transition-all",
+                            activeImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
+                        )}
+                        onClick={() => setActiveImage(img)}
+                    >
+                        <Image
+                            src={img}
+                            alt={`${product.name} - Miniatura ${index + 1}`}
+                            fill
+                            className="object-cover"
+                        />
+                    </button>
+                ))}
+            </div>
         </div>
+
+        {/* Product Info */}
         <div className="flex flex-col">
           <div className="flex items-start justify-between gap-4">
-             <h1 className="font-headline text-3xl font-bold md:text-4xl">
-                {product.name}
-            </h1>
+             <div>
+                <p className="text-sm text-muted-foreground">{categoryTitle}{subCategoryTitle}</p>
+                <h1 className="font-headline text-3xl font-bold md:text-4xl">
+                    {product.name}
+                </h1>
+             </div>
             <QualityBadge quality={product.quality} />
           </div>
           
-          <p className="mt-4 text-3xl font-bold">
-            R$ {product.price.toFixed(2).replace(".", ",")}
-          </p>
+          <div className="mt-4 flex items-baseline gap-3">
+            <p className="text-3xl font-bold">
+              R$ {product.price.toFixed(2).replace(".", ",")}
+            </p>
+             {product.oldPrice && (
+                <p className="text-xl text-muted-foreground line-through">
+                  R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                </p>
+            )}
+          </div>
+
           <div className="mt-6">
-            <p className="text-muted-foreground">{product.longDescription}</p>
+            <h3 className="text-base font-semibold">Descrição</h3>
+            <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
           </div>
           
            <div className="mt-8">
             <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {product.variants.map((variant) => (
                 <button
                   key={variant.id}
                   onClick={() => handleVariantSelect(variant)}
                   className={cn(
-                    "h-10 w-10 rounded-full border-2 transition-all",
-                    selectedVariant?.id === variant.id ? "border-primary scale-110" : "border-transparent"
+                    "relative h-16 w-16 overflow-hidden rounded-md border-2 transition-all",
+                    selectedVariant?.id === variant.id ? "border-primary scale-105" : "border-border"
                   )}
-                   style={{ backgroundColor: variant.colorHex }}
                    title={variant.color}
                 >
+                  <Image
+                    src={variant.images[0]}
+                    alt={variant.color}
+                    fill
+                    className="object-cover"
+                  />
                   <span className="sr-only">{variant.color}</span>
                 </button>
               ))}
@@ -199,6 +238,7 @@ export default function ProductPage() {
                   onClick={() => setSelectedSize(size)}
                   disabled={stock === 0}
                   className={cn(
+                    "w-16",
                     stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
                   )}
                 >
@@ -207,7 +247,6 @@ export default function ProductPage() {
               ))}
              </div>
           </div>
-
 
           <div className="mt-8">
              <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>

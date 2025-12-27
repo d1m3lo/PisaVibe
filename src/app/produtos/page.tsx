@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query, and } from 'firebase/firestore';
+import { collection, query, where, Query, and, or } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,13 +43,19 @@ export default function ProductsPage() {
     }
     
     if (gender) {
-        filters.push(where('gender', '==', gender));
+        // Handle unissex items by querying for the specific gender OR 'unissex'
+        filters.push(
+          or(
+            where('gender', '==', gender),
+            where('gender', '==', 'unissex')
+          )
+        );
     }
     
     const q = collection(firestore, 'products');
 
     if (filters.length > 1) {
-        // @ts-ignore
+        // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
         return query(q, and(...filters));
     }
     
@@ -65,6 +71,7 @@ export default function ProductsPage() {
     return productsData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [productsData, searchQuery]);
 
+
   let title = "Todos os Produtos";
   if (searchQuery) {
     title = `Busca por: "${searchQuery}"`;
@@ -73,9 +80,8 @@ export default function ProductsPage() {
     if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (category) {
         let categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categoryTitle.toLowerCase() === 'calcados') {
-            categoryTitle = 'Calçados';
-        }
+        if (categoryTitle.toLowerCase() === 'calcados') categoryTitle = 'Calçados';
+        if (categoryTitle.toLowerCase() === 'lancamentos') categoryTitle = 'Lançamentos';
         titleParts.push(categoryTitle);
     }
     if (subCategory) {

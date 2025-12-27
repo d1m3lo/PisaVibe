@@ -1,0 +1,79 @@
+
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+
+interface AdminLoginProps {
+  onLoginSuccess: () => void;
+}
+
+const ADMIN_PASSWORD = 'Retnuoctercou-13@';
+
+export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setError('');
+      toast({
+        title: 'Login bem-sucedido!',
+        description: 'Bem-vindo ao painel de administração.',
+      });
+      onLoginSuccess();
+    } else {
+      setError('Senha incorreta. Tente novamente.');
+      toast({
+        variant: 'destructive',
+        title: 'Falha no login',
+        description: 'A senha inserida está incorreta.',
+      });
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-secondary">
+      <Card className="mx-auto w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl">
+            Acesso Restrito
+          </CardTitle>
+          <CardDescription>
+            Insira a senha para acessar o painel administrativo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            <Button type="submit" className="w-full">
+              Entrar
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

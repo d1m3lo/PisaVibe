@@ -9,6 +9,7 @@ export type Product = {
   tags?: ('lancamentos' | 'ofertas')[];
   rating: number;
   reviews: number;
+  status: 'ativo' | 'inativo';
 };
 
 export type CartItem = {

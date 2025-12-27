@@ -1,7 +1,4 @@
 import type { Product } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-const getImageUrl = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl || '';
 
 export const products: Product[] = [
   {
@@ -10,11 +7,12 @@ export const products: Product[] = [
     description: 'Corra com estilo e conforto.',
     longDescription: 'O Tênis Vibe Runner foi desenhado para corredores urbanos que não abrem mão do estilo. Com tecnologia de amortecimento avançada e um design minimalista, ele é perfeito para o asfalto e para o seu dia a dia. Feito com materiais reciclados.',
     price: 349.9,
-    images: [getImageUrl('tenis-preto-1'), getImageUrl('tenis-preto-2')],
+    images: ['https://images.unsplash.com/photo-1580893172418-5870d2130eec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Njg5NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080', 'https://images.unsplash.com/photo-1605261274167-85795b2d73df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbmVha2VyJTIwZGV0YWlsfGVufDB8fHx8MTc2Njc5NDIxOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'tênis',
     tags: ['lancamentos'],
     rating: 4.5,
     reviews: 120,
+    status: 'ativo'
   },
   {
     id: '2',
@@ -22,10 +20,11 @@ export const products: Product[] = [
     description: 'O clássico que nunca sai de moda.',
     longDescription: 'Simples, elegante e versátil. O Tênis Classic White é a peça que faltava no seu guarda-roupa. Combina com tudo, desde um look casual até um mais arrumado. Sua construção em couro sintético garante durabilidade e fácil limpeza.',
     price: 279.9,
-    images: [getImageUrl('tenis-branco-1'), getImageUrl('tenis-branco-2')],
+    images: ['https://images.unsplash.com/photo-1744812441699-a4bd388a77a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3aGl0ZSUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Njg5NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080', 'https://images.unsplash.com/photo-1615109255391-b0dfdcd5b8d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx3aGl0ZSUyMHNuZWFrZXJzfGVufDB8fHx8MTc2NjY5MDUxMXww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'tênis',
     rating: 4.8,
     reviews: 250,
+    status: 'ativo'
   },
   {
     id: '3',
@@ -33,11 +32,12 @@ export const products: Product[] = [
     description: 'Para as pistas e para a rua.',
     longDescription: 'Inspirado na cultura do skate, o Tênis Urban Skate oferece durabilidade e aderência. Seu solado de borracha vulcanizada e cabedal reforçado aguentam qualquer manobra, enquanto o design sóbrio em cinza mantém seu estilo em alta.',
     price: 319.9,
-    images: [getImageUrl('tenis-cinza-1'), getImageUrl('tenis-cinza-2')],
+    images: ['https://images.unsplash.com/photo-1587143770785-2293bcc6a754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxncmV5JTIwc25lYWtlcnxlbnwwfHx8fDE3NjY3OTQyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080', 'https://images.unsplash.com/photo-1597530930123-ade5ceefc3c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxza2F0ZSUyMHNob2V8ZW58MHx8fHwxNzY2Nzk0MjE4fDA&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'tênis',
     tags: ['ofertas'],
     rating: 4.6,
     reviews: 95,
+    status: 'ativo'
   },
   {
     id: '4',
@@ -45,11 +45,12 @@ export const products: Product[] = [
     description: 'Atitude e presença em cada passo.',
     longDescription: 'O Tênis High-Top Impulse é para quem quer se destacar. Com seu design de cano alto e contraste preto e branco, ele traz uma vibe dos anos 90 com um toque moderno. Perfeito para compor looks cheios de personalidade.',
     price: 399.9,
-    images: [getImageUrl('tenis-cano-alto-1'), getImageUrl('tenis-cano-alto-2')],
+    images: ['https://images.unsplash.com/photo-1578608712688-36b5be8823dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxoaWdoLXRvcCUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Nzk0MjE4fDA&ixlib-rb-4.1.0&q=80&w=1080', 'https://images.unsplash.com/photo-1662410944789-615742cddc76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzbmVha2VyJTIwbG9nb3xlbnwwfHx8fDE3NjY3OTQyMTh8MA&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'tênis',
     tags: ['lancamentos'],
     rating: 4.7,
     reviews: 150,
+    status: 'ativo'
   },
   {
     id: '5',
@@ -57,10 +58,11 @@ export const products: Product[] = [
     description: 'A base para qualquer look.',
     longDescription: 'Feita com algodão orgânico de alta qualidade, a Camiseta Minimal Branca é essencial. Seu corte perfeito e tecido macio proporcionam conforto o dia todo. Uma peça-chave para um guarda-roupa inteligente e minimalista.',
     price: 119.9,
-    images: [getImageUrl('camiseta-branca-1')],
+    images: ['https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3aGl0ZSUyMHQtc2hpcnR8ZW58MHx8fHwxNzY2NzE2NzQ2fDA&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     rating: 4.9,
     reviews: 300,
+    status: 'ativo'
   },
   {
     id: '6',
@@ -68,11 +70,12 @@ export const products: Product[] = [
     description: 'Expresse sua vibe com estilo.',
     longDescription: 'Mais do que uma camiseta, uma declaração. A estampa "VIBE" em design minimalista sobre o tecido preto de alta qualidade faz desta peça um item único. Mostre sua personalidade sem dizer uma palavra.',
     price: 139.9,
-    images: [getImageUrl('camiseta-preta-1')],
+    images: ['https://images.unsplash.com/photo-1618354691321-e851c56960d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxibGFjayUyMHQtc2hpcnR8ZW58MHx8fHwxNzY2Nzc3OTA4fDA&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     tags: ['ofertas'],
     rating: 4.8,
     reviews: 180,
+    status: 'ativo'
   },
   {
     id: '7',
@@ -80,11 +83,12 @@ export const products: Product[] = [
     description: 'Conforto e estilo para dias frios.',
     longDescription: 'O Moletom com Capuz Essencial é seu companheiro perfeito para o inverno. Feito de moletom flanelado, ele é quente, confortável e estiloso. O design preto básico com detalhes de alta qualidade o torna uma peça durável e versátil.',
     price: 299.9,
-    images: [getImageUrl('moletom-preto-1')],
+    images: ['https://images.unsplash.com/photo-1614214191247-5b2d3a734f1b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGhvb2RpZXxlbnwwfHx8fDE3NjY2ODc3NjJ8MA&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     tags: ['lancamentos'],
     rating: 4.9,
     reviews: 210,
+    status: 'ativo'
   },
   {
     id: '8',
@@ -92,10 +96,11 @@ export const products: Product[] = [
     description: 'Versatilidade e caimento perfeito.',
     longDescription: 'Uma boa calça jeans preta é indispensável. A nossa versão slim tem o caimento perfeito, modelando o corpo sem restringir os movimentos. O tecido com um toque de elastano garante o conforto, seja para o trabalho ou para o lazer.',
     price: 249.9,
-    images: [getImageUrl('calca-jeans-1')],
+    images: ['https://images.unsplash.com/photo-1700844414385-0cedc33e4bd6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxibGFjayUyMGplYW5zfGVufDB8fHx8MTc2Njc5NDIxOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     rating: 4.6,
     reviews: 140,
+    status: 'ativo'
   },
   {
     id: '9',
@@ -103,11 +108,12 @@ export const products: Product[] = [
     description: 'O toque final para o seu look.',
     longDescription: 'Boné preto com aba curva e logo minimalista da PISA VIBE bordado na frente. Um acessório versátil que protege do sol e adiciona uma dose extra de estilo ao seu visual urbano.',
     price: 89.9,
-    images: [getImageUrl('calca-cargo-1')],
+    images: ['https://images.unsplash.com/photo-1600803177171-b9fbcc3018f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJnbyUyMHBhbnRzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'acessorios',
     tags: ['lancamentos', 'ofertas'],
     rating: 4.7,
     reviews: 80,
+    status: 'ativo'
   },
   {
     id: '10',
@@ -115,11 +121,12 @@ export const products: Product[] = [
     description: 'Um ícone de estilo atemporal.',
     longDescription: 'A Jaqueta Jeans Black é uma peça essencial e versátil. Com lavagem escura e corte clássico, ela complementa qualquer look, do casual ao mais elaborado. Feita com denim resistente e de alta qualidade.',
     price: 389.90,
-    images: [getImageUrl('jaqueta-jeans-1')],
+    images: ['https://images.unsplash.com/photo-1596489377033-89a19c9a0b0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRlbmltJTIwamFja2V0fGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     tags: ['lancamentos'],
     rating: 4.8,
     reviews: 99,
+    status: 'ativo'
   },
   {
     id: '11',
@@ -127,10 +134,11 @@ export const products: Product[] = [
     description: 'Proteção e estilo em um só acessório.',
     longDescription: 'Com um design clássico wayfarer, os Óculos de Sol Vibe são perfeitos para qualquer ocasião. Lentes com proteção UV400 e armação resistente para garantir durabilidade e conforto.',
     price: 159.90,
-    images: [getImageUrl('oculos-sol-1')],
+    images: ['https://images.unsplash.com/photo-1511499767150-a48a237f0083?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdW5nbGFzc2VzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'acessorios',
     rating: 4.6,
     reviews: 75,
+    status: 'ativo'
   },
   {
     id: '12',
@@ -138,11 +146,12 @@ export const products: Product[] = [
     description: 'Conforto e estilo para dias frios.',
     longDescription: 'O Moletom com Capuz Urban é seu companheiro perfeito para o inverno. Feito de moletom flanelado, ele é quente, confortável e estiloso. O design cinza básico com detalhes de alta qualidade o torna uma peça durável e versátil.',
     price: 299.9,
-    images: [getImageUrl('moletom-cinza-1')],
+    images: ['https://images.unsplash.com/photo-1637206614670-e3f13e2c5984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmV5JTIwaG9vZGllfGVufDB8fHx8MTc2NjcwNDc1NXww&ixlibrb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     tags: ['ofertas'],
     rating: 4.7,
     reviews: 115,
+    status: 'ativo'
   },
    {
     id: '13',
@@ -150,11 +159,12 @@ export const products: Product[] = [
     description: 'A fragrância da sua Vibe.',
     longDescription: 'Uma fragrância unissex marcante e sofisticada. Com notas amadeiradas e um toque cítrico, o Vibe One é perfeito para quem quer deixar sua marca por onde passa. Ideal para uso diário ou ocasiões especiais.',
     price: 229.9,
-    images: [getImageUrl('perfume-unissex-1')],
+    images: ['https://images.unsplash.com/photo-1585386959199-ea2d24a683a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'perfumes',
     tags: ['lancamentos'],
     rating: 4.9,
     reviews: 250,
+    status: 'ativo'
   },
   {
     id: '14',
@@ -162,10 +172,11 @@ export const products: Product[] = [
     description: 'Estilo funcional para o dia a dia.',
     longDescription: 'A Calça Cargo Vibe combina estilo e funcionalidade. Com múltiplos bolsos e um corte moderno, é a escolha ideal para quem busca praticidade sem abrir mão do estilo. Feita com tecido resistente e confortável.',
     price: 289.9,
-    images: [getImageUrl('calca-cargo-1')],
+    images: ['https://images.unsplash.com/photo-1600803177171-b9fbcc3018f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJnbyUyMHBhbnRzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080'],
     category: 'roupas',
     tags: ['ofertas'],
     rating: 4.5,
     reviews: 85,
+    status: 'ativo'
   }
 ];

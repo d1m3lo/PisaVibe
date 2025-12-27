@@ -31,13 +31,6 @@ export default function Footer() {
                 <div className="lg:col-span-2">
                     <h3 className="font-headline text-lg font-bold">PISA VIBE</h3>
                     <p className="mt-2 text-sm text-muted-foreground">O seu estilo começa aqui. Tênis e roupas com a atitude que você procura.</p>
-                    <div className="mt-4">
-                        <h4 className="font-semibold">Inscreva-se na nossa newsletter</h4>
-                        <form className="mt-2 flex gap-2">
-                            <Input type="email" placeholder="Seu email" className="max-w-xs" />
-                            <Button>Inscrever</Button>
-                        </form>
-                    </div>
                 </div>
 
                 <div>

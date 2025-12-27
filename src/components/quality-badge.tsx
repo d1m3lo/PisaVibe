@@ -2,11 +2,18 @@
 import { Gem, CheckCircle, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface QualityBadgeProps {
     quality?: Product['quality'];
     size?: 'sm' | 'default';
 }
+
+const qualityDescriptions: Record<NonNullable<Product['quality']>, string> = {
+    Essential: "Qualidade essencial, pensada para o dia a dia com ótimo custo-benefício.",
+    Select: "Qualidade selecionada, com materiais e acabamento de alto padrão.",
+    Elite: "Qualidade elite. O melhor nível disponível, com fidelidade máxima nos detalhes.",
+};
 
 export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) => {
     if (!quality) return null;
@@ -28,10 +35,19 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
         : 'gap-2 text-sm py-1 px-3';
 
     return (
-      <Badge variant="outline" className={`${sizeClasses} ${qualityStyles[quality]}`}>
-          {icon[quality]}
-          {size === 'default' && <span className="font-semibold">Qualidade {quality}</span>}
-          {size === 'sm' && <span className="font-semibold">{quality}</span>}
-      </Badge>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <Badge variant="outline" className={`select-none transition-transform duration-200 hover:-translate-y-1 ${sizeClasses} ${qualityStyles[quality]}`}>
+                        {icon[quality]}
+                        {size === 'default' && <span className="font-semibold">Qualidade {quality}</span>}
+                        {size === 'sm' && <span className="font-semibold">{quality}</span>}
+                    </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{qualityDescriptions[quality]}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 };

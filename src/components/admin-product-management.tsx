@@ -67,19 +67,19 @@ type ProductWithId = Product & { firestoreId: string };
 
 const categoryMappings = {
     masculino: {
-        'tênis': ['Casual', 'Chinelo', 'Streetwear', 'Sneaker'],
+        'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneaker'],
         'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
         'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
         'perfumes': ['Perfumes'],
     },
     feminino: {
-        'tênis': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
+        'calçados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
         'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
         'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
         'perfumes': ['Perfumes'],
     },
     unissex: {
-        'tênis': ['Casual', 'Chinelo', 'Streetwear'], // Sneaker vs Sneakers -> no match
+        'calçados': ['Casual', 'Chinelo', 'Streetwear'],
         'roupas': ['Camisetas', 'Streetwear'],
         'acessorios': ['Bonés', 'Mochilas'],
         'perfumes': ['Perfumes'],
@@ -101,7 +101,7 @@ const ProductForm = ({
     price: product?.price || 0,
     longDescription: product?.longDescription || '',
     gender: product?.gender || 'masculino',
-    category: product?.category || 'tênis',
+    category: product?.category || 'calçados',
     subCategory: product?.subCategory || '',
     images: product?.images?.length ? product.images : [''],
     status: product?.status || 'ativo',
@@ -237,7 +237,7 @@ const ProductForm = ({
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="tênis">Tênis</SelectItem>
+                    <SelectItem value="calçados">Calçados</SelectItem>
                     <SelectItem value="roupas">Roupas</SelectItem>
                     <SelectItem value="acessorios">Acessórios</SelectItem>
                     <SelectItem value="perfumes">Perfumes</SelectItem>
@@ -448,4 +448,5 @@ export default function ProductManagement() {
   );
 }
 
+    
     

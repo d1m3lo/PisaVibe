@@ -5,7 +5,7 @@ export type Product = {
   longDescription: string;
   price: number;
   images: string[];
-  category: 'tênis' | 'roupas' | 'acessorios' | 'perfumes';
+  category: 'calçados' | 'roupas' | 'acessorios' | 'perfumes';
   subCategory?: string;
   gender: 'masculino' | 'feminino' | 'unissex';
   tags?: ('lancamentos' | 'ofertas')[];
@@ -18,3 +18,5 @@ export type CartItem = {
   product: Product;
   quantity: number;
 };
+
+    

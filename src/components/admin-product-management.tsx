@@ -76,19 +76,19 @@ type ProductWithId = Product & { firestoreId: string };
 
 const categoryMappings = {
   masculino: {
-    'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
     'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
     'perfumes': [],
   },
   feminino: {
-    'calçados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
     'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
     'perfumes': [],
   },
   unissex: {
-    'calçados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
+    'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Streetwear'],
     'acessorios': ['Bonés', 'Mochilas'],
     'perfumes': [],
@@ -97,7 +97,7 @@ const categoryMappings = {
 
 const allSizes = {
     roupas: ['P', 'M', 'G', 'GG'],
-    calçados: ['38', '39', '40', '41', '42', '43', '44'],
+    calcados: ['38', '39', '40', '41', '42', '43', '44'],
     acessorios: ['U'],
     perfumes: ['U']
 };
@@ -123,7 +123,7 @@ const ProductForm = ({
     oldPrice: product?.oldPrice || '',
     longDescription: product?.longDescription || '',
     gender: product?.gender || 'masculino',
-    category: product?.category || 'calçados',
+    category: product?.category || 'calcados',
     subCategory: product?.subCategory || '',
     variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], sizes: [] }],
     status: product?.status || 'ativo',
@@ -333,7 +333,7 @@ const ProductForm = ({
                         <SelectValue placeholder="Selecione a categoria" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="calçados">Calçados</SelectItem>
+                        <SelectItem value="calcados">Calçados</SelectItem>
                         <SelectItem value="roupas">Roupas</SelectItem>
                         <SelectItem value="acessorios">Acessórios</SelectItem>
                         <SelectItem value="perfumes">Perfumes</SelectItem>
@@ -707,4 +707,6 @@ export default function ProductManagement() {
 }
 
     
+    
+
     

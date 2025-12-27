@@ -70,11 +70,20 @@ const categoryMappings = {
         'tênis': ['Casual', 'Chinelo', 'Streetwear', 'Sneaker'],
         'roupas': ['Camisetas', 'Shorts', 'Polos', 'Streetwear'],
         'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
-        'perfumes': [],
+        'perfumes': ['Perfumes'],
     },
-    // TODO: Adicionar feminino e unissex
-    feminino: {},
-    unissex: {}
+    feminino: {
+        'tênis': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
+        'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
+        'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
+        'perfumes': ['Perfumes'],
+    },
+    unissex: {
+        'tênis': ['Casual', 'Chinelo', 'Streetwear'], // Sneaker vs Sneakers -> no match
+        'roupas': ['Camisetas', 'Streetwear'],
+        'acessorios': ['Bonés', 'Mochilas'],
+        'perfumes': ['Perfumes'],
+    }
 }
 
 
@@ -106,13 +115,16 @@ const ProductForm = ({
     const mappings = categoryMappings[gender];
     
     if (mappings && category in mappings) {
-      setSubCategoryOptions(mappings[category]);
+      setSubCategoryOptions((mappings as any)[category]);
     } else {
       setSubCategoryOptions([]);
     }
-    // Reset subcategory if category or gender changes
-    setFormData(prev => ({...prev, subCategory: ''}));
-  }, [formData.gender, formData.category]);
+    
+    if(product?.gender !== formData.gender || product?.category !== formData.category) {
+        setFormData(prev => ({...prev, subCategory: ''}));
+    }
+
+  }, [formData.gender, formData.category, product]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -435,3 +447,5 @@ export default function ProductManagement() {
     </Card>
   );
 }
+
+    

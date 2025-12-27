@@ -104,7 +104,7 @@ const ProductForm = ({
   onClose,
 }: {
   product?: ProductWithId | null;
-  onSave: (p: Omit<ProductWithId, 'firestoreId'>) => void;
+  onSave: (p: Omit<ProductWithId, 'firestoreId'>) => Promise<void>;
   onClose: () => void;
 }) => {
   const [formData, setFormData] = useState({
@@ -238,7 +238,7 @@ const ProductForm = ({
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const finalVariants = formData.variants.map(v => ({
@@ -255,7 +255,7 @@ const ProductForm = ({
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
       price: parseFloat(String(formData.price)) || 0,
-      oldPrice: parseFloat(String(formData.oldPrice)) || 0,
+      oldPrice: parseFloat(String(formData.oldPrice)) || undefined,
       description: formData.longDescription.substring(0, 100),
       longDescription: formData.longDescription,
       gender: formData.gender as Product['gender'],
@@ -266,7 +266,8 @@ const ProductForm = ({
       rating: product?.rating || 0,
       reviews: product?.reviews || 0,
     };
-    onSave(productData);
+    await onSave(productData);
+    onClose();
   };
 
   return (
@@ -494,7 +495,6 @@ export default function ProductManagement() {
         await addDoc(collection(db as Firestore, 'products'), productData);
         toast({ title: 'Sucesso!', description: 'Produto criado.' });
       }
-      closeForm();
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
       toast({
@@ -502,6 +502,8 @@ export default function ProductManagement() {
         title: 'Erro!',
         description: 'Não foi possível salvar o produto.',
       });
+      // Re-throw to prevent form from closing on error
+      throw error;
     }
   };
 
@@ -557,7 +559,11 @@ export default function ProductManagement() {
             <DialogHeader>
               <DialogTitle>{editingProduct ? 'Editar' : 'Adicionar'} Produto</DialogTitle>
             </DialogHeader>
-            <ProductForm product={editingProduct} onSave={handleSave} onClose={closeForm} />
+            <ProductForm 
+              product={editingProduct} 
+              onSave={handleSave} 
+              onClose={closeForm} 
+            />
           </DialogContent>
         </Dialog>
       </CardHeader>

@@ -137,8 +137,8 @@ const specialCategories = [
 
 const ListItem = React.forwardRef<
   React.ElementRef<typeof Link>,
-  React.ComponentPropsWithoutRef<typeof Link> & { title: string }
->(({ className, title, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof Link>
+>(({ className, children, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
@@ -150,10 +150,7 @@ const ListItem = React.forwardRef<
           )}
           {...props}
         >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
+          {children}
         </Link>
       </NavigationMenuLink>
     </li>
@@ -253,24 +250,11 @@ export default function Header() {
                  <NavigationMenuItem key={category.name}>
                   <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                       <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <Link
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/produtos?categoria=${category.href}`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              {category.name}
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              {category.description}
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
+                    <ul className="grid w-[400px] grid-cols-2 gap-3 p-4">
                       {subcategories.map((sub) => (
-                        <ListItem key={sub.name} href={`/produtos?categoria=${category.href}&tipo=${sub.href}`} title={sub.name} />
+                        <ListItem key={sub.name} href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}>
+                          <div className="text-sm font-medium">{sub.name}</div>
+                        </ListItem>
                       ))}
                     </ul>
                   </NavigationMenuContent>
@@ -280,24 +264,11 @@ export default function Header() {
                  <NavigationMenuItem key={category.name}>
                   <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                       <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <Link
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/produtos?categoria=${category.href}`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              {category.name}
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              {category.description}
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
+                     <ul className="grid w-[400px] grid-cols-2 gap-3 p-4">
                       {mainCategories.map((mainCat) => (
-                        <ListItem key={mainCat.name} href={`/produtos?categoria=${category.href}&genero=${mainCat.href}`} title={mainCat.name} />
+                        <ListItem key={mainCat.name} href={`/produtos?categoria=${category.href}&genero=${mainCat.href}`}>
+                          <div className="text-sm font-medium">{mainCat.name}</div>
+                        </ListItem>
                       ))}
                     </ul>
                   </NavigationMenuContent>
@@ -343,6 +314,7 @@ export default function Header() {
     </header>
   );
 }
+
 
 
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import AddToCartButton from "./add-to-cart-button";
 
 interface ProductCardProps {
   product: Product;
@@ -29,16 +29,13 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.description}
           </p>
         </CardContent>
-        <CardFooter className="flex items-center justify-between p-4 pt-0">
-          <div className="text-lg font-bold">
-            R$ {product.price.toFixed(2).replace(".", ",")}
-          </div>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Star className="h-4 w-4 fill-primary text-primary" />
-            <span>{product.rating}</span>
-          </div>
-        </CardFooter>
       </Link>
+      <CardFooter className="flex items-center justify-between p-4 pt-0">
+        <div className="text-lg font-bold">
+          R$ {product.price.toFixed(2).replace(".", ",")}
+        </div>
+        <AddToCartButton product={product} />
+      </CardFooter>
     </Card>
   );
 }

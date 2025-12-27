@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query } from 'firebase/firestore';
+import { collection, query, where, Query, and } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ export default function ProductsPage() {
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
-    let filters = [where('status', '==', 'ativo')];
+    const filters = [where('status', '==', 'ativo')];
 
     if (category) {
         if (category === 'lancamentos' || category === 'ofertas') {
@@ -46,8 +46,14 @@ export default function ProductsPage() {
         filters.push(where('gender', '==', gender));
     }
     
-    const q: Query = collection(firestore, 'products');
-    return query(q, ...filters);
+    const q = collection(firestore, 'products');
+
+    if (filters.length > 1) {
+        // @ts-ignore
+        return query(q, and(...filters));
+    }
+    
+    return query(q, filters[0]);
     
   }, [firestore, category, subCategory, gender]);
 

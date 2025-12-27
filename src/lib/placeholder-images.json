@@ -75,7 +75,7 @@
     {
       "id": "moletom-cinza-1",
       "description": "Moletom cinza com zíper",
-      "imageUrl": "https://images.unsplash.com/photo-1637206614670-e3f13e2c5984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmV5JTIwaG9vZGllfGVufDB8fHx8MTc2NjcwNDc1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1637206614670-e3f13e2c5984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmV5JTIwaG9vZGllfGVufDB8fHx8MTc2NjcwNDc1NXww&ixlibrb-4.1.0&q=80&w=1080",
       "imageHint": "grey hoodie"
     },
     {
@@ -87,8 +87,26 @@
     {
       "id": "calca-cargo-1",
       "description": "Calça cargo preta",
-      "imageUrl": "https://images.unsplash.com/photo-1600803177171-b9fbcc3018f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJnbyUyMHBhbnRzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1600803177171-b9fbcc3018f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJnbyUyMHBhbnRzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "cargo pants"
+    },
+    {
+      "id": "jaqueta-jeans-1",
+      "description": "Jaqueta jeans preta",
+      "imageUrl": "https://images.unsplash.com/photo-1596489377033-89a19c9a0b0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRlbmltJTIwamFja2V0fGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black denim jacket"
+    },
+    {
+      "id": "oculos-sol-1",
+      "description": "Óculos de sol estilo wayfarer",
+      "imageUrl": "https://images.unsplash.com/photo-1511499767150-a48a237f0083?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdW5nbGFzc2VzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "sunglasses"
+    },
+    {
+      "id": "perfume-unissex-1",
+      "description": "Frasco de perfume unissex",
+      "imageUrl": "https://images.unsplash.com/photo-1585386959199-ea2d24a683a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
     }
   ]
 }

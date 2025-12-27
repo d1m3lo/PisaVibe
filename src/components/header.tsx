@@ -119,9 +119,9 @@ const SearchBar = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    if(newQuery.trim().length > 1) {
+     if (newQuery.trim().length > 1 && !isPopoverOpen) {
       setIsPopoverOpen(true);
-    } else {
+    } else if (newQuery.trim().length <= 1 && isPopoverOpen) {
       setIsPopoverOpen(false);
     }
   }
@@ -142,7 +142,6 @@ const SearchBar = () => {
             className="w-48 pr-10 lg:w-64"
             value={query}
             onChange={handleInputChange}
-            onClick={() => query.trim().length > 1 && setIsPopoverOpen(true)}
           />
           <Button
             type="submit"

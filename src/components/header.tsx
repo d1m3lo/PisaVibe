@@ -334,16 +334,27 @@ export default function Header() {
                 </NavigationMenuItem>
               ))}
               {specialCategories.map((category) => (
-                 <NavigationMenuItem key={category.name}>
+                <NavigationMenuItem key={category.name}>
                   <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                     <ul className="grid w-[400px] grid-cols-2 gap-3 p-4">
+                    <div className="grid w-[500px] grid-cols-2 gap-4 p-4">
                       {mainCategories.map((mainCat) => (
-                        <ListItem key={mainCat.name} href={`/produtos?categoria=${category.href}&genero=${mainCat.href}`}>
-                          <div className="text-sm font-medium">{mainCat.name}</div>
-                        </ListItem>
+                        <div key={mainCat.name} className="flex flex-col">
+                          <h3 className="mb-2 font-medium">{mainCat.name}</h3>
+                          <ul className="flex flex-col gap-1">
+                            {subcategories.map((sub) => (
+                              <ListItem
+                                key={sub.name}
+                                href={`/produtos?categoria=${category.href}&genero=${mainCat.href}&tipo=${sub.href}`}
+                                className="text-sm text-muted-foreground hover:text-foreground"
+                              >
+                                {sub.name}
+                              </ListItem>
+                            ))}
+                          </ul>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               ))}
@@ -387,4 +398,3 @@ export default function Header() {
     </header>
   );
 }
-

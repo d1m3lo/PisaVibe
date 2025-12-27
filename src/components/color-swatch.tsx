@@ -42,3 +42,5 @@ export const ColorSwatch = ({ colorHex, className, title }: ColorSwatchProps) =>
     </div>
   );
 };
+
+    

@@ -436,7 +436,7 @@ const ProductForm = ({
                                         className="p-1 h-10 w-10 shrink-0"
                                     />
                                     <Input 
-                                        placeholder="#000000 ou #FFFFFF / #000000"
+                                        placeholder="#000000 ou #000000 / #FFFFFF"
                                         value={variant.colorHex}
                                         onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
                                     />
@@ -706,4 +706,5 @@ export default function ProductManagement() {
   );
 }
 
+    
     

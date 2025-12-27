@@ -35,7 +35,7 @@ export default function FaqPage() {
     {
       question: "Os produtos têm garantia?",
       answer:
-        "Sim, todos os nossos produtos têm garantia de 90 dias contra defeitos de fabricação. A garantia não cobre danos por mau uso. Se identificar algum defeito, entre em contato conosco para avaliarmos a situação.",
+        "Para oferecer uma ampla variedade de estilos e preços, trabalhamos com diferentes fornecedores e classificações de qualidade, por isso nossos produtos não possuem uma garantia padrão. No entanto, todos os itens passam por uma rigorosa verificação de qualidade antes do envio para assegurar que você receba seu pedido em perfeitas condições. Se notar qualquer problema no momento do recebimento, por favor, entre em contato com nosso suporte em até 7 dias corridos para que possamos avaliar e resolver a situação.",
     },
      {
       question: "Como entro em contato com o suporte ao cliente?",

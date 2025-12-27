@@ -211,17 +211,12 @@ export default function ProductPage() {
                   key={variant.id}
                   onClick={() => handleVariantSelect(variant)}
                   className={cn(
-                    "relative h-16 w-16 overflow-hidden rounded-md border-2 transition-all",
-                    selectedVariant?.id === variant.id ? "border-primary scale-105" : "border-border"
+                    "h-8 w-8 rounded-full border-2 transition-all",
+                    selectedVariant?.id === variant.id ? "border-primary scale-110 ring-2 ring-offset-2 ring-primary" : "border-border"
                   )}
                    title={variant.color}
+                   style={{ backgroundColor: variant.colorHex }}
                 >
-                  <Image
-                    src={variant.images[0]}
-                    alt={variant.color}
-                    fill
-                    className="object-cover"
-                  />
                   <span className="sr-only">{variant.color}</span>
                 </button>
               ))}

@@ -340,8 +340,8 @@ export default function Header() {
                     <div className="grid w-[500px] grid-cols-2 gap-4 p-4">
                       {mainCategories.map((mainCat) => (
                         <div key={mainCat.name} className="flex flex-col">
-                          <h3 className="mb-2 font-medium">{mainCat.name}</h3>
-                          <ul className="flex flex-col gap-1">
+                          <h3 className="mb-2 text-base font-semibold">{mainCat.name}</h3>
+                          <ul className="flex flex-col gap-1 pl-1">
                             {subcategories.map((sub) => (
                               <ListItem
                                 key={sub.name}

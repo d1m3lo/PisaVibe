@@ -280,7 +280,7 @@ export default function Header() {
                  <NavigationMenuItem key={category.title}>
                   <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className={gridClass}>
+                    <div className={cn("grid", gridClass)}>
                       {category.columns.map((column) => (
                         <div key={column.title} className="flex flex-col">
                           <h3 className="mb-4 text-sm font-bold text-foreground">

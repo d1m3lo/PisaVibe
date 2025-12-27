@@ -59,7 +59,6 @@ export default function Footer() {
                     <h4 className="font-semibold">Ajuda</h4>
                     <ul className="mt-4 space-y-2">
                         <FooterLink href="/duvidas-frequentes">Dúvidas Frequentes</FooterLink>
-                        <FooterLink href="/entregas-e-envios">Entregas e Frete</FooterLink>
                         <FooterLink href="/trocas-e-devolucoes">Trocas e Devoluções</FooterLink>
                         <FooterLink href="/fale-conosco">Fale Conosco</FooterLink>
                     </ul>
@@ -71,6 +70,7 @@ export default function Footer() {
                         <FooterLink href="/sobre-nos">Sobre Nós</FooterLink>
                         <FooterLink href="/politica-de-privacidade">Política de Privacidade</FooterLink>
                         <FooterLink href="/termos-de-uso">Termos de Uso</FooterLink>
+                        <FooterLink href="/entregas-e-envios">Entregas e Envios</FooterLink>
                     </ul>
                 </div>
             </div>

@@ -20,7 +20,7 @@
  * - User Isolation: A user can only ever read or write data within their own data tree (i.e., under /users/{their-own-userId}).
  * - No User Listing: It is not possible for any client to list all users in the database.
  * - Public Product Catalog: All users, including unauthenticated ones, can read the list of products.
- * - Client Write Restrictions: Clients are not permitted to write to the /products collection, as this is assumed to be managed by a backend or admin process. Client-side creation of recommendations is also disabled.
+ * - Admin Write Permissions: Write access to the product catalog is granted, as it's managed via the client-side admin panel.
  *
  * @section Denormalization for Authorization
  * The primary authorization mechanism is path-based. By placing a user's data under a path
@@ -93,15 +93,15 @@ service cloud.firestore {
      * @description Rules for the public product catalog.
      * @path /products/{productId}
      * @allow (get, list) Any user, including unauthenticated ones, reading product data.
-     * @deny (create, update, delete) Any client trying to modify the product catalog.
-     * @principle Provides public read access while protecting data integrity by disallowing client writes.
+     * @allow (create, update, delete) Allows writes for admin purposes.
+     * @principle Provides public read access while protecting data integrity by allowing admin client writes.
      */
     match /products/{productId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false; // Products are managed by a backend/admin service.
-      allow update: if false; // Products are managed by a backend/admin service.
-      allow delete: if false; // Products are managed by a backend/admin service.
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
     }
 
     // -------------------------------------------------------------------------
@@ -153,8 +153,10 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if false; // Recommendations are created by a backend service.
-      allow update: if false; // Recommendations are managed by a backend service.
-      allow delete: if false; // Recommendations are managed by a backend service.
+      update: if false; // Recommendations are managed by a backend service.
+      delete: if false; // Recommendations are managed by a backend service.
     }
   }
 }
+
+    

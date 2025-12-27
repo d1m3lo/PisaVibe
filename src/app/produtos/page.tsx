@@ -1,13 +1,7 @@
+
 "use client";
 
 import { ProductCard } from "@/components/product-card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, Query, and, or } from 'firebase/firestore';
@@ -28,8 +22,17 @@ export default function ProductsPage() {
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
-    let filters = [where('status', '==', 'ativo')];
+    const filters = [where('status', '==', 'ativo')];
 
+    if (gender) {
+      filters.push(
+        or(
+          where('gender', '==', gender),
+          where('gender', '==', 'unissex')
+        )
+      );
+    }
+    
     if (category) {
         if (category === 'lancamentos' || category === 'ofertas') {
             filters.push(where('tags', 'array-contains', category));
@@ -42,24 +45,10 @@ export default function ProductsPage() {
         filters.push(where('subCategory', '==', subCategory));
     }
     
-    if (gender) {
-        // Handle unissex items by querying for the specific gender OR 'unissex'
-        filters.push(
-          or(
-            where('gender', '==', gender),
-            where('gender', '==', 'unissex')
-          )
-        );
-    }
-    
     const q = collection(firestore, 'products');
 
-    if (filters.length > 1) {
-        // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
-        return query(q, and(...filters));
-    }
-    
-    return query(q, filters[0]);
+    // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
+    return query(q, and(...filters));
     
   }, [firestore, category, subCategory, gender]);
 

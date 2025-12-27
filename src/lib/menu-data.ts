@@ -94,41 +94,45 @@ export const megaMenuData: MenuCategory[] = [
     title: "Lançamentos",
     columns: [
       {
-        title: "Calçados",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=calcados" }],
+        title: "Masculino",
+        links: [
+            { title: "Calçados", href: "/produtos?categoria=lancamentos&genero=masculino&tipo=calcados" },
+            { title: "Roupas", href: "/produtos?categoria=lancamentos&genero=masculino&tipo=roupas" },
+            { title: "Acessórios", href: "/produtos?categoria=lancamentos&genero=masculino&tipo=acessorios" },
+            { title: "Perfumes", href: "/produtos?categoria=lancamentos&genero=masculino&tipo=perfumes" },
+        ],
       },
       {
-        title: "Roupas",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=roupas" }],
-      },
-      {
-        title: "Acessórios",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=acessorios" }],
-      },
-      {
-        title: "Perfumes",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=lancamentos&tipo=perfumes" }],
+        title: "Feminino",
+        links: [
+            { title: "Calçados", href: "/produtos?categoria=lancamentos&genero=feminino&tipo=calcados" },
+            { title: "Roupas", href: "/produtos?categoria=lancamentos&genero=feminino&tipo=roupas" },
+            { title: "Acessórios", href: "/produtos?categoria=lancamentos&genero=feminino&tipo=acessorios" },
+            { title: "Perfumes", href: "/produtos?categoria=lancamentos&genero=feminino&tipo=perfumes" },
+        ],
       },
     ],
   },
   {
     title: "Ofertas",
     columns: [
-      {
-        title: "Calçados",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=calcados" }],
+       {
+        title: "Masculino",
+        links: [
+            { title: "Calçados", href: "/produtos?categoria=ofertas&genero=masculino&tipo=calcados" },
+            { title: "Roupas", href: "/produtos?categoria=ofertas&genero=masculino&tipo=roupas" },
+            { title: "Acessórios", href: "/produtos?categoria=ofertas&genero=masculino&tipo=acessorios" },
+            { title: "Perfumes", href: "/produtos?categoria=ofertas&genero=masculino&tipo=perfumes" },
+        ],
       },
       {
-        title: "Roupas",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=roupas" }],
-      },
-      {
-        title: "Acessórios",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=acessorios" }],
-      },
-      {
-        title: "Perfumes",
-        links: [{ title: "Ver tudo", href: "/produtos?categoria=ofertas&tipo=perfumes" }],
+        title: "Feminino",
+        links: [
+            { title: "Calçados", href: "/produtos?categoria=ofertas&genero=feminino&tipo=calcados" },
+            { title: "Roupas", href: "/produtos?categoria=ofertas&genero=feminino&tipo=roupas" },
+            { title: "Acessórios", href: "/produtos?categoria=ofertas&genero=feminino&tipo=acessorios" },
+            { title: "Perfumes", href: "/produtos?categoria=ofertas&genero=feminino&tipo=perfumes" },
+        ],
       },
     ],
   }

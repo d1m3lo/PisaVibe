@@ -7,8 +7,6 @@ export type Variant = {
   id: string;
   color: string;
   colorHex: string;
-  price: number;
-  oldPrice?: number;
   images: string[];
   sizes: SizeInfo[];
 };
@@ -16,6 +14,8 @@ export type Variant = {
 export type Product = {
   id: string;
   name: string;
+  price: number;
+  oldPrice?: number;
   description: string; // Short description for cards
   longDescription: string;
   gender: 'masculino' | 'feminino' | 'unissex';

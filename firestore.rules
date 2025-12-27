@@ -153,10 +153,8 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if false; // Recommendations are created by a backend service.
-      update: if false; // Recommendations are managed by a backend service.
-      delete: if false; // Recommendations are managed by a backend service.
+      allow update: if false; // Recommendations are managed by a backend service.
+      allow delete: if false; // Recommendations are managed by a backend service.
     }
   }
 }
-
-    

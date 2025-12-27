@@ -62,6 +62,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
+import { ScrollArea } from './ui/scroll-area';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -180,99 +181,103 @@ const ProductForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-       <div className="space-y-2">
-        <Label htmlFor="name">Nome do Produto</Label>
-        <Input id="name" value={formData.name} onChange={handleChange} required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="price">Preço</Label>
-        <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="longDescription">Descrição</Label>
-        <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
-      </div>
-      
-      <div className="space-y-3">
-        <Label>Links das Imagens</Label>
-        {formData.images.map((image, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <Input
-              placeholder={`URL da Imagem ${index + 1}`}
-              value={image}
-              onChange={(e) => handleImageChange(index, e.target.value)}
-              required={index === 0}
-            />
-            {formData.images.length > 1 && (
-              <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(index)} className="text-destructive">
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+    <form onSubmit={handleSubmit}>
+      <ScrollArea className="h-[70vh] pr-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome do Produto</Label>
+            <Input id="name" value={formData.name} onChange={handleChange} required />
           </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={addImageInput}>
-          Adicionar mais uma imagem
-        </Button>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Preço</Label>
+            <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="longDescription">Descrição</Label>
+            <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
+          </div>
+          
+          <div className="space-y-3">
+            <Label>Links das Imagens</Label>
+            {formData.images.map((image, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  placeholder={`URL da Imagem ${index + 1}`}
+                  value={image}
+                  onChange={(e) => handleImageChange(index, e.target.value)}
+                  required={index === 0}
+                />
+                {formData.images.length > 1 && (
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(index)} className="text-destructive">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addImageInput}>
+              Adicionar mais uma imagem
+            </Button>
+          </div>
 
-      <div className="space-y-4">
-           <div className="space-y-2">
-                <Label htmlFor="gender">Gênero</Label>
-                <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-                  <SelectTrigger id="gender">
-                    <SelectValue placeholder="Selecione o gênero" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="masculino">Masculino</SelectItem>
-                    <SelectItem value="feminino">Feminino</SelectItem>
-                    <SelectItem value="unissex">Unissex</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-           <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select value={formData.category} onValueChange={(value) => handleSelectChange('category', value)}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="calçados">Calçados</SelectItem>
-                    <SelectItem value="roupas">Roupas</SelectItem>
-                    <SelectItem value="acessorios">Acessórios</SelectItem>
-                    <SelectItem value="perfumes">Perfumes</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-            {subCategoryOptions.length > 0 && (
-                 <div className="space-y-2">
-                    <Label htmlFor="subCategory">Subcategoria</Label>
-                    <Select value={formData.subCategory} onValueChange={(value) => handleSelectChange('subCategory', value)}>
-                    <SelectTrigger id="subCategory">
-                        <SelectValue placeholder="Selecione a subcategoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {subCategoryOptions.map(sub => (
-                            <SelectItem key={sub} value={sub.toLowerCase()}>{sub}</SelectItem>
-                        ))}
-                    </SelectContent>
+          <div className="space-y-4">
+              <div className="space-y-2">
+                    <Label htmlFor="gender">Gênero</Label>
+                    <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
+                      <SelectTrigger id="gender">
+                        <SelectValue placeholder="Selecione o gênero" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="unissex">Unissex</SelectItem>
+                      </SelectContent>
                     </Select>
                 </div>
-            )}
-             <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                 <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-      </div>
-      <DialogFooter>
+              <div className="space-y-2">
+                    <Label htmlFor="category">Categoria</Label>
+                    <Select value={formData.category} onValueChange={(value) => handleSelectChange('category', value)}>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="calçados">Calçados</SelectItem>
+                        <SelectItem value="roupas">Roupas</SelectItem>
+                        <SelectItem value="acessorios">Acessórios</SelectItem>
+                        <SelectItem value="perfumes">Perfumes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+                {subCategoryOptions.length > 0 && (
+                    <div className="space-y-2">
+                        <Label htmlFor="subCategory">Subcategoria</Label>
+                        <Select value={formData.subCategory} onValueChange={(value) => handleSelectChange('subCategory', value)}>
+                        <SelectTrigger id="subCategory">
+                            <SelectValue placeholder="Selecione a subcategoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {subCategoryOptions.map(sub => (
+                                <SelectItem key={sub} value={sub.toLowerCase()}>{sub}</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ativo">Ativo</SelectItem>
+                        <SelectItem value="inativo">Inativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+          </div>
+        </div>
+      </ScrollArea>
+      <DialogFooter className="pt-6">
         <DialogClose asChild>
             <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar

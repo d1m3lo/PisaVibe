@@ -41,16 +41,25 @@ export default function Home() {
         )}
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
-          <h1 className="font-headline text-5xl font-bold tracking-tighter text-white md:text-7xl lg:text-8xl">
-            PISA VIBE
-          </h1>
-          <p className="mt-4 max-w-lg text-lg text-gray-200 md:text-xl">
-            O seu estilo começa aqui. Tênis e roupas com a atitude que você
-            procura.
-          </p>
-          <Button asChild size="lg" className="mt-8">
-            <Link href="/produtos">Ver Coleção</Link>
-          </Button>
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="font-headline text-5xl font-bold tracking-tighter text-white md:text-7xl lg:text-8xl">
+              PISA VIBE
+            </h1>
+            <p className="mt-4 max-w-lg text-lg text-gray-200 md:text-xl">
+              O seu estilo começa aqui. Tênis e roupas com a atitude que você
+              procura.
+            </p>
+            <Button asChild size="lg" className="mt-8">
+              <Link href="/produtos">Ver Coleção</Link>
+            </Button>
+          </div>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 transform">
+            <div className="flex space-x-2">
+              <button className="h-3 w-3 rounded-full bg-white"></button>
+              <button className="h-3 w-3 rounded-full bg-white/50"></button>
+              <button className="h-3 w-3 rounded-full bg-white/50"></button>
+            </div>
+          </div>
         </div>
       </section>
 

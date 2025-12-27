@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/popover";
 import { products } from "@/lib/products";
 import Image from "next/image";
+import { megaMenuData, type MenuCategory } from "@/lib/menu-data";
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -189,33 +190,14 @@ const SearchBar = () => {
   );
 };
 
-
-const mainCategories = [
-  { name: "Masculino", href: "masculino", description: "Roupas e calçados para homens." },
-  { name: "Feminino", href: "feminino", description: "Roupas e calçados para mulheres." },
-];
-
-const subcategories = [
-  { name: "Calçados", href: "calcados" },
-  { name: "Roupas", href: "roupas" },
-  { name: "Acessórios", href: "acessorios" },
-  { name: "Perfumes", href: "perfumes" },
-];
-
-const specialCategories = [
-  { name: "Lançamentos", href: "lancamentos", description: "Veja os últimos lançamentos." },
-  { name: "Ofertas", href: "ofertas", description: "Produtos com preços especiais." }
-];
-
-
 const ListItem = React.forwardRef<
-  React.ElementRef<typeof Link>,
-  React.ComponentPropsWithoutRef<typeof Link>
->(({ className, children, ...props }, ref) => {
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a">
+>(({ className, title, children, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <Link
+        <a
           ref={ref}
           className={cn(
             'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
@@ -223,80 +205,48 @@ const ListItem = React.forwardRef<
           )}
           {...props}
         >
-          {children}
-        </Link>
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
       </NavigationMenuLink>
     </li>
-  );
-});
-ListItem.displayName = 'ListItem';
+  )
+})
+ListItem.displayName = 'ListItem'
+
 
 const MobileSubMenu = ({
   category,
   onClose,
 }: {
-  category: { name: string; href: string };
+  category: MenuCategory;
   onClose: () => void;
 }) => (
   <Collapsible>
-    <CollapsibleTrigger className="flex w-full items-center justify-between text-lg text-foreground/80 transition-colors hover:text-foreground">
-      {category.name}
+    <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-lg font-semibold text-foreground/80 transition-colors hover:text-foreground">
+      {category.title}
       <ChevronDown className="h-5 w-5" />
     </CollapsibleTrigger>
     <CollapsibleContent>
       <div className="mt-2 flex flex-col gap-2 pl-4">
-        {subcategories.map((sub) => (
-          <Link
-            key={sub.href}
-            href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}
-            className="text-base text-foreground/70"
-            onClick={onClose}
-          >
-            {sub.name}
-          </Link>
-        ))}
-      </div>
-    </CollapsibleContent>
-  </Collapsible>
-);
-
-const MobileLabeledSubMenu = ({
-  label,
-  href,
-  onClose,
-}: {
-  label: string;
-  href: string;
-  onClose: () => void;
-}) => (
-  <Collapsible>
-    <CollapsibleTrigger className="flex w-full items-center justify-between text-lg text-foreground/80 transition-colors hover:text-foreground">
-      {label}
-      <ChevronDown className="h-5 w-5" />
-    </CollapsibleTrigger>
-    <CollapsibleContent>
-      <div className="mt-2 flex flex-col gap-2 pl-4">
-        {mainCategories.map((cat) => (
-          <Collapsible key={cat.href}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between text-base text-foreground/70">
-              {cat.name}
-              <ChevronDown className="h-4 w-4" />
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="mt-2 flex flex-col gap-2 pl-4">
-                {subcategories.map((sub) => (
-                  <Link
-                    key={sub.href}
-                    href={`/produtos?categoria=${href}&genero=${cat.href}&tipo=${sub.href}`}
-                    className="text-sm text-foreground/60"
-                    onClick={onClose}
-                  >
-                    {sub.name}
-                  </Link>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+        {category.columns.map((column) => (
+          <div key={column.title} className="flex flex-col gap-2">
+            <h3 className="text-base font-semibold">{column.title}</h3>
+            <div className="flex flex-col gap-1 pl-2">
+              {column.links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-foreground/70"
+                  onClick={onClose}
+                >
+                  {link.title}
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </CollapsibleContent>
@@ -319,37 +269,28 @@ export default function Header() {
           </Link>
            <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
-              {mainCategories.map((category) => (
-                 <NavigationMenuItem key={category.name}>
-                  <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
+              {megaMenuData.map((category) => (
+                 <NavigationMenuItem key={category.title}>
+                  <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] grid-cols-2 gap-3 p-4">
-                      {subcategories.map((sub) => (
-                        <ListItem key={sub.name} href={`/produtos?categoria=${category.href}&tipo=${sub.href}`}>
-                          <div className="text-sm font-medium">{sub.name}</div>
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              ))}
-              {specialCategories.map((category) => (
-                <NavigationMenuItem key={category.name}>
-                  <NavigationMenuTrigger>{category.name}</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="grid w-[500px] grid-cols-2 gap-4 p-4">
-                      {mainCategories.map((mainCat) => (
-                        <div key={mainCat.name} className="flex flex-col">
-                          <h3 className="mb-2 text-base font-semibold">{mainCat.name}</h3>
-                          <ul className="flex flex-col gap-1 pl-1">
-                            {subcategories.map((sub) => (
-                              <ListItem
-                                key={sub.name}
-                                href={`/produtos?categoria=${category.href}&genero=${mainCat.href}&tipo=${sub.href}`}
-                                className="text-sm text-muted-foreground hover:text-foreground"
-                              >
-                                {sub.name}
-                              </ListItem>
+                    <div className="grid w-[600px] grid-flow-col auto-cols-fr gap-x-8 gap-y-4 p-6 lg:w-[800px]">
+                      {category.columns.map((column) => (
+                        <div key={column.title} className="flex flex-col">
+                          <h3 className="mb-4 text-sm font-bold text-foreground">
+                            {column.title}
+                          </h3>
+                          <ul className="flex flex-col gap-2">
+                            {column.links.map((link) => (
+                              <li key={link.href}>
+                                 <NavigationMenuLink asChild>
+                                  <Link
+                                    href={link.href}
+                                    className="text-sm text-muted-foreground hover:text-foreground"
+                                  >
+                                    {link.title}
+                                  </Link>
+                                </NavigationMenuLink>
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -375,17 +316,15 @@ export default function Header() {
                 <span className="sr-only">Abrir menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
+            <SheetContent side="left" className="w-full max-w-sm">
               <div className="flex flex-col gap-6 p-4">
                 <Link href="/" className="font-headline text-xl font-bold" onClick={() => setIsSheetOpen(false)}>
                   PISA VIBE
                 </Link>
-                <nav className="flex flex-col gap-4">
-                   {mainCategories.map((cat) => (
-                    <MobileSubMenu key={cat.href} category={cat} onClose={() => setIsSheetOpen(false)} />
+                <nav className="flex flex-col gap-1">
+                   {megaMenuData.map((cat) => (
+                    <MobileSubMenu key={cat.title} category={cat} onClose={() => setIsSheetOpen(false)} />
                   ))}
-                  <MobileLabeledSubMenu label="Lançamentos" href="lancamentos" onClose={() => setIsSheetOpen(false)} />
-                  <MobileLabeledSubMenu label="Ofertas" href="ofertas" onClose={() => setIsSheetOpen(false)} />
                 </nav>
                  <div className="border-t pt-4">
                   <UserMenu />

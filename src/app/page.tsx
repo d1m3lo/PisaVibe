@@ -32,25 +32,29 @@ export default function Home() {
     setExpanded: React.Dispatch<React.SetStateAction<boolean>>,
     isExpanded: boolean
   ) => {
-    setExpanded(!isExpanded);
+    const element = {
+      'lancamentos': lancamentosRef.current,
+      'destaques': destaquesRef.current,
+      'ofertas': ofertasRef.current,
+    }[section];
+
     if (isExpanded) {
-        const element = {
-            'lancamentos': lancamentosRef.current,
-            'destaques': destaquesRef.current,
-            'ofertas': ofertasRef.current,
-        }[section];
-        
-        // Use a timeout to allow the state to update and items to collapse before scrolling
-        setTimeout(() => {
-             element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+      // If it's expanded, we are collapsing it. Scroll to the top of the section first.
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Use a timeout to allow the scroll to happen before collapsing
+      setTimeout(() => {
+        setExpanded(false);
+      }, 300); // Adjust timeout as needed for smooth scroll
+    } else {
+      // If it's collapsed, we are expanding it.
+      setExpanded(true);
     }
   };
 
 
-  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
+  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 8);
   const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 8);
-  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
+  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 8);
 
   return (
     <div className="flex flex-col">
@@ -99,7 +103,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Lançamentos
             </h2>
-            {allLancamentos.length > 4 && (
+            {allLancamentos.length > 8 && (
               <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
@@ -141,7 +145,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl font-bold md:text-4xl">
               Ofertas
             </h2>
-            {allOfertas.length > 4 && (
+            {allOfertas.length > 8 && (
               <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />

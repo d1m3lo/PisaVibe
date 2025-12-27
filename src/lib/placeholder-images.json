@@ -1,3 +1,94 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-1",
+      "description": "Uma pessoa estilosa em um ambiente urbano com arquitetura moderna.",
+      "imageUrl": "https://images.unsplash.com/photo-1682997843688-94722786a722?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmYXNoaW9uJTIwdXJiYW58ZW58MHx8fHwxNzY2Nzk0MjE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fashion urban"
+    },
+    {
+      "id": "tenis-preto-1",
+      "description": "Tênis de corrida preto em fundo minimalista",
+      "imageUrl": "https://images.unsplash.com/photo-1580893172418-5870d2130eec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Njg5NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black sneaker"
+    },
+    {
+      "id": "tenis-preto-2",
+      "description": "Close do detalhe de um tênis de corrida preto",
+      "imageUrl": "https://images.unsplash.com/photo-1605261274167-85795b2d73df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbmVha2VyJTIwZGV0YWlsfGVufDB8fHx8MTc2Njc5NDIxOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sneaker detail"
+    },
+    {
+      "id": "tenis-branco-1",
+      "description": "Tênis casual branco em fundo claro",
+      "imageUrl": "https://images.unsplash.com/photo-1744812441699-a4bd388a77a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3aGl0ZSUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Njg5NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white sneaker"
+    },
+    {
+      "id": "tenis-branco-2",
+      "description": "Par de tênis casuais brancos",
+      "imageUrl": "https://images.unsplash.com/photo-1615109255391-b0dfdcd5b8d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx3aGl0ZSUyMHNuZWFrZXJzfGVufDB8fHx8MTc2NjY5MDUxMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white sneakers"
+    },
+    {
+      "id": "tenis-cinza-1",
+      "description": "Tênis de skate cinza",
+      "imageUrl": "https://images.unsplash.com/photo-1587143770785-2293bcc6a754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxncmV5JTIwc25lYWtlcnxlbnwwfHx8fDE3NjY3OTQyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "grey sneaker"
+    },
+    {
+      "id": "tenis-cinza-2",
+      "description": "Vista lateral de um tênis de skate cinza",
+      "imageUrl": "https://images.unsplash.com/photo-1597530930123-ade5ceefc3c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxza2F0ZSUyMHNob2V8ZW58MHx8fHwxNzY2Nzk0MjE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "skate shoe"
+    },
+    {
+      "id": "tenis-cano-alto-1",
+      "description": "Tênis de cano alto preto e branco",
+      "imageUrl": "https://images.unsplash.com/photo-1578608712688-36b5be8823dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxoaWdoLXRvcCUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY2Nzk0MjE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "high-top sneaker"
+    },
+    {
+      "id": "tenis-cano-alto-2",
+      "description": "Detalhe do logo em um tênis de cano alto",
+      "imageUrl": "https://images.unsplash.com/photo-1662410944789-615742cddc76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzbmVha2VyJTIwbG9nb3xlbnwwfHx8fDE3NjY3OTQyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sneaker logo"
+    },
+    {
+      "id": "camiseta-branca-1",
+      "description": "Camiseta branca básica de algodão",
+      "imageUrl": "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3aGl0ZSUyMHQtc2hpcnR8ZW58MHx8fHwxNzY2NzE2NzQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white t-shirt"
+    },
+    {
+      "id": "camiseta-preta-1",
+      "description": "Camiseta preta com estampa minimalista",
+      "imageUrl": "https://images.unsplash.com/photo-1618354691321-e851c56960d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxibGFjayUyMHQtc2hpcnR8ZW58MHx8fHwxNzY2Nzc3OTA4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black t-shirt"
+    },
+    {
+      "id": "moletom-preto-1",
+      "description": "Moletom com capuz preto",
+      "imageUrl": "https://images.unsplash.com/photo-1614214191247-5b2d3a734f1b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGhvb2RpZXxlbnwwfHx8fDE3NjY2ODc3NjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black hoodie"
+    },
+    {
+      "id": "moletom-cinza-1",
+      "description": "Moletom cinza com zíper",
+      "imageUrl": "https://images.unsplash.com/photo-1637206614670-e3f13e2c5984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmV5JTIwaG9vZGllfGVufDB8fHx8MTc2NjcwNDc1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "grey hoodie"
+    },
+    {
+      "id": "calca-jeans-1",
+      "description": "Calça jeans preta slim fit",
+      "imageUrl": "https://images.unsplash.com/photo-1700844414385-0cedc33e4bd6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxibGFjayUyMGplYW5zfGVufDB8fHx8MTc2Njc5NDIxOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black jeans"
+    },
+    {
+      "id": "calca-cargo-1",
+      "description": "Calça cargo preta",
+      "imageUrl": "https://images.unsplash.com/photo-1600803177171-b9fbcc3018f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJnbyUyMHBhbnRzfGVufDB8fHx8MTc2Njc5MTMzOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cargo pants"
+    }
+  ]
 }

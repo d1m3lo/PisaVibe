@@ -1,3 +1,57 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ProductCard } from "@/components/product-card";
+import { products } from "@/lib/products";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import Recommendations from "@/components/recommendations";
+
 export default function Home() {
-  return <></>;
+  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-1");
+  const featuredProducts = products.slice(0, 4);
+
+  return (
+    <div className="flex flex-col">
+      <section className="relative h-[60vh] w-full text-white sm:h-[70vh] md:h-[90vh]">
+        {heroImage && (
+          <Image
+            src={heroImage.imageUrl}
+            alt={heroImage.description}
+            fill
+            className="object-cover"
+            priority
+            data-ai-hint={heroImage.imageHint}
+          />
+        )}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
+          <h1 className="font-headline text-5xl font-bold tracking-tighter text-white md:text-7xl lg:text-8xl">
+            PISA VIBE
+          </h1>
+          <p className="mt-4 max-w-lg text-lg text-gray-200 md:text-xl">
+            O seu estilo começa aqui. Tênis e roupas com a atitude que você
+            procura.
+          </p>
+          <Button asChild size="lg" className="mt-8">
+            <Link href="/produtos">Ver Coleção</Link>
+          </Button>
+        </div>
+      </section>
+
+      <section id="novidades" className="w-full bg-background py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-10 text-center font-headline text-3xl font-bold md:text-4xl">
+            Novidades
+          </h2>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Recommendations />
+    </div>
+  );
 }

@@ -1,52 +1,14 @@
-
 {
   "entities": {
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
-      "type": "object",
-      "description": "Represents a user of the PISA VIBE online store.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "Email address of the user.",
-          "format": "email"
-        },
-        "firstName": {
-          "type": "string",
-          "description": "First name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "Last name of the user."
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "Date and time when the user registered.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "firstName",
-        "lastName",
-        "registrationDate"
-      ]
-    },
     "Product": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Product",
       "type": "object",
-      "description": "Represents a product (e.g., shoes, clothing) available in the PISA VIBE store.",
+      "description": "Represents a product sold in the PISA VIBE online store.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Product entity."
+          "description": "Unique identifier for the product."
         },
         "name": {
           "type": "string",
@@ -56,37 +18,96 @@
           "type": "string",
           "description": "Detailed description of the product."
         },
-        "price": {
-          "type": "number",
-          "description": "Price of the product."
-        },
         "imageUrl": {
           "type": "string",
           "description": "URL of the product image.",
           "format": "uri"
         },
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
+        },
         "category": {
           "type": "string",
-          "description": "Category of the product (e.g., shoes, clothing)."
+          "description": "Category of the product (e.g., 'Tênis', 'Roupas')."
         },
         "brand": {
           "type": "string",
           "description": "Brand of the product."
         },
-        "quality": {
-            "type": "string",
-            "description": "The quality tier of the product.",
-            "enum": ["Essential", "Select", "Elite"]
+        "sizes": {
+          "type": "array",
+          "description": "Available sizes for the product.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "colors": {
+          "type": "array",
+          "description": "Available colors for the product.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stockQuantity": {
+          "type": "number",
+          "description": "Number of units currently in stock."
         }
       },
       "required": [
         "id",
         "name",
         "description",
-        "price",
         "imageUrl",
+        "price",
         "category",
-        "brand"
+        "brand",
+        "sizes",
+        "colors",
+        "stockQuantity"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the PISA VIBE online store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "Shipping address of the user."
+        },
+        "orderIds": {
+          "type": "array",
+          "description": "References to Orders. (Relationship: User 1:N Order)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "address"
       ]
     },
     "Order": {
@@ -97,7 +118,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Order entity."
+          "description": "Unique identifier for the order."
         },
         "userId": {
           "type": "string",
@@ -105,16 +126,27 @@
         },
         "orderDate": {
           "type": "string",
-          "description": "Date and time when the order was placed.",
+          "description": "Date and time the order was placed.",
           "format": "date-time"
         },
         "totalAmount": {
           "type": "number",
           "description": "Total amount of the order."
         },
+        "shippingAddress": {
+          "type": "string",
+          "description": "Shipping address for the order."
+        },
         "status": {
           "type": "string",
-          "description": "Status of the order (e.g., pending, processing, shipped, delivered)."
+          "description": "Current status of the order (e.g., 'Processing', 'Shipped', 'Delivered')."
+        },
+        "orderItemIds": {
+          "type": "array",
+          "description": "References to OrderItems. (Relationship: Order 1:N OrderItem)",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -122,6 +154,7 @@
         "userId",
         "orderDate",
         "totalAmount",
+        "shippingAddress",
         "status"
       ]
     },
@@ -133,7 +166,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the OrderItem entity."
+          "description": "Unique identifier for the order item."
         },
         "orderId": {
           "type": "string",
@@ -147,9 +180,9 @@
           "type": "number",
           "description": "Quantity of the product in the order item."
         },
-        "itemPrice": {
+        "price": {
           "type": "number",
-          "description": "Price of the item (price per unit)."
+          "description": "Price of the product at the time of the order."
         }
       },
       "required": [
@@ -157,43 +190,43 @@
         "orderId",
         "productId",
         "quantity",
-        "itemPrice"
+        "price"
       ]
     },
-    "Recommendation": {
+    "ProductRecommendation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Recommendation",
+      "title": "ProductRecommendation",
       "type": "object",
       "description": "Represents a product recommendation for a user.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Recommendation entity."
+          "description": "Unique identifier for the product recommendation."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Recommendation)"
+          "description": "Reference to User. (Relationship: User 1:N ProductRecommendation)"
         },
         "productId": {
           "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N Recommendation)"
-        },
-        "recommendationDate": {
-          "type": "string",
-          "description": "Date and time when the product was recommended.",
-          "format": "date-time"
+          "description": "Reference to Product. (Relationship: Product 1:N ProductRecommendation)"
         },
         "score": {
           "type": "number",
-          "description": "Relevance score of the recommendation (e.g., based on AI model output)."
+          "description": "Recommendation score (higher is better)."
+        },
+        "recommendationDate": {
+          "type": "string",
+          "description": "Date and time the recommendation was generated.",
+          "format": "date-time"
         }
       },
       "required": [
         "id",
         "userId",
         "productId",
-        "recommendationDate",
-        "score"
+        "score",
+        "recommendationDate"
       ]
     }
   },
@@ -206,102 +239,102 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. Only the user can read/write their own document.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/products/{productId}",
+        "path": "products/{productId}",
         "definition": {
           "entityName": "Product",
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Stores product information. Publicly readable.",
+          "description": "Stores product information. Each document represents a single product.",
           "params": [
             {
               "name": "productId",
-              "description": "The unique identifier for the product."
+              "description": "The unique identifier of the product."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/orders/{orderId}",
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user information. Each document represents a single user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/orders/{orderId}",
         "definition": {
           "entityName": "Order",
           "schema": {
             "$ref": "#/backend/entities/Order"
           },
-          "description": "Stores order information for a specific user. Only the user can read/write their own orders.",
+          "description": "Stores order information for a specific user. Orders are subcollections of users for easy retrieval of order history.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user who placed the order."
             },
             {
               "name": "orderId",
-              "description": "The unique identifier for the order."
+              "description": "The unique identifier of the order."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/orders/{orderId}/order_items/{orderItemId}",
+        "path": "users/{userId}/orders/{orderId}/orderItems/{orderItemId}",
         "definition": {
           "entityName": "OrderItem",
           "schema": {
             "$ref": "#/backend/entities/OrderItem"
           },
-          "description": "Stores order item information for a specific order. Only accessible within the scope of an order.",
+          "description": "Stores order items for a specific order. Order items are subcollections of orders.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user who placed the order."
             },
             {
               "name": "orderId",
-              "description": "The unique identifier for the order."
+              "description": "The unique identifier of the order."
             },
             {
               "name": "orderItemId",
-              "description": "The unique identifier for the order item."
+              "description": "The unique identifier of the order item."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/recommendations/{recommendationId}",
+        "path": "users/{userId}/productRecommendations/{productRecommendationId}",
         "definition": {
-          "entityName": "Recommendation",
+          "entityName": "ProductRecommendation",
           "schema": {
-            "$ref": "#/backend/entities/Recommendation"
+            "$ref": "#/backend/entities/ProductRecommendation"
           },
-          "description": "Stores product recommendations for a user.",
+          "description": "Stores product recommendations for a specific user. Recommendations are subcollections of users to allow for personalized recommendations.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user for whom the recommendation is generated."
             },
             {
-              "name": "recommendationId",
-              "description": "The unique identifier for the recommendation."
+              "name": "productRecommendationId",
+              "description": "The unique identifier of the product recommendation."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the PISA VIBE online store, focusing on products, orders, user data, and personalized recommendations. The structure prioritizes security, scalability, and ease of debugging, adhering to the principles of Authorization Independence and Structural Segregation. Key aspects of the design are: \n\n1.  **Authorization Independence:** The design avoids hierarchical authorization dependencies to ensure atomic operations (transactions/batches) are not compromised. The security rules rely on `request.auth.uid` and data stored within the documents themselves rather than retrieving parent document data.\n\n2.  **Structural Segregation:** The structure ensures all documents within a collection share the same security requirements. For example, user-specific data is stored under the `/users/{userId}` path.\n\n3.  **Access Modeling:**\n    *   **User Data:** User profiles are stored in `/users/{userId}`. This path-based ownership ensures that only the user can access their profile data.\n    *   **Orders:** Orders are stored under `/users/{userId}/orders/{orderId}`, continuing the hierarchical path for user-owned data. This allows easy enforcement of ownership-based security rules.\n    *   **Order Items:** Order items are nested under orders at `/users/{userId}/orders/{orderId}/order_items/{orderItemId}`.\n    *   **Recommendations:** Recommendations are stored under `/users/{userId}/recommendations/{recommendationId}`. This follows the same pattern as orders and other user-specific data.\n    *   **Products:** Product data is stored in a top-level `/products` collection, allowing for easy listing and querying of all products.\n\n4. **QAPs (Rules are not Filters):**\n    *   The segregation of user-specific data into subcollections enables secure `list` operations. For example, listing orders is performed within the user's own document scope, preventing unauthorized access to other users' orders.\n\n5.  **Data Clarity:** Using consistent naming conventions (e.g., `userId`, `productId`) and an explicit `status` field for orders enhances predictability and debuggability.\n"
+    "reasoning": "The Firestore data structure is designed to support the PISA VIBE online store, focusing on products, users, orders, and product recommendations. The structure prioritizes authorization independence and QAPs by leveraging path-based ownership for user-specific data and avoiding `get()` calls in security rules. This ensures scalability and simplifies security rule management. The core principle is to make security rules as simple as possible by denormalizing security critical properties to each record. \n\nProducts are stored in a top-level `products` collection. User data, including orders and product recommendations, are stored under the `/users/{userId}` path. This structure facilitates easy retrieval of user-specific data and simplifies ownership-based security rules.\n\nOrders and order items are structured under user-specific collections (`/users/{userId}/orders/{orderId}` and `/users/{userId}/orders/{orderId}/orderItems/{orderItemId}`). This approach enables efficient querying of a user's order history and related order items.\n\nProduct recommendations are also stored under the user's document (`/users/{userId}/productRecommendations/{productRecommendationId}`), allowing for personalized recommendations based on user activity.\n\nThis design promotes Authorization Independence by avoiding hierarchical authorization dependencies. Path-based ownership (`/users/{userId}/...`) allows security rules to directly verify user identity without needing to read parent documents, enabling atomic operations and improving security. QAPs are supported through structural segregation; each collection serves a specific purpose with uniform security requirements. This segregation simplifies `list` operations, as rules can be tailored to each collection's access needs without complex filtering logic."
   }
 }

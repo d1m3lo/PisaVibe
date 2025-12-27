@@ -38,6 +38,13 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { products } from "@/lib/products";
+import Image from "next/image";
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -88,34 +95,100 @@ const CartButton = () => {
 const SearchBar = () => {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
+  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+
+  const searchResults = React.useMemo(() => {
+    if (query.trim().length < 2) return [];
+    return products
+      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5);
+  }, [query]);
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/produtos?q=${query}`);
+      setIsPopoverOpen(false);
+      setQuery("");
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    if(newQuery.trim().length > 1) {
+      setIsPopoverOpen(true);
+    } else {
+      setIsPopoverOpen(false);
+    }
+  }
+  
+  const closePopover = () => {
+    setIsPopoverOpen(false);
+    setQuery("");
+  }
+
+
   return (
-    <form onSubmit={handleSearch} className="relative hidden md:block">
-      <Input
-        type="search"
-        placeholder="Buscar produtos..."
-        className="w-48 pr-10 lg:w-64"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <Button
-        type="submit"
-        variant="ghost"
-        size="icon"
-        className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground"
-      >
-        <Search className="h-4 w-4" />
-      </Button>
-    </form>
+    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+      <PopoverTrigger asChild>
+        <form onSubmit={handleSearch} className="relative hidden md:block">
+          <Input
+            type="search"
+            placeholder="Buscar produtos..."
+            className="w-48 pr-10 lg:w-64"
+            value={query}
+            onChange={handleInputChange}
+            onClick={() => query.trim().length > 1 && setIsPopoverOpen(true)}
+          />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        </form>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-2 lg:w-[400px]" align="start">
+        {searchResults.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {searchResults.map((product) => (
+              <Link
+                key={product.id}
+                href={`/produtos/${product.id}`}
+                className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                onClick={closePopover}
+              >
+                <div className="relative h-16 w-16 flex-shrink-0">
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    fill
+                    className="rounded-md object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-semibold">{product.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    R$ {product.price.toFixed(2).replace(".", ",")}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="p-4 text-center text-sm text-muted-foreground">
+            Nenhum resultado encontrado.
+          </p>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 };
+
 
 const mainCategories = [
   { name: "Masculino", href: "masculino", description: "Roupas e calçados para homens." },
@@ -314,7 +387,4 @@ export default function Header() {
     </header>
   );
 }
-
-
-
 

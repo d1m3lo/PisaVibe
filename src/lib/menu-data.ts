@@ -58,28 +58,26 @@ export const megaMenuData: MenuCategory[] = [
        {
         title: "Calçados",
         links: [
-          { title: "Tênis", href: "/produtos?genero=feminino&categoria=calcados&tipo=tenis" },
           { title: "Casual", href: "/produtos?genero=feminino&categoria=calcados&tipo=casual" },
           { title: "Corrida", href: "/produtos?genero=feminino&categoria=calcados&tipo=corrida" },
-          { title: "Basquete", href: "/produtos?genero=feminino&categoria=calcados&tipo=basquete" },
+          { title: "StreetWear", href: "/produtos?genero=feminino&categoria=calcados&tipo=streetwear" },
+          { title: "Sneakers", href: "/produtos?genero=feminino&categoria=calcados&tipo=sneakers" },
         ],
       },
       {
         title: "Roupas",
         links: [
           { title: "Camisetas", href: "/produtos?genero=feminino&categoria=roupas&tipo=camisetas" },
-          { title: "Shorts", href: "/produtos?genero=feminino&categoria=roupas&tipo=shorts" },
-          { title: "Jaquetas & Moletons", href: "/produtos?genero=feminino&categoria=roupas&tipo=moletons" },
           { title: "Calças & Leggings", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
-          { title: "Saias & Vestidos", href: "/produtos?genero=feminino&categoria=roupas&tipo=saias-e-vestidos" },
+          { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },
         ],
       },
       {
         title: "Acessórios",
         links: [
-          { title: "Bolas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bolas" },
-          { title: "Bonés & Viseiras", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bones" },
-          { title: "Bolsas & Mochilas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=mochilas" },
+          { title: "Bonés", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bones" },
+          { title: "Bolsas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bolsas" },
+          { title: "Mochilas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=mochilas" },
         ],
       },
        {

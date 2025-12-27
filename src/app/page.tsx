@@ -1,14 +1,16 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/product-card";
-import { products } from "@/lib/products";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import Recommendations from "@/components/recommendations";
+import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ProductCard } from '@/components/product-card';
+import { products } from '@/lib/products';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Recommendations from '@/components/recommendations';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-1");
-  const featuredProducts = products.slice(0, 4);
+  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-1');
+  const lancamentos = products.slice(0, 4);
+  const destaques = products.slice(4, 8);
+  const ofertas = products.slice(2, 6);
 
   return (
     <div className="flex flex-col">
@@ -38,13 +40,39 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="novidades" className="w-full bg-background py-16 md:py-24">
+      <section id="lancamentos" className="w-full bg-background py-16 md:py-24">
         <div className="container mx-auto px-4">
           <h2 className="mb-10 text-center font-headline text-3xl font-bold md:text-4xl">
-            Novidades
+            Lançamentos
           </h2>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
+            {lancamentos.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="destaques" className="w-full bg-secondary py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-10 text-center font-headline text-3xl font-bold md:text-4xl">
+            Destaques
+          </h2>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {destaques.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="ofertas" className="w-full bg-background py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-10 text-center font-headline text-3xl font-bold md:text-4xl">
+            Ofertas
+          </h2>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {ofertas.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

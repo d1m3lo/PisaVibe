@@ -67,6 +67,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from './ui/accordion';
+import { Checkbox } from './ui/checkbox';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -98,6 +99,12 @@ const allSizes = {
     perfumes: ['U']
 };
 
+const allTags = [
+    { id: 'lancamentos', label: 'Lançamentos' },
+    { id: 'destaques', label: 'Destaques' },
+    { id: 'ofertas', label: 'Ofertas' },
+]
+
 const ProductForm = ({
   product,
   onSave,
@@ -117,6 +124,7 @@ const ProductForm = ({
     subCategory: product?.subCategory || '',
     variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], sizes: [] }],
     status: product?.status || 'ativo',
+    tags: product?.tags || [],
   });
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
@@ -154,6 +162,15 @@ const ProductForm = ({
   const handleSelectChange = (id: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
+
+  const handleTagChange = (tagId: string, checked: boolean) => {
+    setFormData(prev => {
+        const newTags = checked 
+            ? [...prev.tags, tagId]
+            : prev.tags.filter(t => t !== tagId);
+        return { ...prev, tags: newTags };
+    });
+  }
 
   const handleVariantChange = <T extends keyof Variant>(
     variantId: string,
@@ -265,6 +282,7 @@ const ProductForm = ({
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
       reviews: product?.reviews || 0,
+      tags: formData.tags,
     };
     await onSave(productData);
     onClose();
@@ -280,11 +298,11 @@ const ProductForm = ({
           </div>
           <div className="space-y-2">
               <Label htmlFor="price">Preço</Label>
-              <Input id="price" type="number" value={formData.price || ''} onChange={handleChange} required />
+              <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
           </div>
           <div className="space-y-2">
               <Label htmlFor="oldPrice">Preço Antigo (Opcional)</Label>
-              <Input id="oldPrice" type="number" value={formData.oldPrice || ''} onChange={handleChange} />
+              <Input id="oldPrice" type="number" value={formData.oldPrice} onChange={handleChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="longDescription">Descrição</Label>
@@ -346,6 +364,23 @@ const ProductForm = ({
                       </SelectContent>
                     </Select>
                 </div>
+
+                <div className="space-y-3">
+                    <Label>Tags da Home</Label>
+                    <div className="flex flex-wrap items-center gap-4">
+                        {allTags.map((tag) => (
+                        <div key={tag.id} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`tag-${tag.id}`}
+                                checked={formData.tags.includes(tag.id)}
+                                onCheckedChange={(checked) => handleTagChange(tag.id, !!checked)}
+                            />
+                            <Label htmlFor={`tag-${tag.id}`} className="font-normal">{tag.label}</Label>
+                        </div>
+                        ))}
+                    </div>
+                </div>
+
           </div>
 
           <div className="space-y-4">

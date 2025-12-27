@@ -76,8 +76,9 @@ const ProductForm = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    longDescription: product?.longDescription || '',
     price: product?.price || 0,
+    longDescription: product?.longDescription || '',
+    gender: product?.gender || 'unissex',
     category: product?.category || 'roupas',
     images: product?.images?.length ? product.images : [''],
     status: product?.status || 'ativo',
@@ -126,6 +127,7 @@ const ProductForm = ({
       description: formData.longDescription.substring(0, 100), // Auto-generate short description
       longDescription: formData.longDescription,
       price: Number(formData.price),
+      gender: formData.gender as Product['gender'],
       category: formData.category as Product['category'],
       images: images,
       status: formData.status as Product['status'],
@@ -172,7 +174,20 @@ const ProductForm = ({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
+           <div className="space-y-2">
+                <Label htmlFor="gender">Gênero</Label>
+                <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
+                  <SelectTrigger id="gender">
+                    <SelectValue placeholder="Selecione o gênero" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="masculino">Masculino</SelectItem>
+                    <SelectItem value="feminino">Feminino</SelectItem>
+                    <SelectItem value="unissex">Unissex</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
            <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
                 <Select value={formData.category} onValueChange={(value) => handleSelectChange('category', value)}>

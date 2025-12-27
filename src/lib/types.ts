@@ -6,6 +6,7 @@ export type Product = {
   price: number;
   images: string[];
   category: 'tênis' | 'roupas' | 'acessorios' | 'perfumes';
+  gender: 'masculino' | 'feminino' | 'unissex';
   tags?: ('lancamentos' | 'ofertas')[];
   rating: number;
   reviews: number;

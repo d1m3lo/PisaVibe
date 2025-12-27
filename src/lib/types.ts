@@ -5,7 +5,8 @@ export type Product = {
   longDescription: string;
   price: number;
   images: string[];
-  category: 'tênis' | 'roupas';
+  category: 'tênis' | 'roupas' | 'acessorios' | 'perfumes';
+  tags?: ('lancamentos' | 'ofertas')[];
   rating: number;
   reviews: number;
 };

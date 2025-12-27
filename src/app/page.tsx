@@ -8,9 +8,9 @@ import Recommendations from '@/components/recommendations';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-1');
-  const lancamentos = products.slice(0, 4);
-  const destaques = products.slice(4, 8);
-  const ofertas = products.slice(2, 6);
+  const lancamentos = products.filter(p => p.tags?.includes('lancamentos')).slice(0, 4);
+  const destaques = products.slice(0, 4);
+  const ofertas = products.filter(p => p.tags?.includes('ofertas')).slice(0, 4);
 
   return (
     <div className="flex flex-col">

@@ -19,31 +19,40 @@ export default function ProductsPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const category = searchParams["categoria"] as string | undefined;
+  const subCategory = searchParams["tipo"] as string | undefined;
   const searchQuery = searchParams["q"] as string | undefined;
 
   let filteredProducts = products;
+  let title = "Todos os Produtos";
 
-  if (category) {
+  if (category && category !== 'lancamentos' && category !== 'ofertas') {
+     title = category.charAt(0).toUpperCase() + category.slice(1);
+    if(subCategory) {
+      filteredProducts = filteredProducts.filter(
+        (p) => p.category === subCategory
+      );
+      title += ` - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)}`;
+    }
+  } else if (category) {
     filteredProducts = filteredProducts.filter(
-      (p) => p.category === category
+      (p) => p.category === category || (p.tags && p.tags.includes(category))
     );
+     title = category.charAt(0).toUpperCase() + category.slice(1);
   }
 
   if (searchQuery) {
     filteredProducts = filteredProducts.filter((p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    title = `Busca por: "${searchQuery}"`
   }
 
-  const title = category
-    ? category.charAt(0).toUpperCase() + category.slice(1)
-    : "Todos os Produtos";
 
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
         <h1 className="font-headline text-4xl font-bold">
-          {searchQuery ? `Busca por: "${searchQuery}"` : title}
+          {title}
         </h1>
         {/* TODO: Add sorting functionality */}
         {/* <div className="w-full md:w-auto">
@@ -68,7 +77,7 @@ export default function ProductsPage({
         </div>
       ) : (
         <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">Nenhum produto encontrado.</p>
+            <p className="text-xl text-muted-foreground">Nenhum produto encontrado para esta categoria.</p>
         </div>
       )}
     </div>

@@ -270,11 +270,17 @@ export default function Header() {
           </Link>
            <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
-              {megaMenuData.map((category) => (
+              {megaMenuData.map((category) => {
+                const isSpecialCategory = category.title === 'Lançamentos' || category.title === 'Ofertas';
+                const gridClass = isSpecialCategory
+                    ? "grid w-[400px] grid-flow-col auto-cols-fr gap-x-4 gap-y-4 p-6"
+                    : "grid w-[600px] grid-flow-col auto-cols-fr gap-x-8 gap-y-4 p-6 lg:w-[800px]";
+
+                return (
                  <NavigationMenuItem key={category.title}>
                   <NavigationMenuTrigger>{category.title}</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="grid w-[600px] grid-flow-col auto-cols-fr gap-x-8 gap-y-4 p-6 lg:w-[800px]">
+                    <div className={gridClass}>
                       {category.columns.map((column) => (
                         <div key={column.title} className="flex flex-col">
                           <h3 className="mb-4 text-sm font-bold text-foreground">
@@ -299,7 +305,7 @@ export default function Header() {
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-              ))}
+              )})}
             </NavigationMenuList>
           </NavigationMenu>
         </div>

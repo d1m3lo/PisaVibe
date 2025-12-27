@@ -5,60 +5,95 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/product-card';
-import { products } from '@/lib/products';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function ProductSection({ title, allProducts, defaultVisible = 4, tag }: { title: string; allProducts: Product[]; defaultVisible?: number; tag: string }) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleToggle = () => {
+    if (isExpanded) {
+      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => setIsExpanded(false), 300);
+    } else {
+      setIsExpanded(true);
+      setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  };
+
+  const displayedProducts = isExpanded ? allProducts : allProducts.slice(0, defaultVisible);
+
+  return (
+    <section id={tag} ref={sectionRef} className="w-full bg-background py-16 md:py-24">
+      <div className="container mx-auto px-4">
+        <div className="mb-10 flex items-baseline justify-between">
+          <h2 className="font-headline text-3xl font-bold md:text-4xl">
+            {title}
+          </h2>
+          {allProducts.length > defaultVisible && (
+            <button onClick={handleToggle} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <span>{isExpanded ? "Ver menos" : "Ver mais"}</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {displayedProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductSectionSkeleton({ title }: { title: string }) {
+  return (
+     <section className="w-full bg-background py-16 md:py-24">
+      <div className="container mx-auto px-4">
+        <h2 className="mb-10 font-headline text-3xl font-bold md:text-4xl">
+          {title}
+        </h2>
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+             <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[300px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function Home() {
   const heroImages = PlaceHolderImages.filter(img => img.id.startsWith('hero-'));
   const heroImage = heroImages[0];
-  
-  const allLancamentos = products.filter(p => p.tags?.includes('lancamentos'));
-  const allDestaques = products;
-  const allOfertas = products.filter(p => p.tags?.includes('ofertas'));
 
-  const [lancamentosExpanded, setLancamentosExpanded] = useState(false);
-  const [destaquesExpanded, setDestaquesExpanded] = useState(false);
-  const [ofertasExpanded, setOfertasExpanded] = useState(false);
+  const firestore = useFirestore();
 
-  const lancamentosRef = useRef<HTMLDivElement>(null);
-  const destaquesRef = useRef<HTMLDivElement>(null);
-  const ofertasRef = useRef<HTMLDivElement>(null);
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), where('status', '==', 'ativo'));
+  }, [firestore]);
 
-  const handleToggle = (
-    section: 'lancamentos' | 'destaques' | 'ofertas', 
-    setExpanded: React.Dispatch<React.SetStateAction<boolean>>,
-    isExpanded: boolean
-  ) => {
-    const element = {
-      'lancamentos': lancamentosRef.current,
-      'destaques': destaquesRef.current,
-      'ofertas': ofertasRef.current,
-    }[section];
+  const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
-    if (isExpanded) {
-      // If it's expanded, we are collapsing it. Scroll to the top of the section first.
-      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Use a timeout to allow the scroll to happen before collapsing
-      setTimeout(() => {
-        setExpanded(false);
-      }, 300); // Adjust timeout as needed for smooth scroll
-    } else {
-      // If it's collapsed, we are expanding it.
-      setExpanded(true);
-      // Scroll to the element after a short delay to ensure it's rendered
-      setTimeout(() => {
-        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  };
-
-
-  const lancamentos = lancamentosExpanded ? allLancamentos : allLancamentos.slice(0, 4);
-  const destaques = destaquesExpanded ? allDestaques : allDestaques.slice(0, 4);
-  const ofertas = ofertasExpanded ? allOfertas : allOfertas.slice(0, 4);
+  const lancamentos = useMemo(() => products?.filter(p => p.tags?.includes('lancamentos')) || [], [products]);
+  const destaques = useMemo(() => products || [], [products]);
+  const ofertas = useMemo(() => products?.filter(p => p.tags?.includes('ofertas')) || [], [products]);
 
   return (
     <div className="flex flex-col">
@@ -101,68 +136,19 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="lancamentos" ref={lancamentosRef} className="w-full bg-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 flex items-baseline justify-between">
-            <h2 className="font-headline text-3xl font-bold md:text-4xl">
-              Lançamentos
-            </h2>
-            {allLancamentos.length > 4 && (
-              <button onClick={() => handleToggle('lancamentos', setLancamentosExpanded, lancamentosExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                <span>{lancamentosExpanded ? "Ver menos" : "Ver mais"}</span>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", lancamentosExpanded && "rotate-180")} />
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {lancamentos.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="destaques" ref={destaquesRef} className="w-full bg-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 flex items-baseline justify-between">
-            <h2 className="font-headline text-3xl font-bold md:text-4xl">
-              Destaques
-            </h2>
-             {allDestaques.length > 4 && (
-              <button onClick={() => handleToggle('destaques', setDestaquesExpanded, destaquesExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                <span>{destaquesExpanded ? "Ver menos" : "Ver mais"}</span>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", destaquesExpanded && "rotate-180")} />
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {destaques.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="ofertas" ref={ofertasRef} className="w-full bg-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
-           <div className="mb-10 flex items-baseline justify-between">
-            <h2 className="font-headline text-3xl font-bold md:text-4xl">
-              Ofertas
-            </h2>
-            {allOfertas.length > 4 && (
-              <button onClick={() => handleToggle('ofertas', setOfertasExpanded, ofertasExpanded)} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                <span>{ofertasExpanded ? "Ver menos" : "Ver mais"}</span>
-                <ChevronDown className={cn("h-4 w-4 transition-transform", ofertasExpanded && "rotate-180")} />
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {ofertas.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+      {isLoading ? (
+        <>
+          <ProductSectionSkeleton title="Lançamentos" />
+          <ProductSectionSkeleton title="Destaques" />
+          <ProductSectionSkeleton title="Ofertas" />
+        </>
+      ) : (
+        <>
+          {lancamentos.length > 0 && <ProductSection title="Lançamentos" allProducts={lancamentos} tag="lancamentos" />}
+          {destaques.length > 0 && <ProductSection title="Destaques" allProducts={destaques} tag="destaques" />}
+          {ofertas.length > 0 && <ProductSection title="Ofertas" allProducts={ofertas} tag="ofertas" />}
+        </>
+      )}
     </div>
   );
 }

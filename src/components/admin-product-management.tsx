@@ -9,7 +9,7 @@ import {
   doc,
   Firestore,
 } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -280,7 +280,7 @@ const ProductForm = ({
           </div>
           <div className="space-y-2">
               <Label htmlFor="price">Preço</Label>
-              <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
+              <Input id="price" type="number" value={formData.price || ''} onChange={handleChange} required />
           </div>
           <div className="space-y-2">
               <Label htmlFor="oldPrice">Preço Antigo (Opcional)</Label>
@@ -469,30 +469,40 @@ export default function ProductManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithId | null>(null);
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   useEffect(() => {
-    if (!db) return;
+    if (!firestore) return;
     const unsubscribe = onSnapshot(
-      collection(db as Firestore, 'products'),
+      collection(firestore, 'products'),
       (snapshot) => {
         const productsData = snapshot.docs.map((doc) => ({
           firestoreId: doc.id,
           ...(doc.data() as Product),
         })).filter(p => p.name && p.variants); // Basic data validation
         setProducts(productsData);
+      },
+      (error) => {
+        console.error("Error fetching products:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao buscar produtos',
+          description: 'Não foi possível carregar os produtos do banco de dados.',
+        });
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [firestore, toast]);
 
   const handleSave = async (productData: Omit<ProductWithId, 'firestoreId'>) => {
+    if (!firestore) return;
     try {
       if (editingProduct) {
-        const docRef = doc(db as Firestore, 'products', editingProduct.firestoreId);
+        const docRef = doc(firestore, 'products', editingProduct.firestoreId);
         await updateDoc(docRef, productData);
         toast({ title: 'Sucesso!', description: 'Produto atualizado.' });
       } else {
-        await addDoc(collection(db as Firestore, 'products'), productData);
+        await addDoc(collection(firestore, 'products'), productData);
         toast({ title: 'Sucesso!', description: 'Produto criado.' });
       }
     } catch (error) {
@@ -508,8 +518,9 @@ export default function ProductManagement() {
   };
 
   const handleDelete = async (firestoreId: string) => {
+    if (!firestore) return;
     try {
-      await deleteDoc(doc(db as Firestore, 'products', firestoreId));
+      await deleteDoc(doc(firestore, 'products', firestoreId));
       toast({
         title: 'Produto Removido!',
         description: 'O produto foi removido com sucesso.',

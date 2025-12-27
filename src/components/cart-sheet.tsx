@@ -18,6 +18,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 
+const getCartItemId = (item: any) => `${item.product.id}-${item.variant.id}-${item.size}`;
+
 export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: boolean }) {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
 
@@ -45,56 +47,62 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
     <div className="flex h-full flex-col">
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-5 pr-6">
-          {cartItems.map(({ product, quantity }) => (
-            <div key={product.id} className="flex items-start gap-4">
-              <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-grow">
-                <Link
-                  href={`/produtos/${product.id}`}
-                  className="text-sm font-semibold hover:underline"
-                >
-                  {product.name}
-                </Link>
-                <p className="mt-1 font-bold text-sm">
-                  R$ {product.price.toFixed(2).replace(".", ",")}
-                </p>
-                 <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => updateQuantity(product.id, quantity - 1)}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-semibold">{quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => updateQuantity(product.id, quantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+          {cartItems.map((item) => {
+            const cartItemId = getCartItemId(item);
+            return (
+              <div key={cartItemId} className="flex items-start gap-4">
+                <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
+                  <Image
+                    src={item.variant.images[0]}
+                    alt={item.product.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
+                <div className="flex-grow">
+                  <Link
+                    href={`/produtos/${item.product.id}`}
+                    className="text-sm font-semibold hover:underline"
+                  >
+                    {item.product.name}
+                  </Link>
+                   <div className="text-xs text-muted-foreground">
+                      {item.variant.color} / {item.size}
+                    </div>
+                  <p className="mt-1 font-bold text-sm">
+                    R$ {item.product.price.toFixed(2).replace(".", ",")}
+                  </p>
+                   <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => updateQuantity(cartItemId, item.quantity - 1)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => updateQuantity(cartItemId, item.quantity + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive h-7 w-7"
+                  onClick={() => removeFromCart(cartItemId)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive h-7 w-7"
-                onClick={() => removeFromCart(product.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </ScrollArea>
       <div className="mt-auto pr-6">

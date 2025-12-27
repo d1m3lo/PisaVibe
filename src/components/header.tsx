@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import Link from "next/link";
@@ -21,7 +19,7 @@ import {
 import { useCart } from "@/context/cart-context";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -35,7 +33,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import {
@@ -43,10 +40,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { products } from "@/lib/products";
 import Image from "next/image";
 import { megaMenuData, type MenuCategory } from "@/lib/menu-data";
 import { CartSheet } from "./cart-sheet";
+import { useCollection, useMemoFirebase, useFirestore } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import type { Product } from "@/lib/types";
 
 const UserMenu = () => (
   <DropdownMenu>
@@ -96,28 +95,37 @@ const CartButton = () => {
 
 const SearchBar = () => {
   const router = useRouter();
-  const [query, setQuery] = React.useState("");
+  const [queryValue, setQueryValue] = React.useState("");
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  
+  const firestore = useFirestore();
 
-  const searchResults = React.useMemo(() => {
-    if (query.trim().length < 2) return [];
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), where('status', '==', 'ativo'));
+  }, [firestore]);
+
+  const { data: products } = useCollection<Product>(productsQuery);
+
+  const searchResults = useMemo(() => {
+    if (queryValue.trim().length < 2 || !products) return [];
     return products
-      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+      .filter((p) => p.name.toLowerCase().includes(queryValue.toLowerCase()))
       .slice(0, 5);
-  }, [query]);
+  }, [queryValue, products]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/produtos?q=${query}`);
+    if (queryValue.trim()) {
+      router.push(`/produtos?q=${queryValue}`);
       closePopover();
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
-    setQuery(newQuery);
+    setQueryValue(newQuery);
     if (newQuery.trim().length > 1 && !isPopoverOpen) {
       setIsPopoverOpen(true);
     } else if (newQuery.trim().length <= 1 && isPopoverOpen) {
@@ -134,7 +142,7 @@ const SearchBar = () => {
   
   const closePopover = () => {
     setIsPopoverOpen(false);
-    setQuery("");
+    setQueryValue("");
     inputRef.current?.blur();
   }
 
@@ -148,10 +156,10 @@ const SearchBar = () => {
             type="search"
             placeholder="Buscar produtos..."
             className="w-48 pr-10 lg:w-64"
-            value={query}
+            value={queryValue}
             onChange={handleInputChange}
             onFocus={() => {
-              if (query.trim().length > 1) setIsPopoverOpen(true);
+              if (queryValue.trim().length > 1) setIsPopoverOpen(true);
             }}
           />
           <Button
@@ -176,7 +184,7 @@ const SearchBar = () => {
               >
                 <div className="relative h-16 w-16 flex-shrink-0">
                   <Image
-                    src={product.images[0]}
+                    src={product.variants[0].images[0]}
                     alt={product.name}
                     fill
                     className="rounded-md object-cover"
@@ -192,7 +200,7 @@ const SearchBar = () => {
             ))}
           </div>
         ) : (
-          query.trim().length > 1 && (
+          queryValue.trim().length > 1 && (
             <p className="p-4 text-center text-sm text-muted-foreground">
               Nenhum resultado encontrado.
             </p>
@@ -202,33 +210,6 @@ const SearchBar = () => {
     </Popover>
   );
 };
-
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-            className
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  )
-})
-ListItem.displayName = 'ListItem'
-
 
 const MobileSubMenu = ({
   category,

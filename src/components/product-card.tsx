@@ -9,18 +9,27 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const firstVariant = product.variants?.[0];
+  const firstImage = firstVariant?.images?.[0];
+
   return (
     <Card className="flex h-full transform flex-col overflow-hidden rounded-lg border-0 shadow-sm transition-transform duration-300 hover:shadow-lg hover:-translate-y-2">
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
         <CardHeader className="p-0">
           <div className="relative h-64 w-full">
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+            {firstImage ? (
+              <Image
+                src={firstImage}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
+            ) : (
+               <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
+                Sem imagem
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="flex-grow p-4">

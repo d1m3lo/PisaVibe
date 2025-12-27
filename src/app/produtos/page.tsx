@@ -1,5 +1,6 @@
+"use client";
+
 import { ProductCard } from "@/components/product-card";
-import { products } from "@/lib/products";
 import {
   Select,
   SelectContent,
@@ -7,46 +8,71 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSearchParams } from 'next/navigation';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, Query } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import type { Product } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo } from "react";
 
-export const metadata = {
-  title: "Produtos - PISA VIBE",
-  description: "Explore nossa coleção de tênis e roupas.",
-};
+export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const firestore = useFirestore();
 
-export default function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const category = searchParams["categoria"] as string | undefined;
-  const subCategory = searchParams["tipo"] as string | undefined;
-  const searchQuery = searchParams["q"] as string | undefined;
+  const category = searchParams.get("categoria");
+  const subCategory = searchParams.get("tipo");
+  const gender = searchParams.get("genero");
+  const searchQuery = searchParams.get("q");
 
-  let filteredProducts = products;
-  let title = "Todos os Produtos";
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    
+    let q: Query = collection(firestore, 'products');
+    let filters = [where('status', '==', 'ativo')];
 
-  if (category && category !== 'lancamentos' && category !== 'ofertas') {
-     title = category.charAt(0).toUpperCase() + category.slice(1);
-    if(subCategory) {
-      filteredProducts = filteredProducts.filter(
-        (p) => p.category === subCategory
-      );
-      title += ` - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)}`;
+    if (category && category !== 'lancamentos' && category !== 'ofertas' && category !== 'perfumes') {
+      filters.push(where('category', '==', category));
+      if(subCategory) {
+        filters.push(where('subCategory', '==', subCategory));
+      }
+    } else if (category === 'perfumes') {
+       filters.push(where('category', '==', 'perfumes'));
+    } else if (category) {
+      filters.push(where('tags', 'array-contains', category));
     }
-  } else if (category) {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.category === category || (p.tags && p.tags.includes(category))
-    );
-     title = category.charAt(0).toUpperCase() + category.slice(1);
-  }
 
+    if (gender) {
+       filters.push(where('gender', '==', gender));
+    }
+    
+    if (searchQuery) {
+        // Firestore doesn't support native text search on parts of a string field.
+        // A more robust solution would use a third-party search service like Algolia.
+        // For this example, we will filter on the client-side.
+    }
+
+    return query(q, ...filters);
+  }, [firestore, category, subCategory, gender, searchQuery]);
+
+  const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
+
+  const filteredProducts = useMemo(() => {
+    if (!productsData) return [];
+    if (!searchQuery) return productsData;
+    return productsData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [productsData, searchQuery]);
+
+  let title = "Todos os Produtos";
   if (searchQuery) {
-    filteredProducts = filteredProducts.filter((p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    title = `Busca por: "${searchQuery}"`
+    title = `Busca por: "${searchQuery}"`;
+  } else {
+    let titleParts = [];
+    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
+    if (category) titleParts.push(category.charAt(0).toUpperCase() + category.slice(1));
+    if (subCategory) titleParts.push(subCategory.charAt(0).toUpperCase() + subCategory.slice(1));
+    if (titleParts.length > 0) title = titleParts.join(' - ');
   }
-
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -54,22 +80,22 @@ export default function ProductsPage({
         <h1 className="font-headline text-4xl font-bold">
           {title}
         </h1>
-        {/* TODO: Add sorting functionality */}
-        {/* <div className="w-full md:w-auto">
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="relevance">Relevância</SelectItem>
-              <SelectItem value="price-asc">Preço: Menor para Maior</SelectItem>
-              <SelectItem value="price-desc">Preço: Maior para Menor</SelectItem>
-            </SelectContent>
-          </Select>
-        </div> */}
+        {/* Sorting functionality can be added here */}
       </div>
 
-      {filteredProducts.length > 0 ? (
+      {isLoading ? (
+         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+             <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[300px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
@@ -77,7 +103,7 @@ export default function ProductsPage({
         </div>
       ) : (
         <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">Nenhum produto encontrado para esta categoria.</p>
+            <p className="text-xl text-muted-foreground">Nenhum produto encontrado.</p>
         </div>
       )}
     </div>

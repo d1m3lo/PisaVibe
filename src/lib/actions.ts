@@ -1,7 +1,27 @@
 "use server";
 
 import { getPersonalizedRecommendations } from "@/ai/flows/personalized-product-recommendations";
-import { products } from "./products";
+import { collection, getDocs, Firestore, query, where, limit } from 'firebase/firestore';
+import { getSdks } from "@/firebase";
+import type { Product } from "./types";
+
+async function getProductsFromFirestore(ids?: string[]): Promise<Product[]> {
+    const { firestore } = getSdks();
+    const productsRef = collection(firestore as Firestore, 'products');
+    
+    let q;
+    if (ids && ids.length > 0) {
+        q = query(productsRef, where('id', 'in', ids), where('status', '==', 'ativo'));
+    } else {
+        q = query(productsRef, where('status', '==', 'ativo'), limit(8));
+    }
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => doc.data() as Product);
+}
 
 export async function getRecommendationsAction() {
   try {
@@ -14,15 +34,14 @@ export async function getRecommendationsAction() {
     const recommendations = await getPersonalizedRecommendations(
       simulatedUserHistory
     );
-    const recommendedIds = recommendations.recommendedProducts.split(",");
+    const recommendedIds = recommendations.recommendedProducts.split(",").map(id => id.trim());
 
-    const recommendedProducts = products.filter((p) =>
-      recommendedIds.includes(p.id)
-    );
+    let recommendedProducts = await getProductsFromFirestore(recommendedIds);
 
     // Ensure we always return a consistent number of products if possible
     if (recommendedProducts.length < 4) {
-      const additionalProducts = products
+      const fallbackProducts = await getProductsFromFirestore();
+      const additionalProducts = fallbackProducts
         .filter(p => !recommendedIds.includes(p.id))
         .slice(0, 4 - recommendedProducts.length);
       return [...recommendedProducts, ...additionalProducts];
@@ -33,6 +52,6 @@ export async function getRecommendationsAction() {
   } catch (error) {
     console.error("Error getting recommendations:", error);
     // Fallback to a default list of popular products
-    return products.slice(4, 8);
+    return getProductsFromFirestore();
   }
 }

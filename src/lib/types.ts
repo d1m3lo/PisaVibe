@@ -25,6 +25,7 @@ export type Product = {
   rating: number;
   reviews: number;
   status: 'ativo' | 'inativo';
+  tags?: string[];
 };
 
 export type CartItem = {

@@ -114,11 +114,11 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {cartItems.map(({ product, quantity }) => (
-                  <div key={product.id} className="flex items-center gap-4">
+                {cartItems.map(({ product, variant, size, quantity }) => (
+                  <div key={`${product.id}-${variant.id}-${size}`} className="flex items-center gap-4">
                     <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
                       <Image
-                        src={product.images[0]}
+                        src={variant.images[0]}
                         alt={product.name}
                         fill
                         className="object-cover"
@@ -129,6 +129,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-grow">
                       <p className="font-semibold">{product.name}</p>
+                       <p className="text-xs text-muted-foreground">{variant.color} / {size}</p>
                     </div>
                     <p className="font-semibold">
                       R$ {(product.price * quantity).toFixed(2).replace(".", ",")}

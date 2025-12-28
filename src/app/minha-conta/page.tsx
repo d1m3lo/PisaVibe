@@ -131,8 +131,8 @@ export default function MyAccountPage() {
 
   const menuItems = [
       { id: 'profile', label: 'Detalhes do Perfil', icon: User },
-      { id: 'password', label: 'Alterar Senha', icon: KeyRound },
       { id: 'favorites', label: 'Favoritos', icon: Heart },
+      { id: 'password', label: 'Alterar Senha', icon: KeyRound },
   ]
 
   return (

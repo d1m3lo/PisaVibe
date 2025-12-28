@@ -1,21 +1,8 @@
 
 import Link from "next/link";
-import { Twitter, Instagram, Facebook } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { megaMenuData } from "@/lib/menu-data";
-
-const SocialLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => (
-  <Link href={href} className="text-muted-foreground hover:text-foreground">
-    {children}
-  </Link>
-);
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <li>
@@ -80,17 +67,6 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} PISA VIBE. Todos os direitos reservados.
           </p>
-          <div className="flex items-center gap-4">
-            <SocialLink href="#">
-              <Instagram className="h-5 w-5" />
-            </SocialLink>
-            <SocialLink href="#">
-              <Facebook className="h-5 w-5" />
-            </SocialLink>
-            <SocialLink href="#">
-              <Twitter className="h-5 w-5" />
-            </SocialLink>
-          </div>
         </div>
       </div>
     </footer>

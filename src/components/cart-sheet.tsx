@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
-import { Product } from "@/lib/types";
+import { Product, CartItem } from "@/lib/types";
 
 export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: boolean }) {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
@@ -41,7 +41,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
     );
   }
   
-  const getDisplayImage = (item: { product: Product; selectedImage?: string; variant: { images: string[] } }) => {
+  const getDisplayImage = (item: CartItem) => {
     if (item.product.subCategory === 'mochilas' && item.selectedImage) {
         return item.selectedImage;
     }
@@ -60,7 +60,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
                   <Image
                     src={getDisplayImage(item)}
-                    alt={item.product.name}
+                    alt={item.displayName || item.product.name}
                     fill
                     className="object-cover"
                   />
@@ -70,7 +70,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
                     href={`/produtos/${item.product.id}`}
                     className="text-sm font-semibold hover:underline"
                   >
-                    {item.product.name}
+                    {item.displayName || item.product.name}
                   </Link>
                    <div className="text-xs text-muted-foreground">
                       {item.variant.color}

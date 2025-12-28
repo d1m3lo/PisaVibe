@@ -9,6 +9,7 @@ export type Variant = {
   color: string;
   colorHex: string;
   images: string[];
+  imageNames?: string[]; // Nome correspondente a cada imagem (para mochilas)
   sizes: SizeInfo[];
 };
 
@@ -38,6 +39,7 @@ export type CartItem = {
   size: string;
   quantity: number;
   selectedImage?: string; // Add selectedImage for backpacks
+  displayName?: string; // Nome a ser exibido no carrinho (para mochilas)
 };
 
 export type UserProfile = {

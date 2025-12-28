@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, variant: Variant, size: string, quantity?: number, selectedImage?: string) => void;
+  addToCart: (product: Product, variant: Variant, size: string, quantity?: number, selectedImage?: string, displayName?: string) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -18,9 +18,11 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const getCartItemId = (product: Product, variant: Variant, size: string, selectedImage?: string) => {
+    // For backpacks with selectable images, the image URL is part of the unique ID
     if (product.subCategory === 'mochilas') {
         return `${product.id}-${variant.id}-${selectedImage}`;
     }
+    // For other products, it's product + variant + size
     return `${product.id}-${variant.id}-${size}`;
 };
 
@@ -29,7 +31,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
-  const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1, selectedImage?: string) => {
+  const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1, selectedImage?: string, displayName?: string) => {
     setCartItems((prevItems) => {
         const cartItemId = getCartItemId(product, variant, size, selectedImage);
         const existingItemIndex = prevItems.findIndex(
@@ -42,13 +44,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return updatedItems;
       }
       
-      const cartItem: CartItem = { product, variant, size, quantity, selectedImage };
+      const cartItem: CartItem = { product, variant, size, quantity, selectedImage, displayName };
       return [...prevItems, cartItem];
     });
 
     toast({
       title: "Produto adicionado!",
-      description: `${product.name} foi adicionado ao seu carrinho.`,
+      description: `${displayName || product.name} foi adicionado ao seu carrinho.`,
     });
   };
 

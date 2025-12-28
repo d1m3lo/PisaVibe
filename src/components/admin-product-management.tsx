@@ -126,7 +126,7 @@ const ProductForm = ({
     gender: product?.gender || 'masculino',
     category: product?.category || 'calcados',
     subCategory: product?.subCategory || '',
-    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], sizes: [] }],
+    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], imageNames: [], sizes: [] }],
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
@@ -220,12 +220,17 @@ const ProductForm = ({
     }));
   };
   
-  const handleImageChange = (variantId: string, index: number, value: string) => {
+  const handleImageChange = (variantId: string, index: number, field: 'url' | 'name', value: string) => {
     const newVariants = formData.variants.map(v => {
       if (v.id === variantId) {
         const newImages = [...v.images];
-        newImages[index] = value;
-        return { ...v, images: newImages };
+        const newImageNames = [...(v.imageNames || [])];
+        if (field === 'url') {
+            newImages[index] = value;
+        } else {
+            newImageNames[index] = value;
+        }
+        return { ...v, images: newImages, imageNames: newImageNames };
       }
       return v;
     });
@@ -235,7 +240,8 @@ const ProductForm = ({
   const addImageInput = (variantId: string) => {
      const newVariants = formData.variants.map(v => {
       if (v.id === variantId) {
-        return { ...v, images: [...v.images, ''] };
+        const newImageNames = v.imageNames ? [...v.imageNames, ''] : Array(v.images.length + 1).fill('');
+        return { ...v, images: [...v.images, ''], imageNames: newImageNames };
       }
       return v;
     });
@@ -246,7 +252,8 @@ const ProductForm = ({
     const newVariants = formData.variants.map(v => {
       if (v.id === variantId) {
          const newImages = v.images.filter((_, i) => i !== index);
-         return { ...v, images: newImages };
+         const newImageNames = v.imageNames?.filter((_, i) => i !== index);
+         return { ...v, images: newImages, imageNames: newImageNames };
       }
       return v;
     });
@@ -258,7 +265,7 @@ const ProductForm = ({
       ...prev,
       variants: [
         ...prev.variants,
-        { id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], sizes: [] },
+        { id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], imageNames: [], sizes: [] },
       ],
     }));
   };
@@ -280,8 +287,6 @@ const ProductForm = ({
             } else {
                 newSizes = [...v.sizes, { size, stock: Math.max(0, stock) }];
             }
-            // Filter out sizes with empty stock unless it's an existing product being edited
-            // newSizes = newSizes.filter(s => s.stock > 0);
             return { ...v, sizes: newSizes };
         }
         return v;
@@ -295,7 +300,8 @@ const ProductForm = ({
     
     const finalVariants = formData.variants.map(v => ({
       ...v,
-      images: v.images.filter(Boolean)
+      images: v.images.filter(Boolean),
+      imageNames: formData.subCategory === 'mochilas' ? v.imageNames : undefined
     }));
 
     if (finalVariants.some(v => v.images.length === 0)) {
@@ -321,13 +327,19 @@ const ProductForm = ({
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
       origin: formData.origin,
-      ...(oldPriceValue > 0 && { oldPrice: oldPriceValue }),
     };
+
+    if (oldPriceValue > 0) {
+      productData.oldPrice = oldPriceValue;
+    }
+
+
     await onSave(productData);
     onClose();
   };
 
   const isPerfume = formData.category === 'perfumes';
+  const isBackpack = formData.subCategory === 'mochilas';
 
   return (
     <form onSubmit={handleSubmit}>
@@ -357,7 +369,7 @@ const ProductForm = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="origin">Origem (Admin)</Label>
-            <Input id="origin" value={formData.origin} onChange={handleChange} placeholder="URL ou nome do fornecedor"/>
+            <Input id="origin" value={formData.origin} onChange={handleChange} placeholder="Nome do site/fornecedor"/>
           </div>
           
            <div className="space-y-4">
@@ -448,21 +460,21 @@ const ProductForm = ({
           </div>
 
           <div className="space-y-4">
-            <Label>{isPerfume ? 'Imagem e Estoque' : 'Variantes de Cor'}</Label>
+            <Label>{isPerfume || isBackpack ? 'Imagens e Estoque' : 'Variantes de Cor'}</Label>
             <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
               {formData.variants.map((variant, vIndex) => {
-                if (isPerfume && vIndex > 0) return null; // Show only one variant for perfume
+                if ((isPerfume || isBackpack) && vIndex > 0) return null; // Show only one variant
                 return (
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
                    <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4">
-                            {!isPerfume && <ColorSwatch colorHex={variant.colorHex} />}
-                            <span className="font-semibold">{isPerfume ? 'Imagem e Estoque' : (variant.color || "Nova Cor")}</span>
+                            {!(isPerfume || isBackpack) && <ColorSwatch colorHex={variant.colorHex} />}
+                            <span className="font-semibold">{isPerfume || isBackpack ? 'Imagens e Estoque' : (variant.color || "Nova Cor")}</span>
                         </div>
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        {!isPerfume && (
+                        {!(isPerfume || isBackpack) && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label>Nome da Cor</Label>
@@ -497,15 +509,24 @@ const ProductForm = ({
                         )}
 
                         <div className="space-y-3">
-                          <Label>Links das Imagens {isPerfume ? '' : 'para esta Cor'}</Label>
+                          <Label>Links das Imagens</Label>
                           {variant.images.map((image, index) => (
                             <div key={index} className="flex items-center gap-2">
-                              <Input
-                                placeholder={`URL da Imagem ${index + 1}`}
-                                value={image}
-                                onChange={(e) => handleImageChange(variant.id, index, e.target.value)}
-                                required={index === 0}
-                              />
+                              <div className="flex-grow space-y-1">
+                                <Input
+                                    placeholder={`URL da Imagem ${index + 1}`}
+                                    value={image}
+                                    onChange={(e) => handleImageChange(variant.id, index, 'url', e.target.value)}
+                                    required={index === 0}
+                                />
+                                {isBackpack && (
+                                    <Input
+                                        placeholder="Nome da variação (Ex: Mochila Stitch)"
+                                        value={variant.imageNames?.[index] || ''}
+                                        onChange={(e) => handleImageChange(variant.id, index, 'name', e.target.value)}
+                                    />
+                                )}
+                              </div>
                               {variant.images.length > 1 && (
                                 <Button type="button" variant="ghost" size="icon" onClick={() => removeImageInput(variant.id, index)} className="text-destructive">
                                   <X className="h-4 w-4" />
@@ -518,7 +539,7 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {isPerfume ? (
+                        {isPerfume || isBackpack ? (
                            <div className="space-y-2">
                                 <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
                                 <Input 
@@ -574,7 +595,7 @@ const ProductForm = ({
                             </div>
                           )}
 
-                         {!isPerfume && formData.variants.length > 1 && (
+                         {!(isPerfume || isBackpack) && formData.variants.length > 1 && (
                             <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variant.id)} className="mt-4">
                                 Remover Variante de Cor
                             </Button>
@@ -586,7 +607,7 @@ const ProductForm = ({
               })}
             </Accordion>
 
-            {!isPerfume && (
+            {!(isPerfume || isBackpack) && (
               <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
                   <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
               </Button>
@@ -747,7 +768,7 @@ export default function ProductManagement() {
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {product.origin || 'N/A'}
+                   {product.origin || 'N/A'}
                 </TableCell>
                 <TableCell>
                   R$ {product.price.toFixed(2).replace('.', ',')}

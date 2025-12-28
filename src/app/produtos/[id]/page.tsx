@@ -86,6 +86,7 @@ export default function ProductPage() {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
   
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   
@@ -109,22 +110,31 @@ export default function ProductPage() {
     });
   }, [selectedVariant?.sizes]);
 
-  useEffect(() => {
-    if (product && product.variants.length > 0 && !selectedVariant) {
-      const defaultVariant = product.variants[0];
-      setSelectedVariant(defaultVariant);
-      setSelectedImage(defaultVariant.images[0] || null);
-      
-      const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
-      if (firstAvailableSize) {
-        setSelectedSize(firstAvailableSize.size);
-      }
-    }
-  }, [product, selectedVariant]);
-  
   const isPerfume = product?.category === 'perfumes';
   const isBackpack = product?.subCategory === 'mochilas';
   const allImages = selectedVariant?.images ?? [];
+
+  useEffect(() => {
+    if (product) {
+        setDisplayName(product.name);
+        if (product.variants.length > 0 && !selectedVariant) {
+            const defaultVariant = product.variants[0];
+            setSelectedVariant(defaultVariant);
+            
+            const firstImage = defaultVariant.images[0] || null;
+            setSelectedImage(firstImage);
+
+            if (isBackpack && defaultVariant.imageNames?.[0]) {
+                setDisplayName(defaultVariant.imageNames[0]);
+            }
+            
+            const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
+            if (firstAvailableSize) {
+                setSelectedSize(firstAvailableSize.size);
+            }
+        }
+    }
+  }, [product, selectedVariant, isBackpack]);
 
   useEffect(() => {
     if (!carouselApi || !selectedImage) return;
@@ -137,9 +147,7 @@ export default function ProductPage() {
     const handleSelect = () => {
       const newIndex = carouselApi.selectedScrollSnap();
       if(allImages[newIndex] && allImages[newIndex] !== selectedImage) {
-        if(isBackpack) {
-            setSelectedImage(allImages[newIndex]);
-        }
+        handleImageSelect(allImages[newIndex]);
       }
     };
 
@@ -148,23 +156,38 @@ export default function ProductPage() {
     return () => {
       carouselApi.off("select", handleSelect);
     };
-  }, [carouselApi, selectedImage, isBackpack, allImages]);
+  }, [carouselApi, selectedImage, allImages]);
 
 
   const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant);
-    setSelectedImage(variant.images[0] || null);
+    const firstImage = variant.images[0] || null;
+    handleImageSelect(firstImage);
     carouselApi?.scrollTo(0, true);
-    // Reset size selection or pick first available
+
     const firstAvailableSize = variant.sizes.find(s => s.stock > 0);
     setSelectedSize(firstAvailableSize ? firstAvailableSize.size : null);
   };
+  
+  const handleImageSelect = (image: string | null) => {
+    setSelectedImage(image);
+    if (isBackpack && image && selectedVariant?.images && selectedVariant?.imageNames) {
+        const imageIndex = selectedVariant.images.indexOf(image);
+        if (imageIndex !== -1 && selectedVariant.imageNames[imageIndex]) {
+            setDisplayName(selectedVariant.imageNames[imageIndex]);
+        } else {
+            setDisplayName(product?.name ?? '');
+        }
+    } else {
+        setDisplayName(product?.name ?? '');
+    }
+  };
 
   const handleAddToCart = () => {
-    if (!product || !selectedVariant || !selectedImage) return;
+    if (!product || !selectedVariant || (!isBackpack && !selectedImage)) return;
 
     if (isPerfume || isBackpack) {
-        addToCart(product, selectedVariant, 'U', 1, selectedImage);
+        addToCart(product, selectedVariant, 'U', 1, selectedImage, isBackpack ? displayName : undefined);
     } else if (selectedSize) {
         addToCart(product, selectedVariant, selectedSize, 1, selectedImage);
     }
@@ -216,7 +239,7 @@ export default function ProductPage() {
                       <div className="relative aspect-square w-full overflow-hidden rounded-lg">
                         <Image
                           src={img}
-                          alt={`${product.name} - Imagem ${index + 1}`}
+                          alt={`${displayName} - Imagem ${index + 1}`}
                           fill
                           className="object-cover"
                           priority={index === 0}
@@ -249,11 +272,11 @@ export default function ProductPage() {
                                 "relative aspect-square w-full overflow-hidden rounded-md transition-all",
                                 selectedImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
                             )}
-                            onClick={() => setSelectedImage(img)}
+                            onClick={() => handleImageSelect(img)}
                         >
                             <Image
                                 src={img}
-                                alt={`${product.name} - Miniatura ${index + 1}`}
+                                alt={`${selectedVariant?.imageNames?.[index] || product.name} - Miniatura ${index + 1}`}
                                 fill
                                 className="object-cover"
                             />
@@ -269,7 +292,7 @@ export default function ProductPage() {
              <div>
                 {product.brand && <p className="text-sm uppercase tracking-wider text-muted-foreground">{product.brand}</p>}
                 <h1 className="font-headline text-3xl font-bold md:text-4xl">
-                    {product.name}
+                    {displayName}
                 </h1>
              </div>
             <QualityBadge quality={product.quality} />

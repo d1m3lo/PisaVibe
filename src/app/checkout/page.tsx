@@ -183,14 +183,14 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {cartItems.map(({ product, variant, size, quantity, selectedImage }) => {
+                {cartItems.map(({ product, variant, size, quantity, selectedImage, displayName }) => {
                   const displayImage = product.subCategory === 'mochilas' && selectedImage ? selectedImage : variant.images[0];
                   return (
                     <div key={`${product.id}-${variant.id}-${size}-${selectedImage}`} className="flex items-center gap-4">
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
                         <Image
                             src={displayImage}
-                            alt={product.name}
+                            alt={displayName || product.name}
                             fill
                             className="object-cover"
                         />
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
                             </div>
                         </div>
                         <div className="flex-grow">
-                        <p className="font-semibold">{product.name}</p>
+                        <p className="font-semibold">{displayName || product.name}</p>
                         <p className="text-xs text-muted-foreground">
                             {variant.color}
                             {product.subCategory !== 'mochilas' && ` / ${size}`}

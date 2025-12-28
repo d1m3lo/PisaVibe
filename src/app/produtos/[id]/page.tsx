@@ -145,12 +145,19 @@ export default function ProductPage() {
   };
 
   const handleAddToCart = () => {
-    if (product && selectedVariant && selectedSize) {
-      addToCart(product, selectedVariant, selectedSize);
+    if (!product || !selectedVariant) return;
+
+    if (product.category === 'perfumes') {
+        addToCart(product, selectedVariant, 'U');
+    } else if (selectedSize) {
+        addToCart(product, selectedVariant, selectedSize);
     }
   };
   
-  const isAddToCartDisabled = !selectedSize || (selectedVariant?.sizes.find(s => s.size === selectedSize)?.stock || 0) === 0;
+  const isPerfume = product?.category === 'perfumes';
+  const isAddToCartDisabled = isPerfume 
+    ? (selectedVariant?.sizes.find(s => s.size === 'U')?.stock || 0) === 0
+    : !selectedSize || (selectedVariant?.sizes.find(s => s.size === selectedSize)?.stock || 0) === 0;
 
   if (isLoading || !id) {
     return <ProductPageSkeleton />;
@@ -265,50 +272,55 @@ export default function ProductPage() {
             <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
           </div>
           
-           <div className="mt-8">
-            <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
-            <div className="flex flex-wrap gap-3">
-              {product.variants.map((variant) => (
-                <button
-                  key={variant.id}
-                  onClick={() => handleVariantSelect(variant)}
-                  className={cn(
-                    "relative rounded-full transition-all",
-                    selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
-                  )}
-                >
-                  <ColorSwatch
-                    colorHex={variant.colorHex}
-                    title={variant.color}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
+          {!isPerfume && (
+            <>
+                <div className="mt-8">
+                    <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
+                    <div className="flex flex-wrap gap-3">
+                    {product.variants.map((variant) => (
+                        <button
+                        key={variant.id}
+                        onClick={() => handleVariantSelect(variant)}
+                        className={cn(
+                            "relative rounded-full transition-all",
+                            selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
+                        )}
+                        >
+                        <ColorSwatch
+                            colorHex={variant.colorHex}
+                            title={variant.color}
+                        />
+                        </button>
+                    ))}
+                    </div>
+                </div>
 
-          <div className="mt-8">
-             <h3 className="mb-2 text-sm font-semibold">Tamanho:</h3>
-             <div className="flex flex-wrap gap-2">
-              {sortedSizes.map(({ size, stock }) => (
-                <Button
-                  key={size}
-                  variant={selectedSize === size ? "default" : "outline"}
-                  onClick={() => setSelectedSize(size)}
-                  disabled={stock === 0}
-                  className={cn(
-                    "w-16",
-                    stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
-                  )}
-                >
-                  {size}
-                </Button>
-              ))}
-             </div>
-          </div>
+                <div className="mt-8">
+                    <h3 className="mb-2 text-sm font-semibold">Tamanho:</h3>
+                    <div className="flex flex-wrap gap-2">
+                    {sortedSizes.map(({ size, stock }) => (
+                        <Button
+                        key={size}
+                        variant={selectedSize === size ? "default" : "outline"}
+                        onClick={() => setSelectedSize(size)}
+                        disabled={stock === 0}
+                        className={cn(
+                            "w-16",
+                            stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
+                        )}
+                        >
+                        {size}
+                        </Button>
+                    ))}
+                    </div>
+                </div>
+            </>
+          )}
+
 
           <div className="mt-8">
              <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
-                {isAddToCartDisabled ? (selectedVariant?.sizes.every(s => s.stock === 0) ? "Esgotado" : "Selecione um tamanho") : "Adicionar ao Carrinho"}
+                {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
             </Button>
           </div>
         </div>

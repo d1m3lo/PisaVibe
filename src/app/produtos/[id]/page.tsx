@@ -280,7 +280,6 @@ export default function ProductPage() {
                     <p className="text-4xl font-bold">
                         R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
-                    <p className="text-sm text-muted-foreground">Em até 6x s/ juros no cartão</p>
                 </div>
 
                 <div className="space-y-4">

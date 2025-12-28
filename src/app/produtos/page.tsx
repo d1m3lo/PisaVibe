@@ -4,7 +4,7 @@
 import { ProductCard } from "@/components/product-card";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query, and } from 'firebase/firestore';
+import { collection, query, where, Query, and, or } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,11 +19,14 @@ export default function ProductsPage() {
   const gender = searchParams.get("genero");
   const searchQuery = searchParams.get("q");
 
+  // This query will fetch a broad set of products.
+  // Specific tag-based filtering ('lancamentos', 'ofertas') will be done client-side.
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
     let filters = [where('status', '==', 'ativo')];
 
+    // Main category filter (e.g., 'roupas', 'calcados')
     if (category && category !== 'lancamentos' && category !== 'ofertas') {
         filters.push(where('category', '==', category));
     }
@@ -32,10 +35,6 @@ export default function ProductsPage() {
         // Handle variations like 'calcas' vs 'calças'
         const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : subCategory;
         filters.push(where('subCategory', '==', normalizedSubCategory));
-    }
-
-    if (gender) {
-      filters.push(where('gender', 'in', [gender, 'unissex']));
     }
     
     const q = collection(firestore, 'products');
@@ -47,9 +46,9 @@ export default function ProductsPage() {
       return query(q, filters[0]);
     }
 
-    return query(q); // Fallback to query all active products if no filters
+    return query(q, where('status', '==', 'ativo')); // Fallback to all active products
     
-  }, [firestore, category, subCategory, gender]);
+  }, [firestore, category, subCategory]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
 
@@ -58,7 +57,12 @@ export default function ProductsPage() {
     
     let products = [...productsData];
 
-    // Client-side filtering for complex cases
+    // Apply gender filter client-side, as it can be 'unissex'
+    if (gender) {
+      products = products.filter(p => p.gender === gender || p.gender === 'unissex');
+    }
+
+    // Apply special category tags ('lancamentos', 'ofertas') client-side
     if (category && (category === 'lancamentos' || category === 'ofertas')) {
       products = products.filter(p => p.tags?.includes(category));
     }
@@ -69,7 +73,7 @@ export default function ProductsPage() {
 
     return products;
 
-  }, [productsData, searchQuery, category]);
+  }, [productsData, searchQuery, category, gender]);
 
 
   let title = "Todos os Produtos";
@@ -77,13 +81,14 @@ export default function ProductsPage() {
     title = `Busca por: "${searchQuery}"`;
   } else {
     let titleParts = [];
-    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (category) {
         let categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categoryTitle.toLowerCase() === 'calcados' || categoryTitle.toLowerCase() === 'calçados') categoryTitle = 'Calçados';
         if (categoryTitle.toLowerCase() === 'lancamentos') categoryTitle = 'Lançamentos';
+        if (categoryTitle.toLowerCase() === 'ofertas') categoryTitle = 'Ofertas';
+        if (categoryTitle.toLowerCase() === 'calcados' || categoryTitle.toLowerCase() === 'calçados') categoryTitle = 'Calçados';
         titleParts.push(categoryTitle);
     }
+    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (subCategory) {
        let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
        if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';

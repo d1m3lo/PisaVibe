@@ -47,6 +47,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'artwalk.vtexassets.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

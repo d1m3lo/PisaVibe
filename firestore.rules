@@ -1,36 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow public read access for products
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid in [
+          "QZavnE0270YjhMHsyQOb7FBzFSK2",
+          "UaoQYEmCthasXz2UQlAEhHWZCGE2"
+        ];
+    }
+
+    // PRODUCTS
     match /products/{productId} {
       allow get, list: if true;
-      // Allow write (create, update, delete) only if the user is authenticated with Google
-      allow write: if request.auth != null && request.auth.token.firebase.sign_in_provider == 'google.com';
+      allow write: if isAdmin();
     }
 
-    // Allow public read access for banners
+    // BANNERS
     match /banners/{bannerId} {
       allow get, list: if true;
-      allow write: if false; // Admin only
+      allow write: if isAdmin();
     }
 
-    // Rules for the users collection
+    // USERS
     match /users/{userId} {
-      // Any authenticated user can list users (for admin panel)
-      allow list: if request.auth != null;
+      allow list: if isAdmin();
 
-      // A user can create their own profile document
       allow create: if request.auth != null && request.auth.uid == userId;
 
-      // A user can only get and update their own document
       allow get, update: if request.auth != null && request.auth.uid == userId;
-      
-      // Users cannot delete their own accounts from the client
-      allow delete: if false; 
+
+      allow delete: if false;
     }
 
-    // Default deny all other document access
+    // DEFAULT
     match /{document=**} {
       allow read, write: if false;
     }

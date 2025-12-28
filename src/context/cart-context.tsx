@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
@@ -6,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, variant: Variant, size: string, quantity?: number) => void;
+  addToCart: (product: Product, variant: Variant, size: string, quantity?: number, selectedImage?: string) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -16,15 +17,24 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+export const getCartItemId = (product: Product, variant: Variant, size: string, selectedImage?: string) => {
+    if (product.subCategory === 'mochilas') {
+        return `${product.id}-${variant.id}-${selectedImage}`;
+    }
+    return `${product.id}-${variant.id}-${size}`;
+};
+
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
-  const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1) => {
+  const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1, selectedImage?: string) => {
     setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex(
-        (item) => item.product.id === product.id && item.variant.id === variant.id && item.size === size
-      );
+        const cartItemId = getCartItemId(product, variant, size, selectedImage);
+        const existingItemIndex = prevItems.findIndex(
+            (item) => getCartItemId(item.product, item.variant, item.size, item.selectedImage) === cartItemId
+        );
 
       if (existingItemIndex > -1) {
         const updatedItems = [...prevItems];
@@ -32,21 +42,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return updatedItems;
       }
       
-      const cartItem: CartItem = { product, variant, size, quantity };
+      const cartItem: CartItem = { product, variant, size, quantity, selectedImage };
       return [...prevItems, cartItem];
     });
 
     toast({
       title: "Produto adicionado!",
-      description: `${product.name} (${variant.color}, ${size}) foi adicionado ao seu carrinho.`,
+      description: `${product.name} foi adicionado ao seu carrinho.`,
     });
   };
 
-  const getCartItemId = (item: CartItem) => `${item.product.id}-${item.variant.id}-${item.size}`;
-
   const removeFromCart = (cartItemId: string) => {
     setCartItems((prevItems) =>
-      prevItems.filter((item) => getCartItemId(item) !== cartItemId)
+      prevItems.filter((item) => getCartItemId(item.product, item.variant, item.size, item.selectedImage) !== cartItemId)
     );
     toast({
       title: "Produto removido",
@@ -61,7 +69,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        getCartItemId(item) === cartItemId ? { ...item, quantity } : item
+        getCartItemId(item.product, item.variant, item.size, item.selectedImage) === cartItemId ? { ...item, quantity } : item
       )
     );
   };

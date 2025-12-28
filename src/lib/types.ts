@@ -37,6 +37,7 @@ export type CartItem = {
   variant: Variant;
   size: string;
   quantity: number;
+  selectedImage?: string; // Add selectedImage for backpacks
 };
 
 export type UserProfile = {

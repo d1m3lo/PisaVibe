@@ -1,24 +1,22 @@
+
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/context/cart-context";
+import { useCart, getCartItemId } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
-
-const getCartItemId = (item: any) => `${item.product.id}-${item.variant.id}-${item.size}`;
+import { Product } from "@/lib/types";
 
 export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: boolean }) {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
@@ -42,18 +40,26 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
       </div>
     );
   }
+  
+  const getDisplayImage = (item: { product: Product; selectedImage?: string; variant: { images: string[] } }) => {
+    if (item.product.subCategory === 'mochilas' && item.selectedImage) {
+        return item.selectedImage;
+    }
+    return item.variant.images[0];
+  }
+
 
   return (
     <div className="flex h-full flex-col">
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-5 pr-6">
           {cartItems.map((item) => {
-            const cartItemId = getCartItemId(item);
+            const cartItemId = getCartItemId(item.product, item.variant, item.size, item.selectedImage);
             return (
               <div key={cartItemId} className="flex items-start gap-4">
                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
                   <Image
-                    src={item.variant.images[0]}
+                    src={getDisplayImage(item)}
                     alt={item.product.name}
                     fill
                     className="object-cover"
@@ -67,7 +73,8 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
                     {item.product.name}
                   </Link>
                    <div className="text-xs text-muted-foreground">
-                      {item.variant.color} / {item.size}
+                      {item.variant.color}
+                      {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
                     </div>
                   <p className="mt-1 font-bold text-sm">
                     R$ {item.product.price.toFixed(2).replace(".", ",")}
@@ -122,13 +129,18 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
             <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
           </div>
         </div>
-        <SheetFooter className="mt-6">
-          <SheetClose asChild>
-             <Button asChild size="lg" className="w-full">
-                <Link href="/checkout">Finalizar Compra</Link>
-              </Button>
-          </SheetClose>
-        </SheetFooter>
+        <div className="mt-6 flex flex-col gap-2">
+            <SheetClose asChild>
+                <Button asChild size="lg" className="w-full">
+                    <Link href="/checkout">Finalizar Compra</Link>
+                </Button>
+            </SheetClose>
+            <SheetClose asChild>
+                <Button asChild variant="outline" className="w-full">
+                    <Link href="/carrinho">Ver Carrinho</Link>
+                </Button>
+            </SheetClose>
+        </div>
       </div>
     </div>
   );

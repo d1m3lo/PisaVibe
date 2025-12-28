@@ -85,9 +85,9 @@ export default function ProductPage() {
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
-  const [currentSlide, setCurrentSlide] = useState(0);
   
   const sortedSizes = useMemo(() => {
     if (!selectedVariant?.sizes) return [];
@@ -113,6 +113,7 @@ export default function ProductPage() {
     if (product && product.variants.length > 0 && !selectedVariant) {
       const defaultVariant = product.variants[0];
       setSelectedVariant(defaultVariant);
+      setSelectedImage(defaultVariant.images[0] || null);
       
       const firstAvailableSize = defaultVariant.sizes.find(s => s.stock > 0);
       if (firstAvailableSize) {
@@ -121,13 +122,25 @@ export default function ProductPage() {
     }
   }, [product, selectedVariant]);
   
-  useEffect(() => {
-    if (!carouselApi) return;
-    
-    setCurrentSlide(carouselApi.selectedScrollSnap());
+  const isPerfume = product?.category === 'perfumes';
+  const isBackpack = product?.subCategory === 'mochilas';
+  const allImages = selectedVariant?.images ?? [];
 
+  useEffect(() => {
+    if (!carouselApi || !selectedImage) return;
+    
+    const selectedImageIndex = allImages.indexOf(selectedImage);
+    if (selectedImageIndex !== -1 && carouselApi.selectedScrollSnap() !== selectedImageIndex) {
+        carouselApi.scrollTo(selectedImageIndex, true);
+    }
+    
     const handleSelect = () => {
-      setCurrentSlide(carouselApi.selectedScrollSnap());
+      const newIndex = carouselApi.selectedScrollSnap();
+      if(allImages[newIndex] && allImages[newIndex] !== selectedImage) {
+        if(isBackpack) {
+            setSelectedImage(allImages[newIndex]);
+        }
+      }
     };
 
     carouselApi.on("select", handleSelect);
@@ -135,11 +148,12 @@ export default function ProductPage() {
     return () => {
       carouselApi.off("select", handleSelect);
     };
-  }, [carouselApi]);
+  }, [carouselApi, selectedImage, isBackpack, allImages]);
 
 
   const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant);
+    setSelectedImage(variant.images[0] || null);
     carouselApi?.scrollTo(0, true);
     // Reset size selection or pick first available
     const firstAvailableSize = variant.sizes.find(s => s.stock > 0);
@@ -147,21 +161,19 @@ export default function ProductPage() {
   };
 
   const handleAddToCart = () => {
-    if (!product || !selectedVariant) return;
+    if (!product || !selectedVariant || !selectedImage) return;
 
-    if (product.category === 'perfumes') {
-        addToCart(product, selectedVariant, 'U');
+    if (isPerfume || isBackpack) {
+        addToCart(product, selectedVariant, 'U', 1, selectedImage);
     } else if (selectedSize) {
-        addToCart(product, selectedVariant, selectedSize);
+        addToCart(product, selectedVariant, selectedSize, 1, selectedImage);
     }
   };
+    
+  const stockForSelectedSize = selectedVariant?.sizes.find(s => (isPerfume || isBackpack) ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
   
-  const isPerfume = product?.category === 'perfumes';
-  
-  const stockForSelectedSize = selectedVariant?.sizes.find(s => isPerfume ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
-  
-  const isAddToCartDisabled = isPerfume 
-    ? (selectedVariant?.sizes.find(s => s.size === 'U')?.stock || 0) === 0
+  const isAddToCartDisabled = (isPerfume || isBackpack)
+    ? stockForSelectedSize === 0
     : !selectedSize || stockForSelectedSize === 0;
 
   if (isLoading || !id) {
@@ -180,7 +192,6 @@ export default function ProductPage() {
     )
   }
 
-  const allImages = selectedVariant?.images ?? [];
   const discountPercentage = product.oldPrice && product.oldPrice > product.price 
     ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
     : 0;
@@ -195,7 +206,7 @@ export default function ProductPage() {
               setApi={setCarouselApi} 
               className="w-full"
               opts={{
-                loop: true,
+                loop: allImages.length > 1,
               }}
             >
               <CarouselContent>
@@ -229,16 +240,16 @@ export default function ProductPage() {
                 )}
             </Carousel>
 
-            {allImages.length > 1 && (
-                <div className="grid grid-cols-5 gap-2">
+            {isBackpack && allImages.length > 1 && (
+                 <div className="grid grid-cols-5 gap-2">
                     {allImages.map((img, index) => (
                         <button
                             key={index}
                             className={cn(
                                 "relative aspect-square w-full overflow-hidden rounded-md transition-all",
-                                currentSlide === index ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
+                                selectedImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
                             )}
-                            onClick={() => carouselApi?.scrollTo(index)}
+                            onClick={() => setSelectedImage(img)}
                         >
                             <Image
                                 src={img}
@@ -264,7 +275,7 @@ export default function ProductPage() {
             <QualityBadge quality={product.quality} />
           </div>
           
-          {isPerfume ? (
+          {isPerfume || isBackpack ? (
             <div className="mt-8 flex flex-col space-y-6">
                 <div className="space-y-3 rounded-lg border bg-card p-4">
                     <div className="flex items-baseline gap-3">

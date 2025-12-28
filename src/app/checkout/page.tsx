@@ -183,28 +183,34 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {cartItems.map(({ product, variant, size, quantity }) => (
-                  <div key={`${product.id}-${variant.id}-${size}`} className="flex items-center gap-4">
-                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                      <Image
-                        src={variant.images[0]}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                      />
-                       <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-sm font-bold">
-                          {quantity}
+                {cartItems.map(({ product, variant, size, quantity, selectedImage }) => {
+                  const displayImage = product.subCategory === 'mochilas' && selectedImage ? selectedImage : variant.images[0];
+                  return (
+                    <div key={`${product.id}-${variant.id}-${size}-${selectedImage}`} className="flex items-center gap-4">
+                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
+                        <Image
+                            src={displayImage}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                        />
+                        <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-sm font-bold">
+                            {quantity}
+                            </div>
                         </div>
+                        <div className="flex-grow">
+                        <p className="font-semibold">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {variant.color}
+                            {product.subCategory !== 'mochilas' && ` / ${size}`}
+                        </p>
+                        </div>
+                        <p className="font-semibold">
+                        R$ {(product.price * quantity).toFixed(2).replace(".", ",")}
+                        </p>
                     </div>
-                    <div className="flex-grow">
-                      <p className="font-semibold">{product.name}</p>
-                       <p className="text-xs text-muted-foreground">{variant.color} / {size}</p>
-                    </div>
-                    <p className="font-semibold">
-                      R$ {(product.price * quantity).toFixed(2).replace(".", ",")}
-                    </p>
-                  </div>
-                ))}
+                  )
+                })}
                 <Separator />
                  <div className="space-y-2">
                     <Label htmlFor="coupon">Cupom de Desconto</Label>

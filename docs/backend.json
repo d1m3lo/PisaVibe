@@ -53,6 +53,10 @@
         "stockQuantity": {
           "type": "number",
           "description": "Number of units currently in stock."
+        },
+        "origin": {
+            "type": "string",
+            "description": "Origin of the product for admin use (e.g., supplier URL)."
         }
       },
       "required": [

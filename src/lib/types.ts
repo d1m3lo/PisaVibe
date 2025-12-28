@@ -29,6 +29,7 @@ export type Product = {
   status: 'ativo' | 'inativo';
   tags?: string[];
   quality?: 'Essential' | 'Select' | 'Elite';
+  origin?: string; // Campo de origem para uso do admin
 };
 
 export type CartItem = {

@@ -130,6 +130,7 @@ const ProductForm = ({
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
+    origin: product?.origin || '',
   });
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
@@ -317,6 +318,7 @@ const ProductForm = ({
       reviews: product?.reviews || 0,
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
+      origin: formData.origin,
     };
     await onSave(productData);
     onClose();
@@ -334,17 +336,23 @@ const ProductForm = ({
             <Label htmlFor="brand">Marca</Label>
             <Input id="brand" value={formData.brand} onChange={handleChange} />
           </div>
-          <div className="space-y-2">
-              <Label htmlFor="price">Preço</Label>
-              <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
-          </div>
-          <div className="space-y-2">
-              <Label htmlFor="oldPrice">Preço Antigo (Opcional)</Label>
-              <Input id="oldPrice" type="number" value={formData.oldPrice} onChange={handleChange} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="price">Preço</Label>
+                <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="oldPrice">Preço Antigo (Opcional)</Label>
+                <Input id="oldPrice" type="number" value={formData.oldPrice} onChange={handleChange} />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="longDescription">Descrição</Label>
             <Textarea id="longDescription" value={formData.longDescription} onChange={handleChange} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="origin">Origem (Admin)</Label>
+            <Input id="origin" value={formData.origin} onChange={handleChange} placeholder="URL ou nome do fornecedor"/>
           </div>
           
            <div className="space-y-4">
@@ -759,5 +767,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    

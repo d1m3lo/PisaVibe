@@ -13,9 +13,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AccountPageSkeleton = () => (
-    <div className="container mx-auto max-w-2xl px-4 py-12">
+    <div className="container mx-auto max-w-4xl px-4 py-12">
         <Skeleton className="h-10 w-1/3 mb-2" />
         <Skeleton className="h-5 w-2/3 mb-8" />
         <Card>
@@ -132,43 +133,90 @@ export default function MyAccountPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-12">
+    <div className="container mx-auto max-w-4xl px-4 py-12">
       <h1 className="font-headline text-4xl font-bold">Minha Conta</h1>
-      <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações pessoais e de entrega.</p>
+      <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações e preferências.</p>
       
-      <form onSubmit={handleSave}>
-        <Card className="mt-8">
-            <CardHeader>
-                <CardTitle>Detalhes do Perfil</CardTitle>
-                <CardDescription>
-                    Mantenha seus dados atualizados.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                 <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={profile.email} disabled />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="address">Endereço</Label>
-                    <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, bairro..." />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(XX) XXXXX-XXXX" />
-                </div>
-                <Button type="submit" disabled={isSaving}>
-                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
-                </Button>
-            </CardContent>
-        </Card>
-      </form>
+        <Tabs defaultValue="profile" className="mt-8">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="profile">Detalhes do Perfil</TabsTrigger>
+                <TabsTrigger value="password">Alterar Senha</TabsTrigger>
+                <TabsTrigger value="favorites">Favoritos</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile">
+                <form onSubmit={handleSave}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Detalhes do Perfil</CardTitle>
+                            <CardDescription>
+                                Mantenha seus dados de contato e entrega atualizados.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Nome Completo</Label>
+                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" value={profile.email} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="address">Endereço</Label>
+                                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, bairro..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Telefone</Label>
+                                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(XX) XXXXX-XXXX" />
+                            </div>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </form>
+            </TabsContent>
+
+            <TabsContent value="password">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Alterar Senha</CardTitle>
+                        <CardDescription>
+                            Para sua segurança, recomendamos o uso de uma senha forte.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">Funcionalidade a ser implementada.</p>
+                        <div className="space-y-2">
+                            <Label htmlFor="current-password">Senha Atual</Label>
+                            <Input id="current-password" type="password" disabled />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="new-password">Nova Senha</Label>
+                            <Input id="new-password" type="password" disabled />
+                        </div>
+                        <Button disabled>Salvar Nova Senha</Button>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="favorites">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Favoritos</CardTitle>
+                        <CardDescription>
+                           Seus produtos salvos para não perder de vista.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-center text-muted-foreground py-8">
+                             <p>Você ainda não tem produtos favoritos.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
     </div>
   );
 }
-
-    

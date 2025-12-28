@@ -3,17 +3,18 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, Users, ShoppingCart } from 'lucide-react';
+import { LogOut, Package, Users, ShoppingCart, LayoutDashboard } from 'lucide-react';
 import ProductManagement from './admin-product-management';
 import CustomerManagement from './admin-customer-management';
 import AdminOrderManagement from './admin-order-management';
+import AdminMainDashboard from './admin-main-dashboard';
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
     <div className="flex min-h-screen bg-secondary">
@@ -21,6 +22,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <div>
            <h2 className="font-headline text-2xl font-bold mb-8">Admin</h2>
             <nav className="flex flex-col gap-2">
+            <Button
+              variant={activeTab === 'dashboard' ? 'secondary' : 'ghost'}
+              className="justify-start gap-2"
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </Button>
             <Button
               variant={activeTab === 'products' ? 'secondary' : 'ghost'}
               className="justify-start gap-2"
@@ -53,6 +62,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </Button>
       </aside>
       <main className="flex-1 p-8">
+        {activeTab === 'dashboard' && <AdminMainDashboard />}
         {activeTab === 'products' && <ProductManagement />}
         {activeTab === 'customers' && <CustomerManagement />}
         {activeTab === 'orders' && <AdminOrderManagement />}
@@ -60,5 +70,3 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     </div>
   );
 }
-
-    

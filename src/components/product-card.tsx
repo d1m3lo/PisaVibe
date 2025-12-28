@@ -83,9 +83,16 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
         </CardContent>
       </Link>
-      <CardFooter className="flex items-center justify-between p-4 pt-0">
-        <div className="text-lg font-bold">
-          R$ {product.price.toFixed(2).replace(".", ",")}
+      <CardFooter className="flex items-end justify-between p-4 pt-0">
+        <div className="flex flex-col items-start">
+            {product.oldPrice && (
+                <span className="text-xs text-muted-foreground line-through">
+                R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                </span>
+            )}
+            <span className="text-lg font-bold">
+                R$ {product.price.toFixed(2).replace(".", ",")}
+            </span>
         </div>
         <AddToCartButton product={product} size="icon" />
       </CardFooter>

@@ -87,7 +87,7 @@ export default function Home() {
       subtitle: 'O seu estilo começa aqui. Tênis e roupas com a atitude que você procura.',
       buttonText: 'Ver Coleção',
       buttonLink: '/produtos',
-      imageUrl: 'https://www.crepslocker.com/cdn/shop/articles/Banner_1100x.jpg?v=1674257438'
+      imageUrl: 'https://images.unsplash.com/photo-1580906853149-f82f7601d205?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     },
     {
       title: 'NOVA COLEÇÃO',

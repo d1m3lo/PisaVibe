@@ -287,7 +287,6 @@ export default function ProductPage() {
                     <Button size="lg" className="w-full text-lg h-12" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
                         {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
                     </Button>
-                    <p className="text-center text-sm text-muted-foreground">{stockForSelectedSize > 0 ? `${stockForSelectedSize} unidades em estoque` : 'Produto esgotado'}</p>
                 </div>
                  
                  <Separator />

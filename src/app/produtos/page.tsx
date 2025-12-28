@@ -98,7 +98,12 @@ export default function ProductsPage() {
         }
     }
 
-    if (titleParts.length > 0) title = titleParts.join(' - ');
+    if (titleParts.length > 0) {
+      title = titleParts.join(' - ');
+    } else if (searchParams.get("categoria") === "masculino" || searchParams.get("categoria") === "feminino") {
+      const genderParam = searchParams.get("categoria");
+      title = genderParam!.charAt(0).toUpperCase() + genderParam!.slice(1);
+    }
   }
 
 

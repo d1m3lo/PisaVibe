@@ -29,7 +29,9 @@ export default function ProductsPage() {
     }
     
     if (subCategory) {
-        filters.push(where('subCategory', '==', subCategory));
+        // Handle variations like 'calcas' vs 'calças'
+        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : subCategory;
+        filters.push(where('subCategory', '==', normalizedSubCategory));
     }
 
     if (gender) {

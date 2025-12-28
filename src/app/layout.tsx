@@ -1,13 +1,13 @@
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/context/cart-context";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
+import ConditionalHeaderFooter from "@/components/conditional-header-footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,11 +39,9 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <CartProvider>
-              <div className="relative flex min-h-dvh flex-col bg-background">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <ConditionalHeaderFooter>
+                {children}
+              </ConditionalHeaderFooter>
             </CartProvider>
           </FirebaseClientProvider>
           <Toaster />

@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -37,6 +38,7 @@ export default function CustomerManagement() {
 
   useEffect(() => {
     if (!firestore) return;
+    setLoading(true);
     const unsubscribe = onSnapshot(
       collection(firestore, 'users'),
       (snapshot) => {
@@ -86,7 +88,7 @@ export default function CustomerManagement() {
                   <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                 </TableRow>
               ))
-            ) : (
+            ) : customers.length > 0 ? (
               customers.map((customer) => (
                 <TableRow key={customer.firestoreId}>
                   <TableCell className="font-medium">{customer.name}</TableCell>
@@ -95,15 +97,16 @@ export default function CustomerManagement() {
                   <TableCell>{customer.address || 'Não informado'}</TableCell>
                 </TableRow>
               ))
+            ) : (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        Nenhum cliente encontrado.
+                    </TableCell>
+                </TableRow>
             )}
           </TableBody>
         </Table>
-        {!loading && customers.length === 0 && (
-            <p className="text-center text-muted-foreground pt-8">Nenhum cliente encontrado.</p>
-        )}
       </CardContent>
     </Card>
   );
 }
-
-    

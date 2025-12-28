@@ -85,6 +85,7 @@ export default function ProductsPage() {
     if (subCategory) {
        let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
        if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
+       if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
        titleParts.push(subCategoryTitle);
     }
     if (titleParts.length > 0) title = titleParts.join(' - ');

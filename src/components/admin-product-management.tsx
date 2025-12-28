@@ -97,7 +97,7 @@ const categoryMappings = {
 
 const allSizes = {
     roupas: ['P', 'M', 'G', 'GG'],
-    calcados: ['38', '39', '40', '41', '42', '43', '44'],
+    calcados: [], // Será preenchido dinamicamente
     acessorios: ['U'],
     perfumes: ['U']
 };
@@ -134,6 +134,8 @@ const ProductForm = ({
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+  const [sizeRange, setSizeRange] = useState('');
+
 
   useEffect(() => {
     const gender = formData.gender as keyof typeof categoryMappings;
@@ -150,9 +152,36 @@ const ProductForm = ({
       setFormData(prev => ({ ...prev, subCategory: '' }));
     }
     
-    setAvailableSizes(allSizes[formData.category as keyof typeof allSizes] || []);
+    // Se a categoria não for calçados, usa o padrão. Se for, espera a geração.
+    if(formData.category !== 'calcados') {
+        setAvailableSizes(allSizes[formData.category as keyof typeof allSizes] || []);
+    } else {
+        // Se já houver tamanhos no produto sendo editado, popule a lista
+        const allVariantSizes = product?.variants.flatMap(v => v.sizes.map(s => s.size)) || [];
+        const uniqueSizes = [...new Set(allVariantSizes)].sort((a,b) => Number(a) - Number(b));
+        if (uniqueSizes.length > 0) {
+            setAvailableSizes(uniqueSizes);
+        } else {
+            setAvailableSizes([]);
+        }
+    }
+
 
   }, [formData.gender, formData.category, product]);
+
+  const handleGenerateSizes = () => {
+    const [start, end] = sizeRange.split('-').map(Number);
+    if (!isNaN(start) && !isNaN(end) && start <= end) {
+        const newSizes = [];
+        for (let i = start; i <= end; i++) {
+            newSizes.push(String(i));
+        }
+        setAvailableSizes(newSizes);
+    } else {
+        alert("Formato inválido. Use algo como '34-45'.");
+    }
+  };
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -472,29 +501,46 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                         {availableSizes.length > 0 && (
-                            <div className="space-y-3">
+                         <div className="space-y-3">
                                 <Label>Tamanhos e Estoque</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {availableSizes.map(size => {
-                                    const sizeInfo = variant.sizes.find(s => s.size === size);
-                                    return (
-                                        <div key={size} className="space-y-1">
-                                            <Label htmlFor={`stock-${variant.id}-${size}`}>{size}</Label>
+                                {formData.category === 'calcados' && (
+                                    <div className="flex items-end gap-2 rounded-md border p-3">
+                                        <div className="flex-grow space-y-1">
+                                            <Label htmlFor="size-range" className="text-xs">Intervalo de Tamanhos</Label>
                                             <Input 
-                                                id={`stock-${variant.id}-${size}`}
-                                                type="number"
-                                                placeholder="Estoque"
-                                                value={sizeInfo?.stock || ''}
-                                                onChange={(e) => handleSizeStockChange(variant.id, size, parseInt(e.target.value, 10) || 0)}
-                                                min="0"
+                                                id="size-range"
+                                                placeholder="Ex: 34-45"
+                                                value={sizeRange}
+                                                onChange={(e) => setSizeRange(e.target.value)}
                                             />
                                         </div>
-                                    )
-                                })}
-                                </div>
+                                        <Button type="button" onClick={handleGenerateSizes}>Gerar</Button>
+                                    </div>
+                                )}
+
+                                {availableSizes.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {availableSizes.map(size => {
+                                            const sizeInfo = variant.sizes.find(s => s.size === size);
+                                            return (
+                                                <div key={size} className="space-y-1">
+                                                    <Label htmlFor={`stock-${variant.id}-${size}`}>{size}</Label>
+                                                    <Input 
+                                                        id={`stock-${variant.id}-${size}`}
+                                                        type="number"
+                                                        placeholder="Estoque"
+                                                        value={sizeInfo?.stock ?? ''}
+                                                        onChange={(e) => handleSizeStockChange(variant.id, size, parseInt(e.target.value, 10) || 0)}
+                                                        min="0"
+                                                    />
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    formData.category !== 'calcados' && <p className="text-sm text-muted-foreground">Selecione uma categoria para ver os tamanhos.</p>
+                                )}
                             </div>
-                         )}
 
 
                          {formData.variants.length > 1 && (
@@ -713,3 +759,5 @@ export default function ProductManagement() {
     </Card>
   );
 }
+
+    

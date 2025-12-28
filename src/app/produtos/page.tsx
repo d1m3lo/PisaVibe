@@ -90,7 +90,14 @@ export default function ProductsPage() {
           titleParts.push(subCategoryTitle);
        }
     }
-    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
+    if (gender) {
+        const genderTitle = gender.charAt(0).toUpperCase() + gender.slice(1);
+        // Avoid duplicating title parts if gender is the same as category
+        if (!titleParts.some(part => part.toLowerCase() === genderTitle.toLowerCase())) {
+            titleParts.push(genderTitle);
+        }
+    }
+
     if (titleParts.length > 0) title = titleParts.join(' - ');
   }
 

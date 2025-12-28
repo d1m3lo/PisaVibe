@@ -40,7 +40,7 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Acessórios",
         links: [
-          { title: "Bonés", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bones" },
+          { title: "Bonés", href: "/produtos?genero=masculino&categoria=acessorios&tipo=bonés" },
           { title: "Mochila", href: "/produtos?genero=masculino&categoria=acessorios&tipo=mochilas" },
           { title: "Relógios", href: "/produtos?genero=masculino&categoria=acessorios&tipo=relogios" },
         ],
@@ -78,7 +78,7 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Acessórios",
         links: [
-          { title: "Bonés", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bones" },
+          { title: "Bonés", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bonés" },
           { title: "Bolsas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bolsas" },
           { title: "Mochilas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=mochilas" },
         ],

@@ -49,7 +49,7 @@ export default function ProductsPage() {
     
     // 3. Filter by sub-category/type
     if (subCategory) {
-        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : subCategory;
+        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : (subCategory === 'bones' ? 'bonés' : subCategory);
         // The 'tipo' can sometimes be a main category itself (like 'calcados')
         products = products.filter(p => p.subCategory === normalizedSubCategory || p.category === normalizedSubCategory);
     }
@@ -85,6 +85,7 @@ export default function ProductsPage() {
        let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
        if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
        if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
+       if (subCategoryTitle.toLowerCase() === 'bones' || subCategoryTitle.toLowerCase() === 'bonés') subCategoryTitle = 'Bonés';
        // Avoid duplicating title parts if subCategory is the same as category
        if (!titleParts.some(part => part.toLowerCase() === subCategoryTitle.toLowerCase())) {
           titleParts.push(subCategoryTitle);

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCollection, useMemoFirebase } from '@/firebase';
@@ -14,6 +14,7 @@ import { collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 function ProductSection({ title, allProducts, defaultVisible = 4, tag }: { title: string; allProducts: Product[]; defaultVisible?: number; tag: string }) {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -79,8 +80,35 @@ function ProductSectionSkeleton({ title }: { title: string }) {
 }
 
 export default function Home() {
-  const heroImages = PlaceHolderImages.filter(img => img.id.startsWith('hero-'));
-  const heroImage = heroImages[0];
+  const manualBanners = [
+    {
+      title: 'PISA VIBE',
+      subtitle: 'O seu estilo começa aqui. Tênis e roupas com a atitude que você procura.',
+      buttonText: 'Ver Coleção',
+      buttonLink: '/produtos',
+      imageUrl: 'https://www.crepslocker.com/cdn/shop/articles/Banner_1100x.jpg?v=1674257438'
+    },
+    {
+      title: 'NOVA COLEÇÃO',
+      subtitle: 'Conheça os lançamentos que acabaram de chegar.',
+      buttonText: 'Ver Lançamentos',
+      buttonLink: '/produtos?categoria=lancamentos',
+      imageUrl: 'https://images.unsplash.com/photo-1529339944249-111a843e942f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx1cmJhbiUyMGZhc2hpb24lMjBncm91cHxlbnwwfHx8fDE3NjY4MjY3NDl8MA&ixlib=rb-4.1.0&q=80&w=1080'
+    }
+  ];
+  
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+    const handleSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+    carouselApi.on("select", handleSelect);
+    return () => carouselApi.off("select", handleSelect);
+  }, [carouselApi]);
 
   const firestore = useFirestore();
 
@@ -97,41 +125,48 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      <section className="relative h-[50vh] w-full text-white sm:h-[60vh] md:h-[70vh]">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
-            fill
-            className="object-cover"
-            priority
-            data-ai-hint={heroImage.imageHint}
-          />
-        )}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
-          <div className="flex flex-col items-center justify-center">
-            <h1 className="font-headline text-5xl font-bold tracking-tighter text-white md:text-7xl lg:text-8xl">
-              PISA VIBE
-            </h1>
-            <p className="mt-4 max-w-lg text-lg text-gray-200 md:text-xl">
-              O seu estilo começa aqui. Tênis e roupas com a atitude que você
-              procura.
-            </p>
-            <Button asChild size="lg" variant="outline" className="mt-8 border-white bg-transparent text-white hover:bg-white hover:text-black">
-              <Link href="/produtos">Ver Coleção</Link>
-            </Button>
-          </div>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 transform">
-            <div className="flex space-x-2">
-              {heroImages.length > 1 ? (
-                heroImages.map((_, index) => (
-                  <button key={index} className={`h-3 w-3 rounded-full ${index === 0 ? 'bg-white' : 'bg-white/50'}`}></button>
-                ))
-              ) : (
-                 <button className="h-3 w-3 rounded-full bg-white"></button>
-              )}
-            </div>
+      <section className="relative w-full">
+         <Carousel setApi={setCarouselApi} opts={{ loop: true }}>
+          <CarouselContent>
+            {manualBanners.map((banner, index) => (
+              <CarouselItem key={index}>
+                <div className="relative h-[50vh] w-full text-white sm:h-[60vh] md:h-[70vh]">
+                  <Image
+                    src={banner.imageUrl}
+                    alt={banner.title}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                  <div className="absolute inset-0 bg-black/50" />
+                  <div className="relative z-10 flex h-full flex-col items-center justify-center p-4 text-center">
+                    <h1 className="font-headline text-5xl font-bold tracking-tighter text-white md:text-7xl lg:text-8xl">
+                      {banner.title}
+                    </h1>
+                    <p className="mt-4 max-w-lg text-lg text-gray-200 md:text-xl">
+                      {banner.subtitle}
+                    </p>
+                    <Button asChild size="lg" variant="outline" className="mt-8 border-white bg-transparent text-white hover:bg-white hover:text-black">
+                      <Link href={banner.buttonLink}>{banner.buttonText}</Link>
+                    </Button>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+        </Carousel>
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 transform">
+          <div className="flex space-x-2">
+            {manualBanners.map((_, index) => (
+              <button 
+                key={index} 
+                className={cn("h-2 w-2 rounded-full transition-colors", currentSlide === index ? 'bg-white' : 'bg-white/50')}
+                onClick={() => carouselApi?.scrollTo(index)}
+                aria-label={`Ir para o slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>

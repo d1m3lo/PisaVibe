@@ -24,31 +24,11 @@ export default function ProductsPage() {
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     
-    let filters = [where('status', '==', 'ativo')];
-
-    // Main category filter (e.g., 'roupas', 'calcados')
-    if (category && category !== 'lancamentos' && category !== 'ofertas') {
-        filters.push(where('category', '==', category));
-    }
+    // Always fetch all active products. Filtering logic will be more robust on the client-side
+    // to handle combinations of tags and properties.
+    return query(collection(firestore, 'products'), where('status', '==', 'ativo'));
     
-    if (subCategory) {
-        // Handle variations like 'calcas' vs 'calças'
-        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : subCategory;
-        filters.push(where('subCategory', '==', normalizedSubCategory));
-    }
-    
-    const q = collection(firestore, 'products');
-    
-    if (filters.length > 1) {
-      // @ts-ignore - Firestore 'and' typing can be complex with dynamic filters
-      return query(q, and(...filters));
-    } else if (filters.length === 1) {
-      return query(q, filters[0]);
-    }
-
-    return query(q, where('status', '==', 'ativo')); // Fallback to all active products
-    
-  }, [firestore, category, subCategory]);
+  }, [firestore]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
 
@@ -57,23 +37,36 @@ export default function ProductsPage() {
     
     let products = [...productsData];
 
-    // Apply gender filter client-side, as it can be 'unissex'
+    // 1. Filter by search query first
+    if (searchQuery) {
+      products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    
+    // 2. Filter by main category (if it's not a special tag)
+    if (category && category !== 'lancamentos' && category !== 'ofertas') {
+        products = products.filter(p => p.category === category);
+    }
+    
+    // 3. Filter by sub-category/type
+    if (subCategory) {
+        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : subCategory;
+        // The 'tipo' can sometimes be a main category itself (like 'calcados')
+        products = products.filter(p => p.subCategory === normalizedSubCategory || p.category === normalizedSubCategory);
+    }
+    
+    // 4. Filter by gender
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
     }
 
-    // Apply special category tags ('lancamentos', 'ofertas') client-side
+    // 5. Finally, filter by special category tags
     if (category && (category === 'lancamentos' || category === 'ofertas')) {
       products = products.filter(p => p.tags?.includes(category));
     }
 
-    if (searchQuery) {
-      products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-
     return products;
 
-  }, [productsData, searchQuery, category, gender]);
+  }, [productsData, searchQuery, category, subCategory, gender]);
 
 
   let title = "Todos os Produtos";
@@ -88,13 +81,16 @@ export default function ProductsPage() {
         if (categoryTitle.toLowerCase() === 'calcados' || categoryTitle.toLowerCase() === 'calçados') categoryTitle = 'Calçados';
         titleParts.push(categoryTitle);
     }
-    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (subCategory) {
        let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
        if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
        if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
-       titleParts.push(subCategoryTitle);
+       // Avoid duplicating title parts if subCategory is the same as category
+       if (!titleParts.some(part => part.toLowerCase() === subCategoryTitle.toLowerCase())) {
+          titleParts.push(subCategoryTitle);
+       }
     }
+    if (gender) titleParts.push(gender.charAt(0).toUpperCase() + gender.slice(1));
     if (titleParts.length > 0) title = titleParts.join(' - ');
   }
 

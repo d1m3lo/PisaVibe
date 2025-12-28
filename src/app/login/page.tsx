@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,8 +12,63 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { useUser } from "@/firebase";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const auth = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login bem-sucedido!",
+        description: "Bem-vindo de volta à PISA VIBE.",
+      });
+      router.push("/");
+    } catch (err: any) {
+      let errorMessage = "Ocorreu um erro desconhecido.";
+      switch (err.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          errorMessage = 'Email ou senha inválidos.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'O formato do email é inválido.';
+          break;
+        default:
+          errorMessage = 'Falha no login. Por favor, tente novamente.';
+          break;
+      }
+       setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Erro no Login",
+        description: errorMessage,
+      });
+    }
+  };
+
+
   return (
     <div className="flex min-h-[80vh] items-center justify-center bg-background px-4">
       <Card className="mx-auto w-full max-w-sm">
@@ -23,7 +79,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
+          <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -31,6 +87,8 @@ export default function LoginPage() {
                 type="email"
                 placeholder="seu@email.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -43,12 +101,19 @@ export default function LoginPage() {
                   Esqueceu sua senha?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
             <Button type="submit" className="w-full">
               Entrar
             </Button>
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{" "}
             <Link href="/registrar" className="underline">
@@ -60,3 +125,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

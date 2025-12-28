@@ -1,8 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow public read access for products and banners
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false; // Or admin only
+    }
+
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if false; // Or admin only
+    }
+
+    // Secure user data
+    match /users/{userId} {
+      // Users can create their own profile
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Users can read and update their own profile
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      // Disallow listing all users for non-admins
+      allow list: if false; // Change to admin check later
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow admins to list all users - For now, allow if logged in
+    match /users/{userId} {
+       allow list: if request.auth != null;
+    }
+
+    // Default deny all other collections
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
+
+    

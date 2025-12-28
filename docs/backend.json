@@ -73,17 +73,13 @@
       "type": "object",
       "description": "Represents a user of the PISA VIBE online store.",
       "properties": {
-        "id": {
+        "uid": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the user, from Firebase Auth."
         },
-        "firstName": {
+        "name": {
           "type": "string",
-          "description": "First name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "Last name of the user."
+          "description": "Full name of the user."
         },
         "email": {
           "type": "string",
@@ -94,6 +90,10 @@
           "type": "string",
           "description": "Shipping address of the user."
         },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the user."
+        },
         "orderIds": {
           "type": "array",
           "description": "References to Orders. (Relationship: User 1:N Order)",
@@ -103,11 +103,9 @@
         }
       },
       "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "address"
+        "uid",
+        "name",
+        "email"
       ]
     },
     "Order": {
@@ -232,8 +230,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -261,11 +258,11 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user information. Each document represents a single user.",
+          "description": "Stores user profile information. Each document represents a single user, keyed by their Firebase Auth UID.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
+              "description": "The unique identifier of the user (matches Firebase Auth UID)."
             }
           ]
         }
@@ -338,3 +335,4 @@
     "reasoning": "The Firestore data structure is designed to support the PISA VIBE online store, focusing on products, users, orders, and product recommendations. The structure prioritizes authorization independence and QAPs by leveraging path-based ownership for user-specific data and avoiding `get()` calls in security rules. This ensures scalability and simplifies security rule management. The core principle is to make security rules as simple as possible by denormalizing security critical properties to each record. \n\nProducts are stored in a top-level `products` collection. User data, including orders and product recommendations, are stored under the `/users/{userId}` path. This structure facilitates easy retrieval of user-specific data and simplifies ownership-based security rules.\n\nOrders and order items are structured under user-specific collections (`/users/{userId}/orders/{orderId}` and `/users/{userId}/orders/{orderId}/orderItems/{orderItemId}`). This approach enables efficient querying of a user's order history and related order items.\n\nProduct recommendations are also stored under the user's document (`/users/{userId}/productRecommendations/{productRecommendationId}`), allowing for personalized recommendations based on user activity.\n\nThis design promotes Authorization Independence by avoiding hierarchical authorization dependencies. Path-based ownership (`/users/{userId}/...`) allows security rules to directly verify user identity without needing to read parent documents, enabling atomic operations and improving security. QAPs are supported through structural segregation; each collection serves a specific purpose with uniform security requirements. This segregation simplifies `list` operations, as rules can be tailored to each collection's access needs without complex filtering logic."
   }
 }
+    

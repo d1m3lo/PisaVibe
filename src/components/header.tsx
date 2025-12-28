@@ -7,7 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, ShoppingCart, User, Sun, Moon, ChevronDown } from "lucide-react";
+import { Menu, Search, ShoppingCart, User, Sun, Moon, ChevronDown, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,10 +34,11 @@ import {
 import Image from "next/image";
 import { megaMenuData, type MenuCategory } from "@/lib/menu-data";
 import { CartSheet } from "./cart-sheet";
-import { useCollection, useMemoFirebase, useFirestore } from "@/firebase";
+import { useCollection, useMemoFirebase, useFirestore, useUser, useAuth } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Product } from "@/lib/types";
 import { useTheme } from "next-themes";
+import { signOut } from "firebase/auth";
 
 function ModeToggle() {
   const { theme, setTheme } = useTheme();
@@ -69,30 +70,81 @@ function ModeToggle() {
   );
 }
 
-const UserMenu = () => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="transition-transform duration-200 hover:-translate-y-1"
-      >
-        <User className="h-5 w-5" />
-        <span className="sr-only">Menu do usuário</span>
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem asChild>
-        <Link href="/login">Login</Link>
-      </DropdownMenuItem>
-      <DropdownMenuItem asChild>
-        <Link href="/registrar">Registrar</Link>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
+const UserMenu = () => {
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  }
+
+  if (isUserLoading) {
+    return (
+      <div className="h-10 w-10 flex items-center justify-center">
+        <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="transition-transform duration-200 hover:-translate-y-1"
+          >
+            <User className="h-5 w-5" />
+            <span className="sr-only">Menu do usuário</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/login">Login</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/registrar">Registrar</Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="transition-transform duration-200 hover:-translate-y-1"
+        >
+          <User className="h-5 w-5" />
+          <span className="sr-only">Menu do usuário</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Olá, {user.displayName || user.email?.split('@')[0]}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+            Meus Pedidos
+        </DropdownMenuItem>
+         <DropdownMenuItem>
+            Minha Conta
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+};
 
 const CartButton = () => {
   const { cartCount } = useCart();
@@ -376,3 +428,5 @@ export default function Header() {
     </header>
   );
 }
+
+    

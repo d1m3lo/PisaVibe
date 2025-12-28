@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette, Link as LinkIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -298,11 +298,20 @@ const ProductForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const finalVariants = formData.variants.map(v => ({
-      ...v,
-      images: v.images.filter(Boolean),
-      imageNames: formData.subCategory === 'mochilas' ? v.imageNames : undefined
-    }));
+    const finalVariants = formData.variants.map(v => {
+      const variant: Partial<Variant> = {
+        ...v,
+        images: v.images.filter(Boolean),
+      };
+
+      if (formData.subCategory === 'mochilas') {
+        variant.imageNames = v.imageNames;
+      } else {
+        delete variant.imageNames;
+      }
+
+      return variant as Variant;
+    });
 
     if (finalVariants.some(v => v.images.length === 0)) {
         alert("Cada variante de cor deve ter pelo menos uma imagem.");

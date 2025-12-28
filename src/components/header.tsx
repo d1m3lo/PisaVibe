@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -90,28 +91,9 @@ const UserMenu = () => {
 
   if (!user) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="transition-transform duration-200 hover:-translate-y-1"
-          >
-            <User className="h-5 w-5" />
-            <span className="sr-only">Menu do usuário</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/login">Login</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/registrar">Registrar</Link>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button variant="ghost" asChild className="transition-transform duration-200 hover:-translate-y-1">
+        <Link href="/login">Login</Link>
+      </Button>
     )
   }
 

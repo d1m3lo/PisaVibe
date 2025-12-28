@@ -721,14 +721,8 @@ export default function ProductManagement() {
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>
-                  {product.origin ? (
-                    <Link href={product.origin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      <LinkIcon className="h-4 w-4 inline-block" />
-                    </Link>
-                  ) : (
-                    'N/A'
-                  )}
+                <TableCell className="text-sm text-muted-foreground">
+                  {product.origin || 'N/A'}
                 </TableCell>
                 <TableCell>
                   R$ {product.price.toFixed(2).replace('.', ',')}
@@ -776,4 +770,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-

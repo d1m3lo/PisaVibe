@@ -29,7 +29,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </Button>
           </nav>
         </div>
-        <Button variant="destructive" onClick={onLogout} className="w-full justify-start gap-2">
+        <Button onClick={onLogout} className="w-full justify-start gap-2">
           <LogOut className="h-5 w-5" />
           Sair
         </Button>

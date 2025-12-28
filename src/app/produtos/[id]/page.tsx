@@ -287,7 +287,7 @@ export default function ProductPage() {
                     <Button size="lg" className="w-full text-lg h-12" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
                         {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
                     </Button>
-                    <p className="text-center text-sm text-muted-foreground">{stockForSelectedSize} unidades em estoque</p>
+                    <p className="text-center text-sm text-muted-foreground">{stockForSelectedSize > 0 ? `${stockForSelectedSize} unidades em estoque` : 'Produto esgotado'}</p>
                 </div>
                  
                  <Separator />
@@ -339,11 +339,6 @@ export default function ProductPage() {
                 <div className="mt-8">
                     <div className="flex justify-between items-baseline mb-2">
                         <h3 className="text-sm font-semibold">Tamanho:</h3>
-                        {stockForSelectedSize > 0 && stockForSelectedSize <= 5 && (
-                             <p className="text-sm font-semibold text-orange-500">
-                                Apenas {stockForSelectedSize} em estoque!
-                             </p>
-                        )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                     {sortedSizes.map(({ size, stock }) => (
@@ -375,5 +370,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    

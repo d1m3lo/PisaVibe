@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette, Link as LinkIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +71,7 @@ import {
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
 import { ColorSwatch } from './color-swatch';
+import Link from 'next/link';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -700,7 +701,7 @@ export default function ProductManagement() {
             <TableRow>
               <TableHead className="w-[80px]">Imagem</TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Marca</TableHead>
+              <TableHead>Origem</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Qualidade</TableHead>
               <TableHead>Status</TableHead>
@@ -720,7 +721,15 @@ export default function ProductManagement() {
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.brand || 'N/A'}</TableCell>
+                <TableCell>
+                  {product.origin ? (
+                    <Link href={product.origin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      <LinkIcon className="h-4 w-4 inline-block" />
+                    </Link>
+                  ) : (
+                    'N/A'
+                  )}
+                </TableCell>
                 <TableCell>
                   R$ {product.price.toFixed(2).replace('.', ',')}
                 </TableCell>
@@ -767,3 +776,4 @@ export default function ProductManagement() {
     </Card>
   );
 }
+

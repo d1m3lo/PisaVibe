@@ -30,32 +30,6 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div className="space-y-8">
             <div>
-                 <h2 className="mb-4 font-headline text-2xl font-bold">Informações de Contato</h2>
-                 <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Mail className="h-6 w-6 text-primary" />
-                        <div>
-                            <h3 className="font-semibold">E-mail</h3>
-                            <a href="mailto:suporte@pisavibe.com" className="text-muted-foreground hover:text-primary">suporte@pisavibe.com</a>
-                        </div>
-                    </div>
-                     <div className="flex items-center gap-4">
-                        <Phone className="h-6 w-6 text-primary" />
-                        <div>
-                            <h3 className="font-semibold">WhatsApp</h3>
-                            <p className="text-muted-foreground">(11) 99999-9999</p>
-                        </div>
-                    </div>
-                     <div className="flex items-center gap-4">
-                        <MapPin className="h-6 w-6 text-primary" />
-                        <div>
-                            <h3 className="font-semibold">Endereço</h3>
-                            <p className="text-muted-foreground">Av. Principal, 123 - São Paulo/SP (Escritório)</p>
-                        </div>
-                    </div>
-                 </div>
-            </div>
-            <div>
                 <h2 className="mb-4 font-headline text-2xl font-bold">Horário de Atendimento</h2>
                 <p className="text-muted-foreground">Segunda a Sexta: 9h às 18h</p>
                 <p className="text-muted-foreground">Sábado: 9h às 13h</p>

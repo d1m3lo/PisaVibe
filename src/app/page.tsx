@@ -15,6 +15,7 @@ import { useFirestore } from '@/firebase';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 function ProductSection({ title, allProducts, defaultVisible = 4, tag }: { title: string; allProducts: Product[]; defaultVisible?: number; tag: string }) {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -93,12 +94,16 @@ export default function Home() {
       subtitle: 'Conheça os lançamentos que acabaram de chegar.',
       buttonText: 'Ver Lançamentos',
       buttonLink: '/produtos?categoria=lancamentos',
-      imageUrl: 'https://images.unsplash.com/photo-1529339944249-111a843e942f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx1cmJhbiUyMGZhc2hpb24lMjBncm91cHxlbnwwfHx8fDE3NjY4MjY3NDl8MA&ixlib=rb-4.1.0&q=80&w=1080'
+      imageUrl: 'https://images.unsplash.com/photo-1646122408163-42332de7b4fa?q=80&w=1541&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     }
   ];
   
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 10000, stopOnInteraction: true })
+  );
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -126,7 +131,13 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       <section className="relative w-full">
-         <Carousel setApi={setCarouselApi} opts={{ loop: true }}>
+         <Carousel 
+            setApi={setCarouselApi} 
+            opts={{ loop: true }}
+            plugins={[autoplayPlugin.current]}
+            onMouseEnter={autoplayPlugin.current.stop}
+            onMouseLeave={autoplayPlugin.current.reset}
+          >
           <CarouselContent>
             {manualBanners.map((banner, index) => (
               <CarouselItem key={index}>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -272,6 +271,7 @@ const MobileSubMenu = ({
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [openMenu, setOpenMenu] = React.useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -296,21 +296,30 @@ export default function Header() {
           </Link>
           <nav className="hidden md:flex gap-1 items-center">
             {megaMenuData.map((category) => (
-              <DropdownMenu key={category.title}>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="text-sm font-medium text-muted-foreground hover:text-primary data-[state=open]:text-primary"
-                  >
-                    {category.title}
-                    <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="start"
-                  className="w-screen max-w-none rounded-none border-x-0 border-t-0 bg-background shadow-none"
+              <DropdownMenu 
+                key={category.title} 
+                open={openMenu === category.title} 
+                onOpenChange={(isOpen) => setOpenMenu(isOpen ? category.title : null)}
+              >
+                <div
+                  onMouseEnter={() => setOpenMenu(category.title)}
+                  onMouseLeave={() => setOpenMenu(null)}
+                  className="group"
                 >
-                  <div className="container mx-auto">
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="text-sm font-medium text-muted-foreground hover:text-primary data-[state=open]:text-primary"
+                    >
+                      {category.title}
+                      <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="start"
+                    className="w-auto rounded-lg p-2"
+                    onMouseLeave={() => setOpenMenu(null)}
+                  >
                     <div className="flex gap-4 p-2">
                       {category.columns.map((column) => (
                         <div key={column.title} className="flex flex-col">
@@ -325,8 +334,8 @@ export default function Header() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                </DropdownMenuContent>
+                  </DropdownMenuContent>
+                </div>
               </DropdownMenu>
             ))}
           </nav>
@@ -367,5 +376,3 @@ export default function Header() {
     </header>
   );
 }
-
-    

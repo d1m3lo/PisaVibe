@@ -705,8 +705,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    
-    
-
-    

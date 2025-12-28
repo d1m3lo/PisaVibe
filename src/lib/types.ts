@@ -20,7 +20,7 @@ export type Product = {
   description: string; // Short description for cards
   longDescription: string;
   gender: 'masculino' | 'feminino' | 'unissex';
-  category: 'calçados' | 'roupas' | 'acessorios' | 'perfumes';
+  category: 'calcados' | 'roupas' | 'acessorios' | 'perfumes';
   subCategory?: string;
   variants: Variant[];
   rating: number;

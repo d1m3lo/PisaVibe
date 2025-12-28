@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette, Link as LinkIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -280,6 +280,8 @@ const ProductForm = ({
             } else {
                 newSizes = [...v.sizes, { size, stock: Math.max(0, stock) }];
             }
+            // Filter out sizes with empty stock unless it's an existing product being edited
+            // newSizes = newSizes.filter(s => s.stock > 0);
             return { ...v, sizes: newSizes };
         }
         return v;
@@ -300,13 +302,13 @@ const ProductForm = ({
         alert("Cada variante de cor deve ter pelo menos uma imagem.");
         return;
     }
+    const oldPriceValue = parseFloat(String(formData.oldPrice));
 
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
       brand: formData.brand,
       price: parseFloat(String(formData.price)) || 0,
-      oldPrice: parseFloat(String(formData.oldPrice)) || undefined,
       description: formData.longDescription.substring(0, 100),
       longDescription: formData.longDescription,
       gender: formData.gender as Product['gender'],
@@ -319,6 +321,7 @@ const ProductForm = ({
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
       origin: formData.origin,
+      ...(oldPriceValue > 0 && { oldPrice: oldPriceValue }),
     };
     await onSave(productData);
     onClose();
@@ -792,5 +795,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    

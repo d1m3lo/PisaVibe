@@ -112,11 +112,11 @@ const UserMenu = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Olá, {user.displayName || user.email?.split('@')[0]}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-            Meus Pedidos
+        <DropdownMenuItem asChild>
+            <Link href="#">Meus Pedidos</Link>
         </DropdownMenuItem>
-         <DropdownMenuItem>
-            Minha Conta
+         <DropdownMenuItem asChild>
+            <Link href="/minha-conta">Minha Conta</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
@@ -410,5 +410,7 @@ export default function Header() {
     </header>
   );
 }
+
+    
 
     

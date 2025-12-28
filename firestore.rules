@@ -31,7 +31,19 @@ service cloud.firestore {
       allow get, update: if request.auth != null && request.auth.uid == userId;
 
       allow delete: if false;
+
+      // Allow admins to read/list orders for any user
+      match /orders/{orderId} {
+        allow get, list: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+        allow create, update, delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      }
     }
+
+    // Rule for collection group query on 'orders'
+    match /{path=**}/orders/{orderId} {
+      allow read, list: if isAdmin();
+    }
+
 
     // DEFAULT
     match /{document=**} {

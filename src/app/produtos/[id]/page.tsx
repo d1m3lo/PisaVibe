@@ -23,6 +23,8 @@ import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
 import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 
 const ProductPageSkeleton = () => (
@@ -155,9 +157,12 @@ export default function ProductPage() {
   };
   
   const isPerfume = product?.category === 'perfumes';
+  
+  const stockForSelectedSize = selectedVariant?.sizes.find(s => isPerfume ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
+  
   const isAddToCartDisabled = isPerfume 
     ? (selectedVariant?.sizes.find(s => s.size === 'U')?.stock || 0) === 0
-    : !selectedSize || (selectedVariant?.sizes.find(s => s.size === selectedSize)?.stock || 0) === 0;
+    : !selectedSize || stockForSelectedSize === 0;
 
   if (isLoading || !id) {
     return <ProductPageSkeleton />;
@@ -176,6 +181,9 @@ export default function ProductPage() {
   }
 
   const allImages = selectedVariant?.images ?? [];
+  const discountPercentage = product.oldPrice && product.oldPrice > product.price 
+    ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
+    : 0;
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
@@ -248,7 +256,7 @@ export default function ProductPage() {
         <div className="flex flex-col">
           <div className="flex items-start justify-between gap-4">
              <div>
-                {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
+                {product.brand && <p className="text-sm uppercase tracking-wider text-muted-foreground">{product.brand}</p>}
                 <h1 className="font-headline text-3xl font-bold md:text-4xl">
                     {product.name}
                 </h1>
@@ -256,24 +264,57 @@ export default function ProductPage() {
             <QualityBadge quality={product.quality} />
           </div>
           
-          <div className="mt-4 flex items-baseline gap-3">
-            <p className="text-3xl font-bold">
-              R$ {product.price.toFixed(2).replace(".", ",")}
-            </p>
-             {product.oldPrice && (
-                <p className="text-xl text-muted-foreground line-through">
-                  R$ {product.oldPrice.toFixed(2).replace(".", ",")}
-                </p>
-            )}
-          </div>
+          {isPerfume ? (
+            <div className="mt-8 flex flex-col space-y-6">
+                <div className="space-y-3 rounded-lg border bg-card p-4">
+                    <div className="flex items-baseline gap-3">
+                         {product.oldPrice && (
+                            <p className="text-xl text-muted-foreground line-through">
+                              R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                            </p>
+                        )}
+                        {discountPercentage > 0 && (
+                            <Badge variant="destructive">-{discountPercentage}%</Badge>
+                        )}
+                    </div>
+                    <p className="text-4xl font-bold">
+                        R$ {product.price.toFixed(2).replace(".", ",")}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Em até 6x s/ juros no cartão</p>
+                </div>
 
-          <div className="mt-6">
-            <h3 className="text-base font-semibold">Descrição</h3>
-            <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
-          </div>
-          
-          {!isPerfume && (
+                <div className="space-y-4">
+                    <Button size="lg" className="w-full text-lg h-12" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
+                        {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
+                    </Button>
+                    <p className="text-center text-sm text-muted-foreground">{stockForSelectedSize} unidades em estoque</p>
+                </div>
+                 
+                 <Separator />
+                 
+                <div>
+                  <h3 className="text-base font-semibold">Descrição</h3>
+                  <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
+                </div>
+            </div>
+          ) : (
             <>
+                <div className="mt-4 flex items-baseline gap-3">
+                    <p className="text-3xl font-bold">
+                    R$ {product.price.toFixed(2).replace(".", ",")}
+                    </p>
+                    {product.oldPrice && (
+                        <p className="text-xl text-muted-foreground line-through">
+                        R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                        </p>
+                    )}
+                </div>
+
+                <div className="mt-6">
+                    <h3 className="text-base font-semibold">Descrição</h3>
+                    <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
+                </div>
+
                 <div className="mt-8">
                     <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
                     <div className="flex flex-wrap gap-3">
@@ -296,7 +337,14 @@ export default function ProductPage() {
                 </div>
 
                 <div className="mt-8">
-                    <h3 className="mb-2 text-sm font-semibold">Tamanho:</h3>
+                    <div className="flex justify-between items-baseline mb-2">
+                        <h3 className="text-sm font-semibold">Tamanho:</h3>
+                        {stockForSelectedSize > 0 && stockForSelectedSize <= 5 && (
+                             <p className="text-sm font-semibold text-orange-500">
+                                Apenas {stockForSelectedSize} em estoque!
+                             </p>
+                        )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
                     {sortedSizes.map(({ size, stock }) => (
                         <Button
@@ -314,17 +362,18 @@ export default function ProductPage() {
                     ))}
                     </div>
                 </div>
+
+                <div className="mt-8">
+                    <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
+                        {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
+                    </Button>
+                </div>
             </>
           )}
-
-
-          <div className="mt-8">
-             <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
-                {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
-            </Button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
+
+    

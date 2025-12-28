@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -15,11 +16,34 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useMemo } from "react";
+import type { Coupon } from "@/lib/types";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discountType === 'percentage') {
+      return cartTotal * (appliedCoupon.discountValue / 100);
+    }
+    return appliedCoupon.discountValue;
+  }, [appliedCoupon, cartTotal]);
+
+  const finalTotal = useMemo(() => {
+      const total = cartTotal - discountAmount;
+      return total < 0 ? 0 : total;
+  }, [cartTotal, discountAmount]);
+
 
   if (cartItems.length === 0) {
     // Redirect to home if cart is empty
@@ -29,6 +53,51 @@ export default function CheckoutPage() {
     return null;
   }
   
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+        setCouponMessage("Por favor, insira um código de cupom.");
+        return;
+    }
+    if (!firestore) return;
+
+    setIsApplyingCoupon(true);
+    setCouponMessage("");
+    setAppliedCoupon(null);
+
+    try {
+        const couponsRef = collection(firestore, 'coupons');
+        const q = query(couponsRef, where('code', '==', couponCode.toUpperCase().trim()), where('isActive', '==', true));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            setCouponMessage("Cupom inválido ou expirado.");
+            toast({ variant: 'destructive', title: 'Cupom Inválido' });
+            return;
+        }
+
+        const couponDoc = querySnapshot.docs[0];
+        const couponData = { ...couponDoc.data(), id: couponDoc.id } as Coupon;
+        
+        // Optional: check expiry date
+        if (couponData.expiryDate && new Date(couponData.expiryDate) < new Date()) {
+            setCouponMessage("Este cupom expirou.");
+            toast({ variant: 'destructive', title: 'Cupom Expirado' });
+            return;
+        }
+
+        setAppliedCoupon(couponData);
+        setCouponMessage("Cupom aplicado com sucesso!");
+        toast({ title: 'Cupom Aplicado!', description: 'O desconto foi aplicado ao seu total.' });
+
+    } catch (error) {
+        console.error("Error applying coupon:", error);
+        setCouponMessage("Erro ao aplicar o cupom. Tente novamente.");
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aplicar o cupom.' });
+    } finally {
+        setIsApplyingCoupon(false);
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
@@ -137,10 +206,36 @@ export default function CheckoutPage() {
                   </div>
                 ))}
                 <Separator />
+                 <div className="space-y-2">
+                    <Label htmlFor="coupon">Cupom de Desconto</Label>
+                    <div className="flex gap-2">
+                        <Input 
+                            id="coupon" 
+                            placeholder="Insira seu cupom"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            disabled={isApplyingCoupon || !!appliedCoupon}
+                        />
+                        <Button 
+                            onClick={handleApplyCoupon} 
+                            disabled={isApplyingCoupon || !!appliedCoupon}
+                        >
+                            {isApplyingCoupon ? "Aplicando..." : "Aplicar"}
+                        </Button>
+                    </div>
+                    {couponMessage && <p className={`text-sm ${appliedCoupon ? 'text-green-600' : 'text-destructive'}`}>{couponMessage}</p>}
+                 </div>
+                <Separator />
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
+                 {appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                        <span>Desconto ({appliedCoupon.code})</span>
+                        <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                )}
                 <div className="flex justify-between">
                   <span>Frete</span>
                   <span className="text-green-600">Grátis</span>
@@ -148,7 +243,7 @@ export default function CheckoutPage() {
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
+                  <span>R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
               </div>
             </CardContent>

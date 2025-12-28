@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -38,6 +39,17 @@ service cloud.firestore {
         allow create, update, delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
       }
     }
+
+    // COUPONS
+    // Admins can manage coupons
+    match /coupons/{couponId} {
+      allow read, write: if isAdmin();
+    }
+    // Authenticated users can read/list coupons to apply them
+    match /coupons/{couponId} {
+      allow get, list: if request.auth != null;
+    }
+
 
     // Rule for collection group query on 'orders'
     match /{path=**}/orders/{orderId} {

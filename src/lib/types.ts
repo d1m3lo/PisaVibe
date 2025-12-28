@@ -46,4 +46,22 @@ export type UserProfile = {
   phone?: string;
 };
 
-    
+export type Order = {
+  id: string;
+  userId: string;
+  orderDate: string; // ISO String
+  totalAmount: number;
+  shippingAddress: string;
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  couponCode?: string;
+  discountAmount?: number;
+}
+
+export type Coupon = {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  expiryDate?: string; // ISO String
+  isActive: boolean;
+}

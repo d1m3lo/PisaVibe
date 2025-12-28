@@ -3,11 +3,12 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, Users, ShoppingCart, LayoutDashboard } from 'lucide-react';
+import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent } from 'lucide-react';
 import ProductManagement from './admin-product-management';
 import CustomerManagement from './admin-customer-management';
 import AdminOrderManagement from './admin-order-management';
 import AdminMainDashboard from './admin-main-dashboard';
+import AdminCouponManagement from './admin-coupon-management';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -54,6 +55,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <ShoppingCart className="h-5 w-5" />
               Pedidos
             </Button>
+             <Button
+              variant={activeTab === 'coupons' ? 'secondary' : 'ghost'}
+              className="justify-start gap-2"
+              onClick={() => setActiveTab('coupons')}
+            >
+              <TicketPercent className="h-5 w-5" />
+              Cupons
+            </Button>
           </nav>
         </div>
         <Button onClick={onLogout} className="w-full justify-start gap-2">
@@ -66,6 +75,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         {activeTab === 'products' && <ProductManagement />}
         {activeTab === 'customers' && <CustomerManagement />}
         {activeTab === 'orders' && <AdminOrderManagement />}
+        {activeTab === 'coupons' && <AdminCouponManagement />}
       </main>
     </div>
   );

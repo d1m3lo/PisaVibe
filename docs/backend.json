@@ -146,6 +146,14 @@
           "items": {
             "type": "string"
           }
+        },
+        "couponCode": {
+          "type": "string",
+          "description": "The coupon code applied to the order."
+        },
+        "discountAmount": {
+          "type": "number",
+          "description": "The amount discounted from the order total."
         }
       },
       "required": [
@@ -226,6 +234,47 @@
         "productId",
         "score",
         "recommendationDate"
+      ]
+    },
+    "Coupon": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Coupon",
+      "type": "object",
+      "description": "Represents a discount coupon for the store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the coupon."
+        },
+        "code": {
+          "type": "string",
+          "description": "The coupon code that users will enter."
+        },
+        "discountType": {
+          "type": "string",
+          "description": "The type of discount.",
+          "enum": ["percentage", "fixed"]
+        },
+        "discountValue": {
+          "type": "number",
+          "description": "The value of the discount (either percentage or fixed amount)."
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "The expiration date of the coupon.",
+          "format": "date-time"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the coupon is currently active."
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "discountType",
+        "discountValue",
+        "isActive"
       ]
     }
   },
@@ -329,6 +378,22 @@
             {
               "name": "productRecommendationId",
               "description": "The unique identifier of the product recommendation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "coupons/{couponId}",
+        "definition": {
+          "entityName": "Coupon",
+          "schema": {
+            "$ref": "#/backend/entities/Coupon"
+          },
+          "description": "Stores discount coupon information.",
+          "params": [
+            {
+              "name": "couponId",
+              "description": "The unique identifier of the coupon."
             }
           ]
         }

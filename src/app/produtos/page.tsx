@@ -31,6 +31,10 @@ export default function ProductsPage() {
     if (subCategory) {
         filters.push(where('subCategory', '==', subCategory));
     }
+
+    if (gender) {
+      filters.push(where('gender', 'in', [gender, 'unissex']));
+    }
     
     const q = collection(firestore, 'products');
     
@@ -43,7 +47,7 @@ export default function ProductsPage() {
 
     return query(q); // Fallback to query all active products if no filters
     
-  }, [firestore, category, subCategory]);
+  }, [firestore, category, subCategory, gender]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
 
@@ -53,10 +57,6 @@ export default function ProductsPage() {
     let products = [...productsData];
 
     // Client-side filtering for complex cases
-    if (gender) {
-      products = products.filter(p => p.gender === gender || p.gender === 'unissex');
-    }
-    
     if (category && (category === 'lancamentos' || category === 'ofertas')) {
       products = products.filter(p => p.tags?.includes(category));
     }
@@ -67,7 +67,7 @@ export default function ProductsPage() {
 
     return products;
 
-  }, [productsData, searchQuery, gender, category]);
+  }, [productsData, searchQuery, category]);
 
 
   let title = "Todos os Produtos";

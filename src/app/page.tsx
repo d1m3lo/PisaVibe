@@ -165,8 +165,8 @@ export default function Home() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
-          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex bg-transparent border-white/50 text-white hover:bg-white/10 hover:border-white" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex bg-transparent border-white/50 text-white hover:bg-white/10 hover:border-white" />
         </Carousel>
         <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 transform">
           <div className="flex space-x-2">

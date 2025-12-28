@@ -445,16 +445,16 @@ const ProductForm = ({
           </div>
 
           <div className="space-y-4">
-            <Label>{isPerfume ? 'Imagem' : 'Variantes de Cor'}</Label>
+            <Label>{isPerfume ? 'Imagem e Estoque' : 'Variantes de Cor'}</Label>
             <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
               {formData.variants.map((variant, vIndex) => {
                 if (isPerfume && vIndex > 0) return null; // Show only one variant for perfume
                 return (
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
-                   <AccordionTrigger className="p-4 hover:no-underline" disabled={isPerfume}>
+                   <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4">
                             {!isPerfume && <ColorSwatch colorHex={variant.colorHex} />}
-                            <span className="font-semibold">{isPerfume ? 'Imagem do Perfume' : (variant.color || "Nova Cor")}</span>
+                            <span className="font-semibold">{isPerfume ? 'Imagem e Estoque' : (variant.color || "Nova Cor")}</span>
                         </div>
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
@@ -515,7 +515,20 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {!isPerfume && (
+                        {isPerfume ? (
+                           <div className="space-y-2">
+                                <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
+                                <Input 
+                                    id={`stock-${variant.id}-U`}
+                                    type="number"
+                                    placeholder="Estoque"
+                                    value={variant.sizes.find(s => s.size === 'U')?.stock ?? ''}
+                                    onChange={(e) => handleSizeStockChange(variant.id, 'U', parseInt(e.target.value, 10) || 0)}
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                        ) : (
                          <div className="space-y-3">
                                 <Label>Tamanhos e Estoque</Label>
                                 {formData.category === 'calcados' && (

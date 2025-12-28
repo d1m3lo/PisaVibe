@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette, Link as LinkIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +71,6 @@ import {
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
 import { ColorSwatch } from './color-swatch';
-import Link from 'next/link';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -325,6 +324,8 @@ const ProductForm = ({
     onClose();
   };
 
+  const isPerfume = formData.category === 'perfumes';
+
   return (
     <form onSubmit={handleSubmit}>
       <ScrollArea className="h-[70vh] pr-6">
@@ -384,7 +385,7 @@ const ProductForm = ({
                       </SelectContent>
                     </Select>
                 </div>
-                {subCategoryOptions.length > 0 && (
+                {subCategoryOptions.length > 0 && !isPerfume && (
                     <div className="space-y-2">
                         <Label htmlFor="subCategory">Subcategoria</Label>
                         <Select value={formData.subCategory} onValueChange={(value) => handleSelectChange('subCategory', value)}>
@@ -444,52 +445,56 @@ const ProductForm = ({
           </div>
 
           <div className="space-y-4">
-            <Label>Variantes de Cor</Label>
+            <Label>{isPerfume ? 'Imagem' : 'Variantes de Cor'}</Label>
             <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
-              {formData.variants.map((variant, vIndex) => (
+              {formData.variants.map((variant, vIndex) => {
+                if (isPerfume && vIndex > 0) return null; // Show only one variant for perfume
+                return (
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
-                   <AccordionTrigger className="p-4 hover:no-underline">
+                   <AccordionTrigger className="p-4 hover:no-underline" disabled={isPerfume}>
                         <div className="flex items-center gap-4">
-                            <ColorSwatch colorHex={variant.colorHex} />
-                            <span className="font-semibold">{variant.color || "Nova Cor"}</span>
+                            {!isPerfume && <ColorSwatch colorHex={variant.colorHex} />}
+                            <span className="font-semibold">{isPerfume ? 'Imagem do Perfume' : (variant.color || "Nova Cor")}</span>
                         </div>
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Nome da Cor</Label>
-                                <Input 
-                                    placeholder="Ex: Preto, Branco, Azul" 
-                                    value={variant.color}
-                                    onChange={(e) => handleVariantChange(variant.id, 'color', e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Cor Hexadecimal</Label>
-                                <div className="flex items-center gap-2">
-                                    <Input 
-                                        type="color" 
-                                        value={variant.colorHex.split('/')[0].trim()}
-                                        onChange={(e) => {
-                                            const colors = variant.colorHex.split('/');
-                                            colors[0] = e.target.value;
-                                            handleVariantChange(variant.id, 'colorHex', colors.join(' / '))
-                                        }}
-                                        className="p-1 h-10 w-10 shrink-0"
-                                    />
-                                    <Input 
-                                        placeholder="#000000 ou #000000 / #FFFFFF"
-                                        value={variant.colorHex}
-                                        onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        {!isPerfume && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label>Nome da Cor</Label>
+                                  <Input 
+                                      placeholder="Ex: Preto, Branco, Azul" 
+                                      value={variant.color}
+                                      onChange={(e) => handleVariantChange(variant.id, 'color', e.target.value)}
+                                      required={!isPerfume}
+                                  />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label>Cor Hexadecimal</Label>
+                                  <div className="flex items-center gap-2">
+                                      <Input 
+                                          type="color" 
+                                          value={variant.colorHex.split('/')[0].trim()}
+                                          onChange={(e) => {
+                                              const colors = variant.colorHex.split('/');
+                                              colors[0] = e.target.value;
+                                              handleVariantChange(variant.id, 'colorHex', colors.join(' / '))
+                                          }}
+                                          className="p-1 h-10 w-10 shrink-0"
+                                      />
+                                      <Input 
+                                          placeholder="#000000 ou #000000 / #FFFFFF"
+                                          value={variant.colorHex}
+                                          onChange={(e) => handleVariantChange(variant.id, 'colorHex', e.target.value)}
+                                      />
+                                  </div>
+                              </div>
+                          </div>
+                        )}
 
                         <div className="space-y-3">
-                          <Label>Links das Imagens para esta Cor</Label>
+                          <Label>Links das Imagens {isPerfume ? '' : 'para esta Cor'}</Label>
                           {variant.images.map((image, index) => (
                             <div key={index} className="flex items-center gap-2">
                               <Input
@@ -510,6 +515,7 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
+                        {!isPerfume && (
                          <div className="space-y-3">
                                 <Label>Tamanhos e Estoque</Label>
                                 {formData.category === 'calcados' && (
@@ -550,9 +556,9 @@ const ProductForm = ({
                                     formData.category !== 'calcados' && <p className="text-sm text-muted-foreground">Selecione uma categoria para ver os tamanhos.</p>
                                 )}
                             </div>
+                          )}
 
-
-                         {formData.variants.length > 1 && (
+                         {!isPerfume && formData.variants.length > 1 && (
                             <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variant.id)} className="mt-4">
                                 Remover Variante de Cor
                             </Button>
@@ -560,12 +566,15 @@ const ProductForm = ({
                      </div>
                    </AccordionContent>
                 </AccordionItem>
-              ))}
+                )
+              })}
             </Accordion>
 
-            <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
-                <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
-            </Button>
+            {!isPerfume && (
+              <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
+                  <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
+              </Button>
+            )}
           </div>
         </div>
       </ScrollArea>
@@ -770,3 +779,5 @@ export default function ProductManagement() {
     </Card>
   );
 }
+
+    

@@ -169,8 +169,6 @@ export default function ProductPage() {
   }
 
   const allImages = selectedVariant?.images ?? [];
-  const categoryTitle = product.category.charAt(0).toUpperCase() + product.category.slice(1);
-  const subCategoryTitle = product.subCategory ? ' / ' + product.subCategory.charAt(0).toUpperCase() + product.subCategory.slice(1) : '';
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
@@ -243,7 +241,7 @@ export default function ProductPage() {
         <div className="flex flex-col">
           <div className="flex items-start justify-between gap-4">
              <div>
-                <p className="text-sm text-muted-foreground">{categoryTitle}{subCategoryTitle}</p>
+                {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
                 <h1 className="font-headline text-3xl font-bold md:text-4xl">
                     {product.name}
                 </h1>

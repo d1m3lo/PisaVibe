@@ -263,7 +263,7 @@ export default function ProductPage() {
                 )}
             </Carousel>
 
-            {isBackpack && allImages.length > 1 && (
+            {allImages.length > 1 && (
                  <div className="grid grid-cols-5 gap-2">
                     {allImages.map((img, index) => (
                         <button
@@ -298,7 +298,7 @@ export default function ProductPage() {
             <QualityBadge quality={product.quality} />
           </div>
           
-          {isPerfume || isBackpack ? (
+          {isPerfume ? (
             <div className="mt-8 flex flex-col space-y-6">
                 <div className="space-y-3 rounded-lg border bg-card p-4">
                     <div className="flex items-baseline gap-3">
@@ -347,47 +347,54 @@ export default function ProductPage() {
                     <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
                 </div>
 
-                <div className="mt-8">
-                    <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
-                    <div className="flex flex-wrap gap-3">
-                    {product.variants.map((variant) => (
-                        <button
-                        key={variant.id}
-                        onClick={() => handleVariantSelect(variant)}
-                        className={cn(
-                            "relative rounded-full transition-all",
-                            selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
-                        )}
-                        >
-                        <ColorSwatch
-                            colorHex={variant.colorHex}
-                            title={variant.color}
-                        />
-                        </button>
-                    ))}
+                {!isBackpack && (
+                    <div className="mt-8">
+                        <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
+                        <div className="flex flex-wrap gap-3">
+                        {product.variants.map((variant) => (
+                            <button
+                            key={variant.id}
+                            onClick={() => handleVariantSelect(variant)}
+                            className={cn(
+                                "relative rounded-full transition-all",
+                                selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
+                            )}
+                            >
+                            <ColorSwatch
+                                colorHex={variant.colorHex}
+                                title={variant.color}
+                            />
+                            </button>
+                        ))}
+                        </div>
                     </div>
-                </div>
+                )}
+
 
                 <div className="mt-8">
                     <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="text-sm font-semibold">Tamanho:</h3>
+                        <h3 className="text-sm font-semibold">{isBackpack ? 'Estoque' : 'Tamanho:'}</h3>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                    {sortedSizes.map(({ size, stock }) => (
-                        <Button
-                        key={size}
-                        variant={selectedSize === size ? "default" : "outline"}
-                        onClick={() => setSelectedSize(size)}
-                        disabled={stock === 0}
-                        className={cn(
-                            "w-16",
-                            stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
-                        )}
-                        >
-                        {size}
-                        </Button>
-                    ))}
-                    </div>
+                    {isBackpack ? (
+                        <p className="text-sm text-muted-foreground">{stockForSelectedSize > 0 ? 'Disponível' : 'Indisponível'}</p>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {sortedSizes.map(({ size, stock }) => (
+                                <Button
+                                key={size}
+                                variant={selectedSize === size ? "default" : "outline"}
+                                onClick={() => setSelectedSize(size)}
+                                disabled={stock === 0}
+                                className={cn(
+                                    "w-16",
+                                    stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
+                                )}
+                                >
+                                {size}
+                                </Button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-8">

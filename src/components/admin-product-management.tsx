@@ -119,6 +119,7 @@ const ProductForm = ({
 }) => {
   const [formData, setFormData] = useState({
     name: product?.name || '',
+    brand: product?.brand || '',
     price: product?.price || '',
     oldPrice: product?.oldPrice || '',
     longDescription: product?.longDescription || '',
@@ -273,6 +274,7 @@ const ProductForm = ({
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
+      brand: formData.brand,
       price: parseFloat(String(formData.price)) || 0,
       oldPrice: parseFloat(String(formData.oldPrice)) || undefined,
       description: formData.longDescription.substring(0, 100),
@@ -298,6 +300,10 @@ const ProductForm = ({
           <div className="space-y-2">
             <Label htmlFor="name">Nome do Produto</Label>
             <Input id="name" value={formData.name} onChange={handleChange} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="brand">Marca</Label>
+            <Input id="brand" value={formData.brand} onChange={handleChange} />
           </div>
           <div className="space-y-2">
               <Label htmlFor="price">Preço</Label>
@@ -640,6 +646,7 @@ export default function ProductManagement() {
             <TableRow>
               <TableHead className="w-[80px]">Imagem</TableHead>
               <TableHead>Nome</TableHead>
+              <TableHead>Marca</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Qualidade</TableHead>
               <TableHead>Status</TableHead>
@@ -659,6 +666,7 @@ export default function ProductManagement() {
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.brand || 'N/A'}</TableCell>
                 <TableCell>
                   R$ {product.price.toFixed(2).replace('.', ',')}
                 </TableCell>

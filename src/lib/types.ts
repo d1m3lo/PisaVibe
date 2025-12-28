@@ -17,6 +17,7 @@ export type Product = {
   name: string;
   price: number;
   oldPrice?: number;
+  brand?: string;
   description: string; // Short description for cards
   longDescription: string;
   gender: 'masculino' | 'feminino' | 'unissex';

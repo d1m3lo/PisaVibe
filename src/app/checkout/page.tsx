@@ -16,7 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, FormEvent } from "react";
+import { useState, useMemo, FormEvent, useEffect } from "react";
 import type { Coupon, Order } from "@/lib/types";
 import { collection, query, where, getDocs, addDoc, doc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
@@ -42,6 +42,12 @@ export default function CheckoutPage() {
     zip: '',
   });
 
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      router.push("/");
+    }
+  }, [cartItems, router]);
+
   const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setShippingInfo(prev => ({ ...prev, [id]: value }));
@@ -59,12 +65,6 @@ export default function CheckoutPage() {
       const total = cartTotal - discountAmount;
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
-
-
-  if (cartItems.length === 0 && typeof window !== "undefined") {
-    router.push("/");
-    return null;
-  }
   
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -326,5 +326,7 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    
 
     

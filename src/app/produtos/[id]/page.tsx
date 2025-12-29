@@ -113,6 +113,7 @@ export default function ProductPage() {
   const isPerfume = product?.category === 'perfumes';
   const isBackpack = product?.subCategory === 'mochilas';
   const isCap = product?.subCategory === 'bonés';
+  const isWatch = product?.subCategory === 'relógios';
   const allImages = useMemo(() => selectedVariant?.images ?? [], [selectedVariant]);
 
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product || !selectedVariant) return;
 
-    if (isPerfume || isBackpack || isCap) {
+    if (isPerfume || isBackpack || isCap || isWatch) {
         addToCart(product, selectedVariant, 'U', 1, selectedImage, isBackpack ? displayName : undefined);
     } else if (selectedSize) {
         addToCart(product, selectedVariant, selectedSize, 1, selectedImage);
@@ -195,11 +196,11 @@ export default function ProductPage() {
   };
     
   const stockForSelectedSize = useMemo(() => {
-    return selectedVariant?.sizes.find(s => (isPerfume || isBackpack || isCap) ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
-  }, [selectedVariant, selectedSize, isPerfume, isBackpack, isCap]);
+    return selectedVariant?.sizes.find(s => (isPerfume || isBackpack || isCap || isWatch) ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
+  }, [selectedVariant, selectedSize, isPerfume, isBackpack, isCap, isWatch]);
 
   
-  const isAddToCartDisabled = (isPerfume || isBackpack || isCap)
+  const isAddToCartDisabled = (isPerfume || isBackpack || isCap || isWatch)
     ? stockForSelectedSize === 0
     : !selectedSize || stockForSelectedSize === 0;
 
@@ -357,7 +358,7 @@ export default function ProductPage() {
                     <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
                 </div>
 
-                {!(isBackpack || isCap) && (
+                {!(isBackpack || isCap || isWatch) && (
                     <div className="mt-8">
                         <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
                         <div className="flex flex-wrap gap-3">
@@ -383,9 +384,9 @@ export default function ProductPage() {
 
                 <div className="mt-8">
                     <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="text-sm font-semibold">{isBackpack || isCap ? 'Estoque' : 'Tamanho:'}</h3>
+                        <h3 className="text-sm font-semibold">{isBackpack || isCap || isWatch ? 'Estoque' : 'Tamanho:'}</h3>
                     </div>
-                    {isBackpack || isCap ? (
+                    {isBackpack || isCap || isWatch ? (
                         <p className="text-sm text-muted-foreground">{stockForSelectedSize > 0 ? 'Disponível' : 'Indisponível'}</p>
                     ) : (
                         <div className="flex flex-wrap gap-2">

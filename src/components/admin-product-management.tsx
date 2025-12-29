@@ -469,21 +469,21 @@ const ProductForm = ({
           </div>
 
           <div className="space-y-4">
-            <Label>{isPerfume || isBackpack ? 'Imagens e Estoque' : 'Variantes de Cor'}</Label>
+            <Label>{isPerfume ? 'Imagens e Estoque' : isBackpack ? 'Variações e Estoque' : 'Variantes de Cor'}</Label>
             <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
               {formData.variants.map((variant, vIndex) => {
-                if ((isPerfume || isBackpack) && vIndex > 0) return null; // Show only one variant
+                if (isPerfume && vIndex > 0) return null; // Show only one variant for perfumes
                 return (
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
                    <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4">
-                            {!(isPerfume || isBackpack) && <ColorSwatch colorHex={variant.colorHex} />}
-                            <span className="font-semibold">{isPerfume || isBackpack ? 'Imagens e Estoque' : (variant.color || "Nova Cor")}</span>
+                            {!isPerfume && !isBackpack && <ColorSwatch colorHex={variant.colorHex} />}
+                            <span className="font-semibold">{isPerfume ? 'Imagens e Estoque' : isBackpack ? 'Variação' : (variant.color || "Nova Cor")}</span>
                         </div>
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        {!(isPerfume || isBackpack) && (
+                        {!isPerfume && !isBackpack && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label>Nome da Cor</Label>
@@ -491,7 +491,7 @@ const ProductForm = ({
                                       placeholder="Ex: Preto, Branco, Azul" 
                                       value={variant.color}
                                       onChange={(e) => handleVariantChange(variant.id, 'color', e.target.value)}
-                                      required={!isPerfume}
+                                      required
                                   />
                               </div>
                               <div className="space-y-2">
@@ -518,7 +518,7 @@ const ProductForm = ({
                         )}
 
                         <div className="space-y-3">
-                          <Label>Links das Imagens</Label>
+                          <Label>{isBackpack ? 'Imagens da Variação' : 'Links das Imagens'}</Label>
                           {variant.images.map((image, index) => (
                             <div key={index} className="flex items-center gap-2">
                               <div className="flex-grow space-y-1">
@@ -548,21 +548,8 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {isPerfume ? (
+                        {(isPerfume || isBackpack) ? (
                            <div className="space-y-2">
-                                <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
-                                <Input 
-                                    id={`stock-${variant.id}-U`}
-                                    type="number"
-                                    placeholder="Estoque"
-                                    value={variant.sizes.find(s => s.size === 'U')?.stock ?? ''}
-                                    onChange={(e) => handleSizeStockChange(variant.id, 'U', parseInt(e.target.value, 10) || 0)}
-                                    min="0"
-                                    required
-                                />
-                            </div>
-                        ) : isBackpack ? (
-                            <div className="space-y-2">
                                 <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
                                 <Input 
                                     id={`stock-${variant.id}-U`}
@@ -617,9 +604,9 @@ const ProductForm = ({
                             </div>
                           )}
 
-                         {!(isPerfume || isBackpack) && formData.variants.length > 1 && (
+                         {!isPerfume && formData.variants.length > 1 && (
                             <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variant.id)} className="mt-4">
-                                Remover Variante de Cor
+                                {isBackpack ? 'Remover Variação' : 'Remover Variante de Cor'}
                             </Button>
                          )}
                      </div>
@@ -629,9 +616,9 @@ const ProductForm = ({
               })}
             </Accordion>
 
-            {!(isPerfume || isBackpack) && (
+            {!isPerfume && (
               <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
-                  <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
+                  <Palette className="mr-2 h-4 w-4" /> {isBackpack ? 'Adicionar Variação' : 'Adicionar Variante de Cor'}
               </Button>
             )}
           </div>
@@ -681,13 +668,19 @@ export default function ProductManagement() {
 
   const handleSave = async (productData: Omit<ProductWithId, 'firestoreId'>) => {
     if (!firestore) return;
+    
+    const cleanProductData = { ...productData };
+    if (!cleanProductData.oldPrice) {
+      delete cleanProductData.oldPrice;
+    }
+
     try {
       if (editingProduct) {
         const docRef = doc(firestore, 'products', editingProduct.firestoreId);
-        await updateDoc(docRef, productData);
+        await updateDoc(docRef, cleanProductData);
         toast({ title: 'Sucesso!', description: 'Produto atualizado.' });
       } else {
-        await addDoc(collection(firestore, 'products'), productData);
+        await addDoc(collection(firestore, 'products'), cleanProductData);
         toast({ title: 'Sucesso!', description: 'Produto criado.' });
       }
     } catch (error) {

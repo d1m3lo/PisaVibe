@@ -35,7 +35,13 @@ export default function ProductsPage() {
       products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     
-    if (category && category !== 'lancamentos' && category !== 'ofertas') {
+    const tag = category && (category === 'lancamentos' || category === 'ofertas') ? category : null;
+
+    if (tag) {
+      products = products.filter(p => p.tags?.includes(tag));
+    }
+    
+    if (category && !tag) {
         products = products.filter(p => p.category === category);
     }
     
@@ -58,10 +64,6 @@ export default function ProductsPage() {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
     }
 
-    if (category && (category === 'lancamentos' || category === 'ofertas')) {
-      products = products.filter(p => p.tags?.includes(category));
-    }
-
     return products;
 
   }, [productsData, searchQuery, category, subCategory, gender]);
@@ -78,26 +80,30 @@ export default function ProductsPage() {
     if (formatted === 'bones' || formatted === 'bonés') return 'Bonés';
     if (formatted === 'relogios' || formatted === 'relógios') return 'Relógios';
     if (formatted === 'calcas' || formatted === 'calças') return 'Calças';
+    if (formatted === 'sandalias' || formatted === 'sandálias') return 'Sandálias';
     return capitalize(formatted);
   };
 
+  const titleParts: string[] = [];
+  const tag = category && (category === 'lancamentos' || category === 'ofertas') ? category : null;
+
+  if (tag) {
+    titleParts.push(formatTitlePart(tag));
+  }
+  if (gender) {
+    titleParts.push(formatTitlePart(gender));
+  }
+  if (category && !tag) {
+    titleParts.push(formatTitlePart(category));
+  }
+  if (subCategory) {
+    titleParts.push(formatTitlePart(subCategory));
+  }
 
   if (searchQuery) {
     title = `Busca por: "${searchQuery}"`;
-  } else if (category === 'lancamentos' || category === 'ofertas') {
-    const titleParts = [];
-    titleParts.push(formatTitlePart(category));
-    if (gender) titleParts.push(formatTitlePart(gender));
-    if (subCategory) titleParts.push(formatTitlePart(subCategory));
+  } else if (titleParts.length > 0) {
     title = titleParts.join(' - ');
-  } else if (gender) {
-    const titleParts = [];
-    titleParts.push(formatTitlePart(gender));
-    if (category) titleParts.push(formatTitlePart(category));
-    if (subCategory) titleParts.push(formatTitlePart(subCategory));
-    title = titleParts.join(' - ');
-  } else if (category) {
-    title = formatTitlePart(category);
   }
 
 

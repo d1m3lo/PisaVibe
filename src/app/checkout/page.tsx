@@ -16,12 +16,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo } from "react";
-import type { Coupon } from "@/lib/types";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { useState, useMemo, FormEvent } from "react";
+import type { Coupon, Order } from "@/lib/types";
+import { collection, query, where, getDocs, addDoc, doc } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
 
 export default function CheckoutPage() {
+  const { user, isUserLoading } = useUser();
   const { cartItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const { toast } = useToast();
@@ -30,6 +31,21 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const [shippingInfo, setShippingInfo] = useState({
+    name: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+  });
+
+  const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setShippingInfo(prev => ({ ...prev, [id]: value }));
+  }
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -46,7 +62,6 @@ export default function CheckoutPage() {
 
 
   if (cartItems.length === 0) {
-    // Redirect to home if cart is empty
     if (typeof window !== "undefined") {
       router.push("/");
     }
@@ -78,7 +93,6 @@ export default function CheckoutPage() {
         const couponDoc = querySnapshot.docs[0];
         const couponData = { ...couponDoc.data(), id: couponDoc.id } as Coupon;
         
-        // Optional: check expiry date
         if (couponData.expiryDate && new Date(couponData.expiryDate) < new Date()) {
             setCouponMessage("Este cupom expirou.");
             toast({ variant: 'destructive', title: 'Cupom Expirado' });
@@ -98,14 +112,62 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    toast({
-        title: "Compra finalizada com sucesso!",
-        description: "Obrigado por comprar na PISA VIBE.",
-    });
-    clearCart();
-    router.push("/");
+    if (!user || !firestore) {
+        toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Você precisa estar logado para finalizar a compra.",
+        });
+        return;
+    }
+    setIsProcessing(true);
+
+    try {
+        const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
+        
+        const orderData: Order = {
+            userId: user.uid,
+            customerInfo: shippingInfo,
+            orderDate: new Date().toISOString(),
+            totalAmount: finalTotal,
+            shippingAddress: fullAddress,
+            status: 'Processing',
+            items: cartItems.map(item => ({
+                productId: item.product.id,
+                productName: item.displayName || item.product.name,
+                variantColor: item.variant.color,
+                size: item.size,
+                quantity: item.quantity,
+                price: item.product.price,
+                imageUrl: (item.product.subCategory === 'mochilas' && item.selectedImage) 
+                    ? item.selectedImage 
+                    : item.variant.images[0]
+            })),
+            couponCode: appliedCoupon?.code,
+            discountAmount: discountAmount,
+        };
+
+        const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
+        await addDoc(userOrdersRef, orderData);
+
+        toast({
+            title: "Compra finalizada com sucesso!",
+            description: "Obrigado por comprar na PISA VIBE.",
+        });
+        clearCart();
+        router.push("/minha-conta"); // Redirect to account page to see order history (future)
+    } catch (error) {
+        console.error("Error creating order:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao finalizar a compra",
+            description: "Não foi possível registrar seu pedido. Tente novamente.",
+        });
+    } finally {
+        setIsProcessing(false);
+    }
   }
 
   return (
@@ -121,28 +183,28 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome Completo</Label>
-                  <Input id="name" required />
+                  <Input id="name" value={shippingInfo.name} onChange={handleShippingInfoChange} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required />
+                  <Input id="email" type="email" value={shippingInfo.email} onChange={handleShippingInfoChange} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Endereço</Label>
-                  <Input id="address" required />
+                  <Input id="address" value={shippingInfo.address} onChange={handleShippingInfoChange} required placeholder="Rua, Av, etc. e número" />
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" required />
+                    <Input id="city" value={shippingInfo.city} onChange={handleShippingInfoChange} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
-                    <Input id="state" required />
+                    <Input id="state" value={shippingInfo.state} onChange={handleShippingInfoChange} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zip">CEP</Label>
-                    <Input id="zip" required />
+                    <Input id="zip" value={shippingInfo.zip} onChange={handleShippingInfoChange} required />
                   </div>
                 </div>
               </CardContent>
@@ -171,8 +233,8 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            <Button type="submit" size="lg" className="mt-8 w-full">
-              Finalizar Compra e Pagar
+            <Button type="submit" size="lg" className="mt-8 w-full" disabled={isProcessing || isUserLoading}>
+              {isProcessing ? 'Processando...' : 'Finalizar Compra e Pagar'}
             </Button>
           </form>
         </div>

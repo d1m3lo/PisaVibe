@@ -50,9 +50,24 @@ export type UserProfile = {
   phone?: string;
 };
 
+export type OrderItem = {
+    productId: string;
+    productName: string;
+    variantColor: string;
+    size: string;
+    quantity: number;
+    price: number;
+    imageUrl: string;
+}
+
 export type Order = {
-  id: string;
+  id?: string;
   userId: string;
+  customerInfo: {
+    name: string;
+    email: string;
+  },
+  items: OrderItem[];
   orderDate: string; // ISO String
   totalAmount: number;
   shippingAddress: string;

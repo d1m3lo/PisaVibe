@@ -4,7 +4,7 @@
 import { ProductCard } from "@/components/product-card";
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Query, and, or } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,15 +19,9 @@ export default function ProductsPage() {
   const gender = searchParams.get("genero");
   const searchQuery = searchParams.get("q");
 
-  // This query will fetch a broad set of products.
-  // Specific tag-based filtering ('lancamentos', 'ofertas') will be done client-side.
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    
-    // Always fetch all active products. Filtering logic will be more robust on the client-side
-    // to handle combinations of tags and properties.
     return query(collection(firestore, 'products'), where('status', '==', 'ativo'));
-    
   }, [firestore]);
 
   const { data: productsData, isLoading } = useCollection<Product>(productsQuery);
@@ -37,33 +31,36 @@ export default function ProductsPage() {
     
     let products = [...productsData];
 
-    // 1. Filter by search query first
     if (searchQuery) {
       products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     
-    // 2. Filter by main category (if it's not a special tag)
     if (category && category !== 'lancamentos' && category !== 'ofertas') {
         products = products.filter(p => p.category === category);
     }
     
-    // 3. Filter by sub-category/type
     if (subCategory) {
-        let normalizedSubCategory = subCategory;
-        if (subCategory === 'calcas') normalizedSubCategory = 'calças';
-        if (subCategory === 'bones') normalizedSubCategory = 'bonés';
-        if (subCategory === 'relogios') normalizedSubCategory = 'relógios';
+        // Normaliza a subcategoria da URL para remover acentos
+        const normalizedSubCategory = subCategory
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
 
-        // The 'tipo' can sometimes be a main category itself (like 'calcados')
-        products = products.filter(p => p.subCategory === normalizedSubCategory || p.category === normalizedSubCategory);
+        products = products.filter(p => {
+          if (!p.subCategory) return false;
+          // Normaliza a subcategoria do produto
+          const normalizedProductSubCategory = p.subCategory
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+          // Compara as versões normalizadas
+          return normalizedProductSubCategory === normalizedSubCategory || p.category === normalizedSubCategory;
+        });
     }
     
-    // 4. Filter by gender
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
     }
 
-    // 5. Finally, filter by special category tags
     if (category && (category === 'lancamentos' || category === 'ofertas')) {
       products = products.filter(p => p.tags?.includes(category));
     }
@@ -91,14 +88,12 @@ export default function ProductsPage() {
        if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
        if (subCategoryTitle.toLowerCase() === 'bones' || subCategoryTitle.toLowerCase() === 'bonés') subCategoryTitle = 'Bonés';
        if (subCategoryTitle.toLowerCase() === 'relogios' || subCategoryTitle.toLowerCase() === 'relógios') subCategoryTitle = 'Relógios';
-       // Avoid duplicating title parts if subCategory is the same as category
        if (!titleParts.some(part => part.toLowerCase() === subCategoryTitle.toLowerCase())) {
           titleParts.push(subCategoryTitle);
        }
     }
     if (gender) {
         const genderTitle = gender.charAt(0).toUpperCase() + gender.slice(1);
-        // Avoid duplicating title parts if gender is the same as category
         if (!titleParts.some(part => part.toLowerCase() === genderTitle.toLowerCase())) {
             titleParts.push(genderTitle);
         }
@@ -119,7 +114,6 @@ export default function ProductsPage() {
         <h1 className="font-headline text-4xl font-bold">
           {title}
         </h1>
-        {/* Sorting functionality can be added here */}
       </div>
 
       {isLoading ? (

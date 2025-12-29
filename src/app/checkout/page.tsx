@@ -43,6 +43,7 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
+    // Redirect if cart is empty, runs only on client after mount
     if (cartItems.length === 0) {
       router.push("/");
     }
@@ -122,13 +123,24 @@ export default function CheckoutPage() {
     }
     setIsProcessing(true);
     
-    // Simulate payment processing
+    // =================================================================
+    // AQUI SERIA A CHAMADA PARA A API DE PAGAMENTO
+    // =================================================================
+    // 1. Você criaria um endpoint no seu backend (ex: /api/process-payment).
+    // 2. Esse endpoint receberia os detalhes do pedido e do cartão.
+    // 3. No backend, você usaria a sua PAYMENT_API_KEY (do arquivo .env) 
+    //    para se comunicar com o gateway de pagamento (Stripe, Mercado Pago, etc.).
+    // 4. Apenas após a confirmação de pagamento do backend, você continuaria com o código abaixo.
+    //
+    // Para simular, vamos aguardar 2 segundos.
     await new Promise(resolve => setTimeout(resolve, 2000));
+    // =================================================================
+
 
     try {
         const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
         
-        const orderData: Order = {
+        const orderData: Omit<Order, 'id'> = {
             userId: user.uid,
             customerInfo: shippingInfo,
             orderDate: new Date().toISOString(),
@@ -172,7 +184,7 @@ export default function CheckoutPage() {
   }
 
   if (cartItems.length === 0) {
-    return null;
+    return null; // The useEffect will handle the redirect
   }
 
   return (
@@ -326,7 +338,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-    
-
-    

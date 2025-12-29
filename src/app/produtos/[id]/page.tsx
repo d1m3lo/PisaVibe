@@ -358,37 +358,33 @@ export default function ProductPage() {
                     <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
                 </div>
 
+                <div className="mt-8">
+                    <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
+                    <div className="flex flex-wrap gap-3">
+                    {product.variants.map((variant) => (
+                        <button
+                        key={variant.id}
+                        onClick={() => handleVariantSelect(variant)}
+                        className={cn(
+                            "relative rounded-full transition-all",
+                            selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
+                        )}
+                        >
+                        <ColorSwatch
+                            colorHex={variant.colorHex}
+                            title={variant.color}
+                        />
+                        </button>
+                    ))}
+                    </div>
+                </div>
+
+
                 {!(isBackpack || isCap || isWatch) && (
                     <div className="mt-8">
-                        <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
-                        <div className="flex flex-wrap gap-3">
-                        {product.variants.map((variant) => (
-                            <button
-                            key={variant.id}
-                            onClick={() => handleVariantSelect(variant)}
-                            className={cn(
-                                "relative rounded-full transition-all",
-                                selectedVariant?.id === variant.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : ""
-                            )}
-                            >
-                            <ColorSwatch
-                                colorHex={variant.colorHex}
-                                title={variant.color}
-                            />
-                            </button>
-                        ))}
+                        <div className="flex justify-between items-baseline mb-2">
+                            <h3 className="text-sm font-semibold">Tamanho:</h3>
                         </div>
-                    </div>
-                )}
-
-
-                <div className="mt-8">
-                    <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="text-sm font-semibold">{isBackpack || isCap || isWatch ? 'Estoque' : 'Tamanho:'}</h3>
-                    </div>
-                    {isBackpack || isCap || isWatch ? (
-                        <p className="text-sm text-muted-foreground">{stockForSelectedSize > 0 ? 'Disponível' : 'Indisponível'}</p>
-                    ) : (
                         <div className="flex flex-wrap gap-2">
                             {sortedSizes.map(({ size, stock }) => (
                                 <Button
@@ -405,8 +401,16 @@ export default function ProductPage() {
                                 </Button>
                             ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                 {(isBackpack || isCap || isWatch) && stockForSelectedSize > 0 && (
+                    <div className="mt-8 flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <p className="text-sm font-semibold text-green-600">Disponível</p>
+                    </div>
+                )}
+
 
                 <div className="mt-8">
                     <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
@@ -420,3 +424,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    

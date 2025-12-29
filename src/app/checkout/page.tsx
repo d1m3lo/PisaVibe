@@ -61,10 +61,8 @@ export default function CheckoutPage() {
   }, [cartTotal, discountAmount]);
 
 
-  if (cartItems.length === 0) {
-    if (typeof window !== "undefined") {
-      router.push("/");
-    }
+  if (cartItems.length === 0 && typeof window !== "undefined") {
+    router.push("/");
     return null;
   }
   
@@ -123,6 +121,9 @@ export default function CheckoutPage() {
         return;
     }
     setIsProcessing(true);
+    
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
         const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
@@ -157,7 +158,7 @@ export default function CheckoutPage() {
             description: "Obrigado por comprar na PISA VIBE.",
         });
         clearCart();
-        router.push("/minha-conta"); // Redirect to account page to see order history (future)
+        router.push("/minha-conta");
     } catch (error) {
         console.error("Error creating order:", error);
         toast({
@@ -168,6 +169,10 @@ export default function CheckoutPage() {
     } finally {
         setIsProcessing(false);
     }
+  }
+
+  if (cartItems.length === 0) {
+    return null;
   }
 
   return (
@@ -215,26 +220,25 @@ export default function CheckoutPage() {
                 <CardTitle>Pagamento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">Funcionalidade de pagamento a ser implementada.</p>
                  <div className="space-y-2">
                   <Label htmlFor="card-number">Número do Cartão</Label>
-                  <Input id="card-number" placeholder="XXXX XXXX XXXX XXXX" disabled/>
+                  <Input id="card-number" placeholder="XXXX XXXX XXXX XXXX" required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label htmlFor="expiry-date">Validade</Label>
-                        <Input id="expiry-date" placeholder="MM/AA" disabled/>
+                        <Input id="expiry-date" placeholder="MM/AA" required />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" disabled/>
+                        <Input id="cvc" placeholder="123" required />
                     </div>
                 </div>
               </CardContent>
             </Card>
 
             <Button type="submit" size="lg" className="mt-8 w-full" disabled={isProcessing || isUserLoading}>
-              {isProcessing ? 'Processando...' : 'Finalizar Compra e Pagar'}
+              {isProcessing ? 'Processando pagamento...' : 'Finalizar Compra e Pagar'}
             </Button>
           </form>
         </div>
@@ -322,3 +326,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    

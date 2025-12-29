@@ -114,6 +114,12 @@ export default function ProductPage() {
   const isBackpack = product?.subCategory === 'mochilas';
   const isCap = product?.subCategory === 'bonés';
   const isWatch = product?.subCategory === 'relógios';
+  const hasSingleSize = useMemo(() => {
+    if (!selectedVariant) return false;
+    const allSizesAreU = selectedVariant.sizes.every(s => s.size === 'U');
+    return selectedVariant.sizes.length === 1 && allSizesAreU;
+  }, [selectedVariant]);
+
   const allImages = useMemo(() => selectedVariant?.images ?? [], [selectedVariant]);
 
   useEffect(() => {
@@ -380,7 +386,7 @@ export default function ProductPage() {
                 </div>
 
 
-                {!(isBackpack || isCap || isWatch) && (
+                {!(isBackpack || isCap || isWatch || hasSingleSize) && (
                     <div className="mt-8">
                         <div className="flex justify-between items-baseline mb-2">
                             <h3 className="text-sm font-semibold">Tamanho:</h3>
@@ -404,7 +410,7 @@ export default function ProductPage() {
                     </div>
                 )}
 
-                 {(isBackpack || isCap || isWatch) && stockForSelectedSize > 0 && (
+                 {(isBackpack || isCap || isWatch || hasSingleSize) && stockForSelectedSize > 0 && (
                     <div className="mt-8 flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                         <p className="text-sm font-semibold text-green-600">Disponível</p>
@@ -424,5 +430,7 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    
 
     

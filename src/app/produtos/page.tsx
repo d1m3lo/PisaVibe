@@ -40,19 +40,16 @@ export default function ProductsPage() {
     }
     
     if (subCategory) {
-        // Normaliza a subcategoria da URL para remover acentos
         const normalizedSubCategory = subCategory
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "");
 
         products = products.filter(p => {
           if (!p.subCategory) return false;
-          // Normaliza a subcategoria do produto
           const normalizedProductSubCategory = p.subCategory
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "");
 
-          // Compara as versões normalizadas
           return normalizedProductSubCategory === normalizedSubCategory || p.category === normalizedSubCategory;
         });
     }
@@ -71,40 +68,32 @@ export default function ProductsPage() {
 
 
   let title = "Todos os Produtos";
+
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  
+  const formatTitlePart = (part: string) => {
+    const formatted = part.toLowerCase();
+    if (formatted === 'calcados' || formatted === 'calçados') return 'Calçados';
+    if (formatted === 'acessorios' || formatted === 'acessórios') return 'Acessórios';
+    if (formatted === 'bones' || formatted === 'bonés') return 'Bonés';
+    if (formatted === 'relogios' || formatted === 'relógios') return 'Relógios';
+    if (formatted === 'calcas' || formatted === 'calças') return 'Calças';
+    return capitalize(formatted);
+  };
+
+
   if (searchQuery) {
     title = `Busca por: "${searchQuery}"`;
-  } else {
-    let titleParts = [];
-    if (category) {
-        let categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categoryTitle.toLowerCase() === 'lancamentos') categoryTitle = 'Lançamentos';
-        if (categoryTitle.toLowerCase() === 'ofertas') categoryTitle = 'Ofertas';
-        if (categoryTitle.toLowerCase() === 'calcados' || categoryTitle.toLowerCase() === 'calçados') categoryTitle = 'Calçados';
-        titleParts.push(categoryTitle);
-    }
-    if (subCategory) {
-       let subCategoryTitle = subCategory.charAt(0).toUpperCase() + subCategory.slice(1);
-       if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
-       if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
-       if (subCategoryTitle.toLowerCase() === 'bones' || subCategoryTitle.toLowerCase() === 'bonés') subCategoryTitle = 'Bonés';
-       if (subCategoryTitle.toLowerCase() === 'relogios' || subCategoryTitle.toLowerCase() === 'relógios') subCategoryTitle = 'Relógios';
-       if (!titleParts.some(part => part.toLowerCase() === subCategoryTitle.toLowerCase())) {
-          titleParts.push(subCategoryTitle);
-       }
-    }
-    if (gender) {
-        const genderTitle = gender.charAt(0).toUpperCase() + gender.slice(1);
-        if (!titleParts.some(part => part.toLowerCase() === genderTitle.toLowerCase())) {
-            titleParts.push(genderTitle);
-        }
-    }
-
-    if (titleParts.length > 0) {
-      title = titleParts.join(' - ');
-    } else if (searchParams.get("categoria") === "masculino" || searchParams.get("categoria") === "feminino") {
-      const genderParam = searchParams.get("categoria");
-      title = genderParam!.charAt(0).toUpperCase() + genderParam!.slice(1);
-    }
+  } else if (gender) {
+    const titleParts = [];
+    titleParts.push(formatTitlePart(gender));
+    if (category) titleParts.push(formatTitlePart(category));
+    if (subCategory) titleParts.push(formatTitlePart(subCategory));
+    title = titleParts.join(' - ');
+  } else if (category === 'lancamentos' || category === 'ofertas') {
+    title = capitalize(category);
+  } else if (category) {
+    title = formatTitlePart(category);
   }
 
 

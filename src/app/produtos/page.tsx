@@ -75,6 +75,7 @@ export default function ProductsPage() {
   
   const formatTitlePart = (part: string) => {
     const formatted = part.toLowerCase();
+    if (formatted === 'lancamentos') return 'Lançamentos';
     if (formatted === 'calcados' || formatted === 'calçados') return 'Calçados';
     if (formatted === 'acessorios' || formatted === 'acessórios') return 'Acessórios';
     if (formatted === 'bones' || formatted === 'bonés') return 'Bonés';

@@ -242,10 +242,6 @@ export default function CheckoutPage() {
                         <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
                     </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Frete</span>
-                  <span className="text-green-600">Grátis</span>
-                </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>

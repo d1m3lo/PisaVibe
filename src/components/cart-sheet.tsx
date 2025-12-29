@@ -119,10 +119,6 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
             <span>Subtotal</span>
             <span>R$ {cartTotal.toFixed(2).replace(".", ",")}</span>
           </div>
-           <div className="flex justify-between text-sm">
-            <span>Frete</span>
-            <span className="text-green-600">Grátis</span>
-          </div>
           <Separator />
            <div className="flex justify-between font-bold">
             <span>Total</span>

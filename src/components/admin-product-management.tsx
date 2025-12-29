@@ -317,8 +317,7 @@ const ProductForm = ({
         alert("Cada variante de cor deve ter pelo menos uma imagem.");
         return;
     }
-    const oldPriceValue = parseFloat(String(formData.oldPrice));
-
+    
     const productData: Omit<ProductWithId, 'firestoreId'> = {
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
@@ -337,8 +336,9 @@ const ProductForm = ({
       quality: formData.quality as Product['quality'],
       origin: formData.origin,
     };
-
-    if (oldPriceValue > 0) {
+    
+    const oldPriceValue = parseFloat(String(formData.oldPrice));
+    if (!isNaN(oldPriceValue) && oldPriceValue > 0) {
       productData.oldPrice = oldPriceValue;
     }
 
@@ -418,7 +418,7 @@ const ProductForm = ({
                         </SelectTrigger>
                         <SelectContent>
                             {subCategoryOptions.map(sub => (
-                                <SelectItem key={sub} value={sub.toLowerCase()}>{sub}</SelectItem>
+                                <SelectItem key={sub} value={sub.toLowerCase().replace('ç', 'c').replace('é', 'e')}>{sub}</SelectItem>
                             ))}
                         </SelectContent>
                         </Select>
@@ -548,8 +548,21 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {isPerfume || isBackpack ? (
+                        {isPerfume ? (
                            <div className="space-y-2">
+                                <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
+                                <Input 
+                                    id={`stock-${variant.id}-U`}
+                                    type="number"
+                                    placeholder="Estoque"
+                                    value={variant.sizes.find(s => s.size === 'U')?.stock ?? ''}
+                                    onChange={(e) => handleSizeStockChange(variant.id, 'U', parseInt(e.target.value, 10) || 0)}
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                        ) : isBackpack ? (
+                            <div className="space-y-2">
                                 <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
                                 <Input 
                                     id={`stock-${variant.id}-U`}

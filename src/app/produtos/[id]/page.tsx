@@ -112,7 +112,8 @@ export default function ProductPage() {
 
   const isPerfume = product?.category === 'perfumes';
   const isBackpack = product?.subCategory === 'mochilas';
-  const allImages = selectedVariant?.images ?? [];
+  const isCap = product?.subCategory === 'bonés';
+  const allImages = useMemo(() => selectedVariant?.images ?? [], [selectedVariant]);
 
   useEffect(() => {
     if (product) {
@@ -184,18 +185,21 @@ export default function ProductPage() {
   };
 
   const handleAddToCart = () => {
-    if (!product || !selectedVariant || (!isBackpack && !selectedImage)) return;
+    if (!product || !selectedVariant) return;
 
-    if (isPerfume || isBackpack) {
+    if (isPerfume || isBackpack || isCap) {
         addToCart(product, selectedVariant, 'U', 1, selectedImage, isBackpack ? displayName : undefined);
     } else if (selectedSize) {
         addToCart(product, selectedVariant, selectedSize, 1, selectedImage);
     }
   };
     
-  const stockForSelectedSize = selectedVariant?.sizes.find(s => (isPerfume || isBackpack) ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
+  const stockForSelectedSize = useMemo(() => {
+    return selectedVariant?.sizes.find(s => (isPerfume || isBackpack || isCap) ? s.size === 'U' : s.size === selectedSize)?.stock || 0;
+  }, [selectedVariant, selectedSize, isPerfume, isBackpack, isCap]);
+
   
-  const isAddToCartDisabled = (isPerfume || isBackpack)
+  const isAddToCartDisabled = (isPerfume || isBackpack || isCap)
     ? stockForSelectedSize === 0
     : !selectedSize || stockForSelectedSize === 0;
 
@@ -314,6 +318,12 @@ export default function ProductPage() {
                     <p className="text-4xl font-bold">
                         R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
+                    {stockForSelectedSize > 0 && (
+                         <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <p className="text-sm font-semibold text-green-600">Disponível</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-4">
@@ -347,7 +357,7 @@ export default function ProductPage() {
                     <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
                 </div>
 
-                {!isBackpack && (
+                {!(isBackpack || isCap) && (
                     <div className="mt-8">
                         <h3 className="mb-2 text-sm font-semibold">Cor: <span className="font-normal">{selectedVariant?.color}</span></h3>
                         <div className="flex flex-wrap gap-3">
@@ -373,9 +383,9 @@ export default function ProductPage() {
 
                 <div className="mt-8">
                     <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="text-sm font-semibold">{isBackpack ? 'Estoque' : 'Tamanho:'}</h3>
+                        <h3 className="text-sm font-semibold">{isBackpack || isCap ? 'Estoque' : 'Tamanho:'}</h3>
                     </div>
-                    {isBackpack ? (
+                    {isBackpack || isCap ? (
                         <p className="text-sm text-muted-foreground">{stockForSelectedSize > 0 ? 'Disponível' : 'Indisponível'}</p>
                     ) : (
                         <div className="flex flex-wrap gap-2">

@@ -84,14 +84,18 @@ export default function ProductsPage() {
 
   if (searchQuery) {
     title = `Busca por: "${searchQuery}"`;
+  } else if (category === 'lancamentos' || category === 'ofertas') {
+    const titleParts = [];
+    titleParts.push(formatTitlePart(category));
+    if (gender) titleParts.push(formatTitlePart(gender));
+    if (subCategory) titleParts.push(formatTitlePart(subCategory));
+    title = titleParts.join(' - ');
   } else if (gender) {
     const titleParts = [];
     titleParts.push(formatTitlePart(gender));
     if (category) titleParts.push(formatTitlePart(category));
     if (subCategory) titleParts.push(formatTitlePart(subCategory));
     title = titleParts.join(' - ');
-  } else if (category === 'lancamentos' || category === 'ofertas') {
-    title = capitalize(category);
   } else if (category) {
     title = formatTitlePart(category);
   }

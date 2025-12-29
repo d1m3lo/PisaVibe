@@ -49,7 +49,11 @@ export default function ProductsPage() {
     
     // 3. Filter by sub-category/type
     if (subCategory) {
-        const normalizedSubCategory = subCategory === 'calcas' ? 'calças' : (subCategory === 'bones' ? 'bonés' : subCategory);
+        let normalizedSubCategory = subCategory;
+        if (subCategory === 'calcas') normalizedSubCategory = 'calças';
+        if (subCategory === 'bones') normalizedSubCategory = 'bonés';
+        if (subCategory === 'relogios') normalizedSubCategory = 'relógios';
+
         // The 'tipo' can sometimes be a main category itself (like 'calcados')
         products = products.filter(p => p.subCategory === normalizedSubCategory || p.category === normalizedSubCategory);
     }
@@ -86,6 +90,7 @@ export default function ProductsPage() {
        if (subCategoryTitle.toLowerCase() === 'calcados' || subCategoryTitle.toLowerCase() === 'calçados') subCategoryTitle = 'Calçados';
        if (subCategoryTitle.toLowerCase() === 'calcas' || subCategoryTitle.toLowerCase() === 'calças') subCategoryTitle = 'Calças';
        if (subCategoryTitle.toLowerCase() === 'bones' || subCategoryTitle.toLowerCase() === 'bonés') subCategoryTitle = 'Bonés';
+       if (subCategoryTitle.toLowerCase() === 'relogios' || subCategoryTitle.toLowerCase() === 'relógios') subCategoryTitle = 'Relógios';
        // Avoid duplicating title parts if subCategory is the same as category
        if (!titleParts.some(part => part.toLowerCase() === subCategoryTitle.toLowerCase())) {
           titleParts.push(subCategoryTitle);

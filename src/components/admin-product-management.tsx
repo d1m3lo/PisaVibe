@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette, Image as ImageIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,7 +70,7 @@ import {
 } from './ui/accordion';
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
-import { ColorSwatch } from './color-swatch';
+import { ColorSwatch } from './color-satch';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -770,14 +770,16 @@ export default function ProductManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {products.map((product) => {
+              const imageUrl = product.variants?.[0]?.images?.[0];
+              return (
               <TableRow key={product.firestoreId}>
                 <TableCell>
-                  {product.variants?.[0]?.images?.[0] ? (
-                    <Image src={product.variants[0].images[0]} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                  {imageUrl ? (
+                    <Image src={imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
                   ) : (
                     <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center text-muted-foreground">
-                      ?
+                      <ImageIcon className="h-5 w-5" />
                     </div>
                   )}
                 </TableCell>
@@ -824,7 +826,7 @@ export default function ProductManagement() {
                   </AlertDialog>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </CardContent>

@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, onSnapshot, query } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query, getDocs, writeBatch } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import {
   Table,
@@ -25,10 +25,21 @@ import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Separator } from './ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 
 interface OrderWithId extends Order {
@@ -41,6 +52,7 @@ export default function AdminOrderManagement() {
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!firestore) return;
@@ -72,6 +84,49 @@ export default function AdminOrderManagement() {
     return () => unsubscribe();
   }, [firestore, toast]);
 
+  const handleClearAllOrders = async () => {
+    if (!firestore || orders.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Nenhum pedido para apagar',
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const ordersQuery = query(collectionGroup(firestore, 'orders'));
+      const querySnapshot = await getDocs(ordersQuery);
+      
+      if (querySnapshot.empty) {
+        toast({ title: 'Tudo limpo!', description: 'Não havia pedidos para remover.' });
+        return;
+      }
+      
+      const batch = writeBatch(firestore);
+      querySnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+
+      toast({
+        title: 'Sucesso!',
+        description: `${querySnapshot.size} pedidos foram removidos.`,
+      });
+    } catch (error) {
+      console.error("Error clearing all orders:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao zerar pedidos',
+        description: 'Não foi possível remover todos os pedidos. Tente novamente.',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'processing':
@@ -87,9 +142,32 @@ export default function AdminOrderManagement() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Gerenciamento de Pedidos</CardTitle>
-        <CardDescription>Veja todos os pedidos realizados na sua loja.</CardDescription>
+      <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Gerenciamento de Pedidos</CardTitle>
+          <CardDescription>Veja todos os pedidos realizados na sua loja.</CardDescription>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" disabled={loading || orders.length === 0}>
+              <Trash2 className="mr-2 h-4 w-4" /> Zerar Pedidos
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Essa ação não pode ser desfeita. Todos os {orders.length} pedidos serão permanentemente apagados dos registros de todos os usuários.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearAllOrders} disabled={isDeleting}>
+                {isDeleting ? 'Apagando...' : 'Sim, apagar tudo'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardHeader>
       <CardContent>
         <Table>
@@ -111,8 +189,8 @@ export default function AdminOrderManagement() {
               ))
             ) : orders.length > 0 ? (
               orders.map((order) => (
-                <Collapsible asChild key={order.id} open={openOrderId === order.id} onOpenChange={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
-                  <>
+                <React.Fragment key={order.id}>
+                  <Collapsible asChild open={openOrderId === order.id} onOpenChange={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
                       <TableRow className="cursor-pointer">
                           <TableCell>
                               <CollapsibleTrigger asChild>
@@ -132,59 +210,59 @@ export default function AdminOrderManagement() {
                               </Badge>
                           </TableCell>
                       </TableRow>
-                      <CollapsibleContent asChild>
-                          <tr className="bg-secondary/50 hover:bg-secondary/50">
-                              <TableCell colSpan={5} className="p-0">
-                                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                      <div>
-                                          <h4 className="font-bold mb-2">Detalhes do Cliente</h4>
-                                          <p><strong>Nome:</strong> {order.customerInfo.name}</p>
-                                          <p><strong>Email:</strong> {order.customerInfo.email}</p>
-                                          <p><strong>Endereço:</strong> {order.shippingAddress}</p>
-                                          <p className="font-mono text-xs mt-2 text-muted-foreground">User ID: {order.userId}</p>
-                                      </div>
-                                      <div>
-                                          <h4 className="font-bold mb-2">Itens do Pedido</h4>
-                                          <div className="space-y-4">
-                                              {order.items.map((item, index) => (
-                                                  <div key={index} className="flex items-center gap-4">
-                                                      <Image src={item.imageUrl} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
-                                                      <div className="flex-grow">
-                                                          <p className="font-semibold">{item.productName}</p>
-                                                          <p className="text-sm text-muted-foreground">
-                                                              {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
-                                                          </p>
-                                                          <p className="text-xs text-muted-foreground">Cor: {item.variantColor} / Tam: {item.size}</p>
-                                                      </div>
-                                                  </div>
-                                              ))}
-                                          </div>
-                                           <Separator className="my-4" />
-                                           <div className="space-y-1 text-sm">
-                                              {order.discountAmount > 0 && (
-                                                  <div className="flex justify-between">
-                                                      <span>Subtotal:</span>
-                                                      <span>R$ {(order.totalAmount + order.discountAmount).toFixed(2).replace('.', ',')}</span>
-                                                  </div>
-                                              )}
-                                              {order.discountAmount > 0 && (
-                                                  <div className="flex justify-between text-green-600">
-                                                      <span>Desconto ({order.couponCode}):</span>
-                                                      <span>- R$ {order.discountAmount.toFixed(2).replace('.', ',')}</span>
-                                                  </div>
-                                              )}
-                                               <div className="flex justify-between font-bold">
-                                                      <span>Total do Pedido:</span>
-                                                      <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
-                                                  </div>
-                                           </div>
-                                      </div>
+                  </Collapsible>
+                  <CollapsibleContent asChild>
+                      <tr className="bg-secondary/50 hover:bg-secondary/50">
+                          <TableCell colSpan={5} className="p-0">
+                              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                      <h4 className="font-bold mb-2">Detalhes do Cliente</h4>
+                                      <p><strong>Nome:</strong> {order.customerInfo.name}</p>
+                                      <p><strong>Email:</strong> {order.customerInfo.email}</p>
+                                      <p><strong>Endereço:</strong> {order.shippingAddress}</p>
+                                      <p className="font-mono text-xs mt-2 text-muted-foreground">User ID: {order.userId}</p>
                                   </div>
-                              </TableCell>
-                          </tr>
-                      </CollapsibleContent>
-                  </>
-                </Collapsible>
+                                  <div>
+                                      <h4 className="font-bold mb-2">Itens do Pedido</h4>
+                                      <div className="space-y-4">
+                                          {order.items.map((item, index) => (
+                                              <div key={index} className="flex items-center gap-4">
+                                                  <Image src={item.imageUrl} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                  <div className="flex-grow">
+                                                      <p className="font-semibold">{item.productName}</p>
+                                                      <p className="text-sm text-muted-foreground">
+                                                          {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
+                                                      </p>
+                                                      <p className="text-xs text-muted-foreground">Cor: {item.variantColor} / Tam: {item.size}</p>
+                                                  </div>
+                                              </div>
+                                          ))}
+                                      </div>
+                                       <Separator className="my-4" />
+                                       <div className="space-y-1 text-sm">
+                                          {order.discountAmount > 0 && (
+                                              <div className="flex justify-between">
+                                                  <span>Subtotal:</span>
+                                                  <span>R$ {(order.totalAmount + order.discountAmount).toFixed(2).replace('.', ',')}</span>
+                                              </div>
+                                          )}
+                                          {order.discountAmount > 0 && (
+                                              <div className="flex justify-between text-green-600">
+                                                  <span>Desconto ({order.couponCode}):</span>
+                                                  <span>- R$ {order.discountAmount.toFixed(2).replace('.', ',')}</span>
+                                              </div>
+                                          )}
+                                           <div className="flex justify-between font-bold">
+                                                  <span>Total do Pedido:</span>
+                                                  <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
+                                              </div>
+                                       </div>
+                                  </div>
+                              </div>
+                          </TableCell>
+                      </tr>
+                  </CollapsibleContent>
+                </React.Fragment>
               ))
             ) : (
                 <TableRow>

@@ -75,6 +75,7 @@ export type Order = {
   status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   couponCode?: string;
   discountAmount?: number;
+  paymentMethod: 'card' | 'pix';
 }
 
 export type Coupon = {
@@ -85,3 +86,5 @@ export type Coupon = {
   expiryDate?: string; // ISO String
   isActive: boolean;
 }
+
+    

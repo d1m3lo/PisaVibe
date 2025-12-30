@@ -20,6 +20,8 @@ import { useState, useMemo, FormEvent, useEffect } from "react";
 import type { Coupon, Order } from "@/lib/types";
 import { collection, query, where, getDocs, addDoc, doc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { QrCode } from "lucide-react";
 
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
@@ -32,6 +34,8 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("card");
+
 
   const [shippingInfo, setShippingInfo] = useState({
     name: '',
@@ -44,6 +48,7 @@ export default function CheckoutPage() {
   });
 
   const [paymentInfo, setPaymentInfo] = useState({
+      cardHolderName: '',
       cardNumber: '',
       expiryDate: '',
       cvc: '',
@@ -139,28 +144,37 @@ export default function CheckoutPage() {
     // SIMULAÇÃO DE INTEGRAÇÃO COM A API DE PAGAMENTO (EX: MERCADO PAGO)
     // =================================================================
     try {
-      // 1. SIMULAÇÃO: Validar os dados do cartão.
-      if (!paymentInfo.cardNumber || !paymentInfo.expiryDate || !paymentInfo.cvc) {
-        throw new Error("Por favor, preencha todos os dados de pagamento.");
-      }
-      console.log("Simulando validação de dados do cartão...");
-      await new Promise(resolve => setTimeout(resolve, 500));
+        if (paymentMethod === 'card') {
+            // 1. SIMULAÇÃO: Validar os dados do cartão.
+            if (!paymentInfo.cardHolderName ||!paymentInfo.cardNumber || !paymentInfo.expiryDate || !paymentInfo.cvc) {
+                throw new Error("Por favor, preencha todos os dados de pagamento.");
+            }
+            console.log("Simulando validação de dados do cartão...");
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-      // 2. SIMULAÇÃO: O SDK do Mercado Pago criaria um token seguro aqui.
-      // const cardToken = await mp.sdk.cardToken.create({ ... });
-      const simulatedCardToken = `tok_${Date.now()}`;
-      console.log("Simulando criação de Card Token:", simulatedCardToken);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+            // 2. SIMULAÇÃO: O SDK do Mercado Pago criaria um token seguro aqui.
+            // const cardToken = await mp.sdk.cardToken.create({ ... });
+            const simulatedCardToken = `tok_${Date.now()}`;
+            console.log("Simulando criação de Card Token:", simulatedCardToken);
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // 3. SIMULAÇÃO: Envio do token para um backend seguro para processar o pagamento.
-      // const paymentResponse = await fetch('/api/process-payment', { 
-      //   method: 'POST', 
-      //   body: JSON.stringify({ token: simulatedCardToken, amount: finalTotal }) 
-      // });
-      // if (!paymentResponse.ok) throw new Error("Falha no pagamento.");
-      console.log("Simulando envio do token ao backend e processamento...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log("Simulação de pagamento aprovado!");
+            // 3. SIMULAÇÃO: Envio do token para um backend seguro para processar o pagamento.
+            // const paymentResponse = await fetch('/api/process-payment', { 
+            //   method: 'POST', 
+            //   body: JSON.stringify({ token: simulatedCardToken, amount: finalTotal }) 
+            // });
+            // if (!paymentResponse.ok) throw new Error("Falha no pagamento.");
+            console.log("Simulando envio do token ao backend e processamento...");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log("Simulação de pagamento com cartão aprovado!");
+        } else { // 'pix'
+             console.log("Simulando aguardo de pagamento Pix...");
+             // Poderia ter uma lógica de polling aqui em um cenário real.
+             // Para a simulação, vamos apenas aguardar um tempo.
+             await new Promise(resolve => setTimeout(resolve, 3000));
+             console.log("Simulação de pagamento com Pix aprovado!");
+        }
+
 
       // 4. Se o pagamento foi aprovado (na simulação, ele sempre é), cria o pedido no Firestore.
       const fullAddress = `${shippingInfo.address}, ${shippingInfo.complemento ? shippingInfo.complemento + ', ' : ''}${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
@@ -189,6 +203,7 @@ export default function CheckoutPage() {
           })),
           couponCode: appliedCoupon?.code,
           discountAmount: discountAmount > 0 ? discountAmount : undefined,
+          paymentMethod,
       };
       
       // Remove campos 'undefined' antes de enviar ao Firestore
@@ -277,29 +292,55 @@ export default function CheckoutPage() {
               <CardHeader>
                 <CardTitle>Pagamento</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                 <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Número do Cartão</Label>
-                  <Input id="cardNumber" placeholder="XXXX XXXX XXXX XXXX" value={paymentInfo.cardNumber} onChange={handleInfoChange} required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="expiryDate">Validade</Label>
-                        <Input id="expiryDate" placeholder="MM/AA" value={paymentInfo.expiryDate} onChange={handleInfoChange} required />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" value={paymentInfo.cvc} onChange={handleInfoChange} required />
-                    </div>
-                </div>
-                 <p className="pt-2 text-xs text-muted-foreground">
+              <CardContent>
+                 <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="card">Cartão de Crédito</TabsTrigger>
+                        <TabsTrigger value="pix">Pix</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="card" className="mt-6 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="cardHolderName">Nome do Titular do Cartão</Label>
+                            <Input id="cardHolderName" placeholder="Como está no cartão" value={paymentInfo.cardHolderName} onChange={handleInfoChange} required={paymentMethod === 'card'} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="cardNumber">Número do Cartão</Label>
+                            <Input id="cardNumber" placeholder="XXXX XXXX XXXX XXXX" value={paymentInfo.cardNumber} onChange={handleInfoChange} required={paymentMethod === 'card'} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="expiryDate">Validade</Label>
+                                <Input id="expiryDate" placeholder="MM/AA" value={paymentInfo.expiryDate} onChange={handleInfoChange} required={paymentMethod === 'card'} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="cvc">CVC</Label>
+                                <Input id="cvc" placeholder="123" value={paymentInfo.cvc} onChange={handleInfoChange} required={paymentMethod === 'card'} />
+                            </div>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="pix" className="mt-6">
+                        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border p-6">
+                           <QrCode className="h-8 w-8"/>
+                           <p className="font-bold text-lg">Pague com Pix</p>
+                           <Image src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=EsteEhUmQrCodeDeExemplo" alt="QR Code Pix" width={200} height={200} />
+                           <p className="text-center text-sm text-muted-foreground">
+                             1. Abra o app do seu banco e escaneie o código.<br/>
+                             2. Confirme o pagamento e pronto!
+                           </p>
+                           <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText("EsteEhUmQrCodeDeExemplo")}>
+                            Copiar código Pix
+                           </Button>
+                        </div>
+                    </TabsContent>
+                 </Tabs>
+                 <p className="pt-4 text-xs text-muted-foreground">
                     Este é um ambiente de demonstração. Nenhum pagamento real será processado.
                  </p>
               </CardContent>
             </Card>
 
             <Button type="submit" size="lg" className="mt-8 w-full" disabled={isProcessing || isUserLoading}>
-              {isProcessing ? 'Processando pagamento...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.',',')}`}
+              {isProcessing ? 'Processando...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.',',')}`}
             </Button>
           </form>
         </div>
@@ -387,3 +428,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    

@@ -77,7 +77,7 @@ type ProductWithId = Product & { firestoreId: string };
 const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Calças', 'Shorts', 'Polos', 'Streetwear'],
+    'roupas': ['Camisetas', 'Calças', 'Bermudas', 'Polos', 'Streetwear'],
     'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
     'perfumes': [],
   },

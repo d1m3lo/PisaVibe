@@ -31,48 +31,33 @@ export default function ProductsPage() {
     
     let products = [...productsData];
 
-    // 1. Filter by search query first
     if (searchQuery) {
-      products = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    
-    // 2. Check for special tags (Lançamentos/Ofertas)
-    const tag = category && (category === 'lancamentos' || category === 'ofertas') ? category : null;
-    if (tag) {
-      products = products.filter(p => p.tags?.includes(tag));
+      return products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
 
-    // 3. Filter by gender
+    if (category) {
+      if (category === 'lancamentos' || category === 'ofertas') {
+        products = products.filter(p => p.tags?.includes(category));
+      } else {
+        products = products.filter(p => p.category === category);
+      }
+    }
+
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
     }
-    
-    // 4. Filter by category or subcategory
-    // This part handles filtering after tags and gender have been applied.
-    if (tag) { // If we are in a "Lançamentos" or "Ofertas" page
-        if (subCategory) {
-            const normalizedSubCategory = subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            products = products.filter(p => {
-                 // Check if the type matches a main category (for Perfumes)
-                if (p.category === normalizedSubCategory) return true;
-                // Or if it matches a subcategory
-                if (!p.subCategory) return false;
-                const normalizedProductSubCategory = p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                return normalizedProductSubCategory === normalizedSubCategory;
-            });
-        }
-    } else { // If not a special tag page, filter by main category
-        if (category) {
-            products = products.filter(p => p.category === category);
-        }
-        if (subCategory) {
-            const normalizedSubCategory = subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-             products = products.filter(p => {
-                if (!p.subCategory) return false;
-                const normalizedProductSubCategory = p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                return normalizedProductSubCategory === normalizedSubCategory;
-            });
-        }
+
+    if (subCategory) {
+        const normalizedSubCategory = subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        products = products.filter(p => {
+            // Handle cases where 'tipo' might be a main category like 'perfumes'
+            if (p.category === normalizedSubCategory) return true;
+            
+            // Handle regular subcategories
+            if (!p.subCategory) return false;
+            const normalizedProductSubCategory = p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return normalizedProductSubCategory === normalizedSubCategory;
+        });
     }
 
     return products;
@@ -82,43 +67,47 @@ export default function ProductsPage() {
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   
-  const formatTitlePart = (part: string | null) => {
+  const formatTitlePart = (part: string | null): string => {
     if (!part) return '';
-    const formatted = part.toLowerCase();
-    if (formatted === 'lancamentos') return 'Lançamentos';
-    if (formatted === 'calcados' || formatted === 'calçados') return 'Calçados';
-    if (formatted === 'acessorios' || formatted === 'acessórios') return 'Acessórios';
-    if (formatted === 'bones' || formatted === 'bonés') return 'Bonés';
-    if (formatted === 'relogios' || formatted === 'relógios') return 'Relógios';
-    if (formatted === 'calcas' || formatted === 'calças') return 'Calças';
-    if (formatted === 'sandalias' || formatted === 'sandálias') return 'Sandálias';
-    return capitalize(formatted);
-  };
+    
+    const specialCases: Record<string, string> = {
+        'lancamentos': 'Lançamentos',
+        'ofertas': 'Ofertas',
+        'calcados': 'Calçados',
+        'calçados': 'Calçados',
+        'acessorios': 'Acessórios',
+        'acessórios': 'Acessórios',
+        'bones': 'Bonés',
+        'bonés': 'Bonés',
+        'relogios': 'Relógios',
+        'relógios': 'Relógios',
+        'calcas': 'Calças',
+        'calças': 'Calças',
+        'sandalias': 'Sandálias',
+        'sandálias': 'Sandálias',
+    };
+
+    const lowerPart = part.toLowerCase();
+    return specialCases[lowerPart] || capitalize(lowerPart);
+};
+
 
   const title = useMemo(() => {
     if (searchQuery) {
         return `Busca por: "${searchQuery}"`;
     }
 
-    const tag = category && (category === 'lancamentos' || category === 'ofertas') ? category : null;
-    
     const titleParts: string[] = [];
 
-    if (tag) {
-        titleParts.push(formatTitlePart(tag));
-    }
-    if (gender) {
-        titleParts.push(formatTitlePart(gender));
-    }
-    if (!tag && category) {
+    // Order: Tag/Category -> Gender -> SubCategory
+    if (category) {
         titleParts.push(formatTitlePart(category));
     }
-    
-    // For tags, 'tipo' can be a category (like perfumes) or a sub-category.
-    if (tag && subCategory) {
-       titleParts.push(formatTitlePart(subCategory));
-    } else if (!tag && subCategory) { // For regular pages, 'tipo' is always a sub-category.
-       titleParts.push(formatTitlePart(subCategory));
+     if (gender) {
+        titleParts.push(formatTitlePart(gender));
+    }
+     if (subCategory) {
+        titleParts.push(formatTitleLax(subCategory));
     }
     
     if (titleParts.length > 0) {
@@ -127,6 +116,12 @@ export default function ProductsPage() {
 
     return "Todos os Produtos";
   }, [searchQuery, category, gender, subCategory]);
+  
+  // A more relaxed version for the title, as it doesn't affect filtering
+  const formatTitleLax = (part: string | null) => {
+    if (!part) return '';
+    return formatTitlePart(part.replace('&', 'e'));
+  };
 
 
   return (

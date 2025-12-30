@@ -83,7 +83,7 @@ const categoryMappings = {
   },
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Vestidos', 'Calças & Leggings', 'Streetwear'],
+    'roupas': ['Camisetas', 'Vestidos', 'Calças', 'Streetwear'],
     'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
     'perfumes': [],
   },
@@ -418,7 +418,7 @@ const ProductForm = ({
                         </SelectTrigger>
                         <SelectContent>
                             {subCategoryOptions.map(sub => (
-                                <SelectItem key={sub} value={sub.toLowerCase().replace('ç', 'c').replace('é', 'e')}>{sub}</SelectItem>
+                                <SelectItem key={sub} value={sub.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}>{sub}</SelectItem>
                             ))}
                         </SelectContent>
                         </Select>

@@ -25,6 +25,7 @@ import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Info } from "lucide-react";
 
 
 const ProductPageSkeleton = () => (
@@ -236,7 +237,10 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <p className="text-center text-sm text-muted-foreground">As imagens usadas são meramente ilustrativas.</p>
+            <div className="flex items-center justify-center gap-2 rounded-md border bg-secondary/50 p-3 text-center text-sm text-secondary-foreground">
+              <Info className="h-4 w-4 flex-shrink-0" />
+              <span>As imagens do produto são meramente ilustrativas e podem variar.</span>
+            </div>
             <Carousel 
               setApi={setCarouselApi} 
               className="w-full"
@@ -435,3 +439,4 @@ export default function ProductPage() {
     
 
     
+

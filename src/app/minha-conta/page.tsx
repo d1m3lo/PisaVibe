@@ -5,7 +5,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -250,6 +250,12 @@ export default function MyAccountPage() {
         setIsSaving(false);
     }
   };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+    toast({ title: 'Você saiu da sua conta.' });
+  }
   
   if (isUserLoading || !profile) {
     return <AccountPageSkeleton />;
@@ -280,6 +286,15 @@ export default function MyAccountPage() {
                         {item.label}
                     </Button>
                 ))}
+                 <Separator className="my-2" />
+                <Button
+                    variant='ghost'
+                    className="justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={handleLogout}
+                >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                </Button>
             </nav>
 
             <div>

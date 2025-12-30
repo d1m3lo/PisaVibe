@@ -73,13 +73,6 @@ function ModeToggle() {
 
 const UserMenu = () => {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/');
-  }
 
   if (isUserLoading) {
     return (
@@ -98,30 +91,17 @@ const UserMenu = () => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="transition-transform duration-200 hover:-translate-y-1"
-        >
-          <User className="h-5 w-5" />
-          <span className="sr-only">Menu do usuário</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Olá, {user.displayName || user.email?.split('@')[0]}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-         <DropdownMenuItem asChild>
-            <Link href="/minha-conta">Minha Conta</Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="transition-transform duration-200 hover:-translate-y-1"
+      asChild
+    >
+      <Link href="/minha-conta">
+        <User className="h-5 w-5" />
+        <span className="sr-only">Minha Conta</span>
+      </Link>
+    </Button>
   )
 };
 
@@ -404,3 +384,5 @@ export default function Header() {
     </header>
   );
 }
+
+    

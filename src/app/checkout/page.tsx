@@ -37,6 +37,7 @@ export default function CheckoutPage() {
     name: '',
     email: '',
     address: '',
+    complemento: '',
     city: '',
     state: '',
     zip: '',
@@ -162,11 +163,15 @@ export default function CheckoutPage() {
       console.log("Simulação de pagamento aprovado!");
 
       // 4. Se o pagamento foi aprovado (na simulação, ele sempre é), cria o pedido no Firestore.
-      const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
+      const fullAddress = `${shippingInfo.address}, ${shippingInfo.complemento ? shippingInfo.complemento + ', ' : ''}${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
       
       const orderData: Omit<Order, 'id'> = {
           userId: user.uid,
-          customerInfo: shippingInfo,
+          customerInfo: {
+            name: shippingInfo.name,
+            email: shippingInfo.email,
+            complemento: shippingInfo.complemento,
+          },
           orderDate: new Date().toISOString(),
           totalAmount: finalTotal,
           shippingAddress: fullAddress,
@@ -182,7 +187,7 @@ export default function CheckoutPage() {
                   ? item.selectedImage 
                   : item.variant.images[0]
           })),
-          couponCode: appliedCoupon?.code || undefined,
+          couponCode: appliedCoupon?.code,
           discountAmount: discountAmount > 0 ? discountAmount : undefined,
       };
       
@@ -190,9 +195,10 @@ export default function CheckoutPage() {
       Object.keys(orderData).forEach(key => {
         const typedKey = key as keyof typeof orderData;
         if (orderData[typedKey] === undefined) {
-          delete orderData[typedKey];
+          delete (orderData as any)[typedKey];
         }
       });
+      if (orderData.couponCode === undefined) delete orderData.couponCode;
 
       const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
       await addDoc(userOrdersRef, orderData);
@@ -240,9 +246,15 @@ export default function CheckoutPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Endereço</Label>
-                  <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="address">Endereço</Label>
+                    <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="complemento">Complemento (Opcional)</Label>
+                    <Input id="complemento" value={shippingInfo.complemento} onChange={handleInfoChange} placeholder="Apto, bloco, casa, etc." />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="space-y-2">

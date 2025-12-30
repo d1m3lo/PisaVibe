@@ -42,6 +42,12 @@ export default function CheckoutPage() {
     zip: '',
   });
 
+  const [paymentInfo, setPaymentInfo] = useState({
+      cardNumber: '',
+      expiryDate: '',
+      cvc: '',
+  });
+
   useEffect(() => {
     // Redirect if cart is empty, runs only on client after mount
     if (cartItems.length === 0) {
@@ -49,9 +55,13 @@ export default function CheckoutPage() {
     }
   }, [cartItems, router]);
 
-  const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setShippingInfo(prev => ({ ...prev, [id]: value }));
+    if (id in shippingInfo) {
+      setShippingInfo(prev => ({ ...prev, [id]: value }));
+    } else {
+      setPaymentInfo(prev => ({ ...prev, [id]: value }));
+    }
   }
 
   const discountAmount = useMemo(() => {
@@ -92,7 +102,8 @@ export default function CheckoutPage() {
         const couponDoc = querySnapshot.docs[0];
         const couponData = { ...couponDoc.data(), id: couponDoc.id } as Coupon;
         
-        if (couponData.expiryDate && new Date(couponData.expiryDate) < new Date()) {
+        const expiryDate = couponData.expiryDate ? new Date(couponData.expiryDate) : null;
+        if (expiryDate && expiryDate < new Date()) {
             setCouponMessage("Este cupom expirou.");
             toast({ variant: 'destructive', title: 'Cupom Expirado' });
             return;
@@ -124,76 +135,80 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     // =================================================================
-    // INTEGRAÇÃO COM A API DE PAGAMENTO (EX: MERCADO PAGO)
+    // SIMULAÇÃO DE INTEGRAÇÃO COM A API DE PAGAMENTO (EX: MERCADO PAGO)
     // =================================================================
-    // 1. Aqui você usaria o SDK do Mercado Pago no front-end.
-    //    Primeiro, adicione o script do SDK no seu layout.
-    //    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    //
-    // 2. Inicialize o SDK com sua Chave Pública (do arquivo .env).
-    //    const mp = new MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY);
-    //
-    // 3. Crie um "Card Token" com os dados do cartão inseridos pelo usuário.
-    //
-    // 4. Envie este "Card Token" (e não os dados do cartão) para um endpoint
-    //    seguro no seu backend (ex: uma API route do Next.js em /api/process-payment).
-    //
-    // 5. No backend, use sua Chave Secreta (Access Token) para processar o pagamento
-    //    junto com o Card Token recebido.
-    //
-    // 6. Apenas após a confirmação de pagamento do backend, você continua com o código abaixo.
-    //
-    // Para simular, vamos aguardar 2 segundos.
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    // =================================================================
-
-
     try {
-        const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
-        
-        const orderData: Omit<Order, 'id'> = {
-            userId: user.uid,
-            customerInfo: shippingInfo,
-            orderDate: new Date().toISOString(),
-            totalAmount: finalTotal,
-            shippingAddress: fullAddress,
-            status: 'Processing',
-            items: cartItems.map(item => ({
-                productId: item.product.id,
-                productName: item.displayName || item.product.name,
-                variantColor: item.variant.color,
-                size: item.size,
-                quantity: item.quantity,
-                price: item.product.price,
-                imageUrl: (item.product.subCategory === 'mochilas' && item.selectedImage) 
-                    ? item.selectedImage 
-                    : item.variant.images[0]
-            })),
-            couponCode: appliedCoupon?.code,
-            discountAmount: discountAmount,
-        };
+      // 1. SIMULAÇÃO: Validar os dados do cartão.
+      if (!paymentInfo.cardNumber || !paymentInfo.expiryDate || !paymentInfo.cvc) {
+        throw new Error("Por favor, preencha todos os dados de pagamento.");
+      }
+      console.log("Simulando validação de dados do cartão...");
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
-        await addDoc(userOrdersRef, orderData);
+      // 2. SIMULAÇÃO: O SDK do Mercado Pago criaria um token seguro aqui.
+      // const cardToken = await mp.sdk.cardToken.create({ ... });
+      const simulatedCardToken = `tok_${Date.now()}`;
+      console.log("Simulando criação de Card Token:", simulatedCardToken);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-        toast({
-            title: "Compra finalizada com sucesso!",
-            description: "Obrigado por comprar na PISA VIBE.",
-        });
-        clearCart();
-        router.push("/minha-conta");
-    } catch (error) {
-        console.error("Error creating order:", error);
+      // 3. SIMULAÇÃO: Envio do token para um backend seguro para processar o pagamento.
+      // const paymentResponse = await fetch('/api/process-payment', { 
+      //   method: 'POST', 
+      //   body: JSON.stringify({ token: simulatedCardToken, amount: finalTotal }) 
+      // });
+      // if (!paymentResponse.ok) throw new Error("Falha no pagamento.");
+      console.log("Simulando envio do token ao backend e processamento...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log("Simulação de pagamento aprovado!");
+
+      // 4. Se o pagamento foi aprovado (na simulação, ele sempre é), cria o pedido no Firestore.
+      const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
+      
+      const orderData: Omit<Order, 'id'> = {
+          userId: user.uid,
+          customerInfo: shippingInfo,
+          orderDate: new Date().toISOString(),
+          totalAmount: finalTotal,
+          shippingAddress: fullAddress,
+          status: 'Processing',
+          items: cartItems.map(item => ({
+              productId: item.product.id,
+              productName: item.displayName || item.product.name,
+              variantColor: item.variant.color,
+              size: item.size,
+              quantity: item.quantity,
+              price: item.product.price,
+              imageUrl: (item.product.subCategory === 'mochilas' && item.selectedImage) 
+                  ? item.selectedImage 
+                  : item.variant.images[0]
+          })),
+          couponCode: appliedCoupon?.code,
+          discountAmount: discountAmount,
+      };
+
+      const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
+      await addDoc(userOrdersRef, orderData);
+
+      toast({
+          title: "Compra finalizada com sucesso!",
+          description: "Obrigado por comprar na PISA VIBE.",
+      });
+      clearCart();
+      router.push("/minha-conta");
+
+    } catch (error: any) {
+        console.error("Error during checkout simulation:", error);
         toast({
             variant: "destructive",
             title: "Erro ao finalizar a compra",
-            description: "Não foi possível registrar seu pedido. Tente novamente.",
+            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
         });
     } finally {
         setIsProcessing(false);
     }
   }
 
+  // Prevents rendering if cart is empty before useEffect can redirect
   if (cartItems.length === 0) {
     return null;
   }
@@ -211,28 +226,28 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome Completo</Label>
-                  <Input id="name" value={shippingInfo.name} onChange={handleShippingInfoChange} required />
+                  <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={shippingInfo.email} onChange={handleShippingInfoChange} required />
+                  <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Endereço</Label>
-                  <Input id="address" value={shippingInfo.address} onChange={handleShippingInfoChange} required placeholder="Rua, Av, etc. e número" />
+                  <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" value={shippingInfo.city} onChange={handleShippingInfoChange} required />
+                    <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
-                    <Input id="state" value={shippingInfo.state} onChange={handleShippingInfoChange} required />
+                    <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zip">CEP</Label>
-                    <Input id="zip" value={shippingInfo.zip} onChange={handleShippingInfoChange} required />
+                    <Input id="zip" value={shippingInfo.zip} onChange={handleInfoChange} required />
                   </div>
                 </div>
               </CardContent>
@@ -244,24 +259,27 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                  <div className="space-y-2">
-                  <Label htmlFor="card-number">Número do Cartão</Label>
-                  <Input id="card-number" placeholder="XXXX XXXX XXXX XXXX" required />
+                  <Label htmlFor="cardNumber">Número do Cartão</Label>
+                  <Input id="cardNumber" placeholder="XXXX XXXX XXXX XXXX" value={paymentInfo.cardNumber} onChange={handleInfoChange} required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
-                        <Label htmlFor="expiry-date">Validade</Label>
-                        <Input id="expiry-date" placeholder="MM/AA" required />
+                        <Label htmlFor="expiryDate">Validade</Label>
+                        <Input id="expiryDate" placeholder="MM/AA" value={paymentInfo.expiryDate} onChange={handleInfoChange} required />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" required />
+                        <Input id="cvc" placeholder="123" value={paymentInfo.cvc} onChange={handleInfoChange} required />
                     </div>
                 </div>
+                 <p className="pt-2 text-xs text-muted-foreground">
+                    Este é um ambiente de demonstração. Nenhum pagamento real será processado.
+                 </p>
               </CardContent>
             </Card>
 
             <Button type="submit" size="lg" className="mt-8 w-full" disabled={isProcessing || isUserLoading}>
-              {isProcessing ? 'Processando pagamento...' : 'Finalizar Compra e Pagar'}
+              {isProcessing ? 'Processando pagamento...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.',',')}`}
             </Button>
           </form>
         </div>
@@ -349,3 +367,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    

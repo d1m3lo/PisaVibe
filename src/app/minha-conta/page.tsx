@@ -3,8 +3,8 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useAuth } from '@/firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,16 +12,21 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, Order } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { User, KeyRound, Heart } from 'lucide-react';
+import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { Separator } from '@/components/ui/separator';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const AccountPageSkeleton = () => (
     <div className="container mx-auto max-w-5xl px-4 py-12">
         <Skeleton className="h-10 w-1/3 mb-2" />
         <Skeleton className="h-5 w-2/3 mb-8" />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[240px_1fr]">
-            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-48 w-full" />
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-1/4" />
@@ -43,6 +48,127 @@ const AccountPageSkeleton = () => (
     </div>
 );
 
+const OrderHistory = () => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+
+    const ordersQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return query(collection(firestore, 'users', user.uid, 'orders'), orderBy('orderDate', 'desc'));
+    }, [user, firestore]);
+    
+    const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
+
+    const getStatusVariant = (status: string) => {
+        switch (status.toLowerCase()) {
+          case 'processing': return 'default';
+          case 'shipped': return 'secondary';
+          case 'delivered': return 'outline';
+          default: return 'destructive';
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+            </div>
+        )
+    }
+
+    if (!orders || orders.length === 0) {
+        return (
+            <div className="text-center text-muted-foreground py-16">
+                <ShoppingCart className="mx-auto h-12 w-12" />
+                <p className="mt-4">Você ainda não fez nenhum pedido.</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-4">
+            {orders.map((order) => (
+                <Card key={order.id}>
+                    <div 
+                        className="flex items-center gap-4 p-4 cursor-pointer"
+                        onClick={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}
+                    >
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
+                             <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Pedido</span>
+                                <span className="font-mono text-sm font-semibold truncate">#{order.id.slice(0, 7)}</span>
+                             </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Data</span>
+                                <span className="text-sm font-semibold">{format(new Date(order.orderDate), 'dd/MM/yyyy')}</span>
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Total</span>
+                                <span className="text-sm font-semibold">R$ {order.totalAmount.toFixed(2).replace('.',',')}</span>
+                             </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Status</span>
+                                <Badge variant={getStatusVariant(order.status)} className="w-fit">{order.status}</Badge>
+                             </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                    </div>
+
+                    {openOrderId === order.id && (
+                        <div className="px-4 pb-4 border-t pt-4">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                      <h4 className="font-semibold mb-2">Endereço de Entrega</h4>
+                                      <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
+                                  </div>
+                                  <div>
+                                      <h4 className="font-semibold mb-2">Itens</h4>
+                                      <div className="space-y-4">
+                                          {order.items.map((item, index) => (
+                                              <div key={index} className="flex items-center gap-4">
+                                                  <Image src={item.imageUrl} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                  <div className="flex-grow">
+                                                      <p className="font-semibold text-sm">{item.productName}</p>
+                                                      <p className="text-xs text-muted-foreground">
+                                                          {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
+                                                      </p>
+                                                  </div>
+                                              </div>
+                                          ))}
+                                      </div>
+                                      <Separator className="my-4" />
+                                       <div className="space-y-1 text-sm">
+                                            {order.discountAmount && order.discountAmount > 0 && (
+                                                <div className="flex justify-between">
+                                                    <span>Subtotal:</span>
+                                                    <span>R$ {(order.totalAmount + order.discountAmount).toFixed(2).replace('.', ',')}</span>
+                                                </div>
+                                            )}
+                                            {order.discountAmount && order.discountAmount > 0 && (
+                                                <div className="flex justify-between text-green-600">
+                                                    <span>Desconto ({order.couponCode}):</span>
+                                                    <span>- R$ {order.discountAmount.toFixed(2).replace('.', ',')}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between font-bold">
+                                                    <span>Total:</span>
+                                                    <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
+                                            </div>
+                                       </div>
+                                  </div>
+                              </div>
+                        </div>
+                    )}
+                </Card>
+            ))}
+        </div>
+    )
+}
 
 export default function MyAccountPage() {
   const { user, isUserLoading } = useUser();
@@ -131,6 +257,7 @@ export default function MyAccountPage() {
 
   const menuItems = [
       { id: 'profile', label: 'Detalhes do Perfil', icon: User },
+      { id: 'orders', label: 'Meus Pedidos', icon: ShoppingCart },
       { id: 'favorites', label: 'Favoritos', icon: Heart },
       { id: 'password', label: 'Alterar Senha', icon: KeyRound },
   ]
@@ -188,6 +315,20 @@ export default function MyAccountPage() {
                             </CardContent>
                         </Card>
                     </form>
+                )}
+
+                {activeView === 'orders' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Meus Pedidos</CardTitle>
+                            <CardDescription>
+                                Acompanhe o histórico de suas compras.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <OrderHistory />
+                        </CardContent>
+                    </Card>
                 )}
 
                 {activeView === 'password' && (

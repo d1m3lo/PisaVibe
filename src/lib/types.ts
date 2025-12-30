@@ -61,7 +61,7 @@ export type OrderItem = {
 }
 
 export type Order = {
-  id?: string;
+  id: string;
   userId: string;
   customerInfo: {
     name: string;
@@ -86,5 +86,3 @@ export type Coupon = {
   expiryDate?: string; // ISO String
   isActive: boolean;
 }
-
-    

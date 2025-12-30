@@ -112,9 +112,6 @@ const UserMenu = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Olá, {user.displayName || user.email?.split('@')[0]}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-            <Link href="#">Meus Pedidos</Link>
-        </DropdownMenuItem>
          <DropdownMenuItem asChild>
             <Link href="/minha-conta">Minha Conta</Link>
         </DropdownMenuItem>

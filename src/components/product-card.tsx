@@ -14,16 +14,27 @@ interface ProductCardProps {
   product: Product;
 }
 
+const fixImageUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  if (!url.startsWith('http')) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
 export function ProductCard({ product }: ProductCardProps) {
   const firstVariant = product.variants?.[0];
   const secondVariant = product.variants?.[1];
   
-  const firstImage = firstVariant?.images?.[0];
-  const secondImage = secondVariant?.images?.[0] ?? firstImage;
+  const firstImage = fixImageUrl(firstVariant?.images?.[0]);
+  const secondImage = fixImageUrl(secondVariant?.images?.[0] ?? firstImage);
 
   const [isHovered, setIsHovered] = useState(false);
   
-  const hasMultipleVariants = !!secondVariant;
+  const hasMultipleVariants = !!secondVariant && !!secondImage && firstImage !== secondImage;
 
   return (
     <Card 

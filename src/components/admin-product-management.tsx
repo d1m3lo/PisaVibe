@@ -636,6 +636,17 @@ const ProductForm = ({
   );
 };
 
+const fixImageUrl = (url?: string) => {
+  if (!url) return '';
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  if (!url.startsWith('http')) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
 export default function ProductManagement() {
   const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -771,10 +782,7 @@ export default function ProductManagement() {
           </TableHeader>
           <TableBody>
             {products.map((product) => {
-              let imageUrl = product.variants?.[0]?.images?.[0];
-              if (imageUrl && !imageUrl.startsWith('http')) {
-                imageUrl = `https://${imageUrl}`;
-              }
+              const imageUrl = fixImageUrl(product.variants?.[0]?.images?.[0]);
               
               return (
               <TableRow key={product.firestoreId}>

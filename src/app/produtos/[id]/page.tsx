@@ -71,6 +71,17 @@ const ProductPageSkeleton = () => (
   </div>
 );
 
+const fixImageUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+   if (!url.startsWith('http')) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
 export default function ProductPage() {
   const params = useParams();
   const id = params.id as string;
@@ -121,7 +132,7 @@ export default function ProductPage() {
     return selectedVariant.sizes.length === 1 && allSizesAreU;
   }, [selectedVariant]);
 
-  const allImages = useMemo(() => selectedVariant?.images ?? [], [selectedVariant]);
+  const allImages = useMemo(() => selectedVariant?.images.map(fixImageUrl).filter(Boolean) as string[] ?? [], [selectedVariant]);
 
   useEffect(() => {
     if (product) {
@@ -130,7 +141,7 @@ export default function ProductPage() {
             const defaultVariant = product.variants[0];
             setSelectedVariant(defaultVariant);
             
-            const firstImage = defaultVariant.images[0] || null;
+            const firstImage = fixImageUrl(defaultVariant.images[0]) || null;
             setSelectedImage(firstImage);
 
             if (isBackpack && defaultVariant.imageNames?.[0]) {
@@ -170,7 +181,7 @@ export default function ProductPage() {
 
   const handleVariantSelect = (variant: Variant) => {
     setSelectedVariant(variant);
-    const firstImage = variant.images[0] || null;
+    const firstImage = fixImageUrl(variant.images[0]) || null;
     handleImageSelect(firstImage);
     carouselApi?.scrollTo(0, true);
 
@@ -181,7 +192,7 @@ export default function ProductPage() {
   const handleImageSelect = (image: string | null) => {
     setSelectedImage(image);
     if (isBackpack && image && selectedVariant?.images && selectedVariant?.imageNames) {
-        const imageIndex = selectedVariant.images.indexOf(image);
+        const imageIndex = selectedVariant.images.map(fixImageUrl).indexOf(image);
         if (imageIndex !== -1 && selectedVariant.imageNames[imageIndex]) {
             setDisplayName(selectedVariant.imageNames[imageIndex]);
         } else {

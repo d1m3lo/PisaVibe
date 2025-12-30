@@ -77,13 +77,13 @@ type ProductWithId = Product & { firestoreId: string };
 const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Calças', 'Bermudas', 'Polos', 'Streetwear'],
+    'roupas': ['Camisetas', 'Bermudas', 'Calças', 'Polos', 'Streetwear'],
     'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
     'perfumes': [],
   },
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Vestidos', 'Calças', 'Streetwear'],
+    'roupas': ['Vestidos', 'Calças', 'Streetwear'],
     'acessorios': ['Bonés', 'Bolsas', 'Mochilas'],
     'perfumes': [],
   },

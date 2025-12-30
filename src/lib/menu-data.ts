@@ -69,7 +69,6 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Roupas",
         links: [
-          { title: "Camisetas", href: "/produtos?genero=feminino&categoria=roupas&tipo=camisetas" },
           { title: "Vestidos", href: "/produtos?genero=feminino&categoria=roupas&tipo=vestidos" },
           { title: "Calças", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
           { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },

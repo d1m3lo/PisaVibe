@@ -237,10 +237,6 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center justify-center gap-2 rounded-md border bg-secondary/50 p-3 text-center text-sm text-secondary-foreground">
-              <Info className="h-4 w-4 flex-shrink-0" />
-              <span>As imagens do produto são meramente ilustrativas e podem variar.</span>
-            </div>
             <Carousel 
               setApi={setCarouselApi} 
               className="w-full"
@@ -435,8 +431,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
-
-    
-

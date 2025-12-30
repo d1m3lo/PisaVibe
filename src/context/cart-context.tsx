@@ -34,14 +34,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1, selectedImage?: string, displayName?: string) => {
     setCartItems((prevItems) => {
         const cartItemId = getCartItemId(product, variant, size, selectedImage);
-        const existingItemIndex = prevItems.findIndex(
+        const existingItem = prevItems.find(
             (item) => getCartItemId(item.product, item.variant, item.size, item.selectedImage) === cartItemId
         );
 
-      if (existingItemIndex > -1) {
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += quantity;
-        return updatedItems;
+      if (existingItem) {
+        return prevItems.map(item =>
+            getCartItemId(item.product, item.variant, item.size, item.selectedImage) === cartItemId
+                ? { ...item, quantity: item.quantity + quantity }
+                : item
+        );
       }
       
       const cartItem: CartItem = { product, variant, size, quantity, selectedImage, displayName };

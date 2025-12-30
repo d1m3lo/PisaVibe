@@ -70,7 +70,7 @@ import {
 } from './ui/accordion';
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
-import { ColorSwatch } from './color-satch';
+import { ColorSwatch } from './color-swatch';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -84,7 +84,7 @@ const categoryMappings = {
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Vestidos', 'Calças', 'Streetwear'],
-    'acessorios': ['Bolsas', 'Mochilas'],
+    'acessorios': ['Bolsas', 'Mochilas', 'Relógios'],
     'perfumes': [],
   },
   unissex: {
@@ -469,7 +469,7 @@ const ProductForm = ({
           </div>
 
           <div className="space-y-4">
-            <Label>{isPerfume ? 'Imagens e Estoque' : isBackpack ? 'Variações e Estoque' : 'Variantes de Cor'}</Label>
+            <Label>{isPerfume ? 'Imagens e Estoque' : 'Variantes de Cor'}</Label>
             <Accordion type="multiple" className="w-full" defaultValue={formData.variants.map(v => v.id)}>
               {formData.variants.map((variant, vIndex) => {
                 if (isPerfume && vIndex > 0) return null; // Show only one variant for perfumes
@@ -477,13 +477,13 @@ const ProductForm = ({
                 <AccordionItem key={variant.id} value={variant.id} className="border rounded-md">
                    <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-4">
-                            {!isPerfume && !isBackpack && <ColorSwatch colorHex={variant.colorHex} />}
-                            <span className="font-semibold">{isPerfume ? 'Imagens e Estoque' : isBackpack ? 'Variação' : (variant.color || "Nova Cor")}</span>
+                            {!isPerfume && <ColorSwatch colorHex={variant.colorHex} />}
+                            <span className="font-semibold">{isPerfume ? 'Imagens e Estoque' : (variant.color || "Nova Cor")}</span>
                         </div>
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        {!isPerfume && !isBackpack && (
+                        {!isPerfume && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label>Nome da Cor</Label>
@@ -606,7 +606,7 @@ const ProductForm = ({
 
                          {!isPerfume && formData.variants.length > 1 && (
                             <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(variant.id)} className="mt-4">
-                                {isBackpack ? 'Remover Variação' : 'Remover Variante de Cor'}
+                                Remover Variante de Cor
                             </Button>
                          )}
                      </div>
@@ -618,7 +618,7 @@ const ProductForm = ({
 
             {!isPerfume && (
               <Button type="button" variant="outline" size="sm" onClick={addVariant} className="mt-4">
-                  <Palette className="mr-2 h-4 w-4" /> {isBackpack ? 'Adicionar Variação' : 'Adicionar Variante de Cor'}
+                  <Palette className="mr-2 h-4 w-4" /> Adicionar Variante de Cor
               </Button>
             )}
           </div>

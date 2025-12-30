@@ -377,7 +377,7 @@ export default function Header() {
 
         <div className="flex items-center justify-end gap-2">
           <SearchBar />
-          <div className="hidden items-center md:flex">
+          <div className="items-center flex">
              <UserMenu />
              <ModeToggle />
           </div>
@@ -399,9 +399,6 @@ export default function Header() {
                     <MobileSubMenu key={cat.title} category={cat} onClose={() => setIsSheetOpen(false)} />
                   ))}
                 </nav>
-                 <div className="border-t pt-4">
-                  <UserMenu />
-                </div>
               </div>
             </SheetContent>
           </Sheet>
@@ -410,7 +407,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
-
-    

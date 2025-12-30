@@ -124,13 +124,24 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     // =================================================================
-    // AQUI SERIA A CHAMADA PARA A API DE PAGAMENTO
+    // INTEGRAÇÃO COM A API DE PAGAMENTO (EX: MERCADO PAGO)
     // =================================================================
-    // 1. Você criaria um endpoint no seu backend (ex: /api/process-payment).
-    // 2. Esse endpoint receberia os detalhes do pedido e do cartão.
-    // 3. No backend, você usaria a sua PAYMENT_API_KEY (do arquivo .env) 
-    //    para se comunicar com o gateway de pagamento (Stripe, Mercado Pago, etc.).
-    // 4. Apenas após a confirmação de pagamento do backend, você continuaria com o código abaixo.
+    // 1. Aqui você usaria o SDK do Mercado Pago no front-end.
+    //    Primeiro, adicione o script do SDK no seu layout.
+    //    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    //
+    // 2. Inicialize o SDK com sua Chave Pública (do arquivo .env).
+    //    const mp = new MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY);
+    //
+    // 3. Crie um "Card Token" com os dados do cartão inseridos pelo usuário.
+    //
+    // 4. Envie este "Card Token" (e não os dados do cartão) para um endpoint
+    //    seguro no seu backend (ex: uma API route do Next.js em /api/process-payment).
+    //
+    // 5. No backend, use sua Chave Secreta (Access Token) para processar o pagamento
+    //    junto com o Card Token recebido.
+    //
+    // 6. Apenas após a confirmação de pagamento do backend, você continua com o código abaixo.
     //
     // Para simular, vamos aguardar 2 segundos.
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -184,7 +195,7 @@ export default function CheckoutPage() {
   }
 
   if (cartItems.length === 0) {
-    return null; // The useEffect will handle the redirect
+    return null;
   }
 
   return (

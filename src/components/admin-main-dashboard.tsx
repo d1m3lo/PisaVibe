@@ -1,11 +1,19 @@
 
 'use client';
-import { useState, useEffect } from 'react';
-import { collection, collectionGroup, onSnapshot, query } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, collectionGroup, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, ShoppingCart, DollarSign, Package } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { format, subDays, startOfDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface RevenueData {
+    date: string;
+    total: number;
+}
 
 export default function AdminMainDashboard() {
   const [stats, setStats] = useState({
@@ -14,6 +22,7 @@ export default function AdminMainDashboard() {
     totalRevenue: 0,
     totalProducts: 0,
   });
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
@@ -31,9 +40,13 @@ export default function AdminMainDashboard() {
 
     const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
       let revenue = 0;
+      const fetchedOrders: any[] = [];
       snapshot.docs.forEach((doc) => {
-        revenue += doc.data().totalAmount || 0;
+        const orderData = doc.data();
+        revenue += orderData.totalAmount || 0;
+        fetchedOrders.push(orderData);
       });
+      setOrders(fetchedOrders);
       setStats((prev) => ({
         ...prev,
         totalOrders: snapshot.size,
@@ -45,14 +58,44 @@ export default function AdminMainDashboard() {
         setStats((prev) => ({ ...prev, totalProducts: snapshot.size }));
     });
     
-    setLoading(false);
+    // Simulating loading finish
+    const timer = setTimeout(() => setLoading(false), 1000);
 
     return () => {
       unsubUsers();
       unsubOrders();
       unsubProducts();
+      clearTimeout(timer);
     };
   }, [firestore]);
+
+  const weeklyRevenueData = useMemo((): RevenueData[] => {
+    const data: { [key: string]: number } = {};
+    const today = startOfDay(new Date());
+
+    // Initialize last 7 days with 0 revenue
+    for (let i = 0; i < 7; i++) {
+        const date = subDays(today, i);
+        const formattedDate = format(date, 'dd/MM');
+        data[formattedDate] = 0;
+    }
+
+    orders.forEach(order => {
+        const orderDate = startOfDay(new Date(order.orderDate));
+        if (orderDate >= subDays(today, 6)) { // Filter for last 7 days
+            const formattedDate = format(orderDate, 'dd/MM');
+            if (data[formattedDate] !== undefined) {
+                 data[formattedDate] += order.totalAmount;
+            }
+        }
+    });
+
+    return Object.keys(data).map(date => ({
+        date,
+        total: data[date]
+    })).reverse(); // Reverse to have the oldest day first
+
+  }, [orders]);
 
   return (
     <div>
@@ -113,6 +156,53 @@ export default function AdminMainDashboard() {
           </CardContent>
         </Card>
       </div>
+
+       <div className="mt-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Receita nos últimos 7 dias</CardTitle>
+                    <CardDescription>
+                       Um resumo das vendas diárias na última semana.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                   {loading ? (
+                     <Skeleton className="h-[350px] w-full" />
+                   ) : (
+                     <ResponsiveContainer width="100%" height={350}>
+                        <BarChart data={weeklyRevenueData}>
+                            <XAxis
+                                dataKey="date"
+                                stroke="#888888"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <YAxis
+                                stroke="#888888"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(value) => `R$${value}`}
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'hsl(var(--secondary))' }}
+                                contentStyle={{ 
+                                    backgroundColor: 'hsl(var(--background))',
+                                    border: '1px solid hsl(var(--border))'
+                                }}
+                                 formatter={(value: number) => [
+                                    `R$ ${value.toFixed(2).replace('.', ',')}`,
+                                    'Receita'
+                                ]}
+                            />
+                            <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                   )}
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }

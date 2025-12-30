@@ -236,6 +236,7 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
+            <p className="text-center text-sm text-muted-foreground">As imagens usadas são meramente ilustrativas.</p>
             <Carousel 
               setApi={setCarouselApi} 
               className="w-full"

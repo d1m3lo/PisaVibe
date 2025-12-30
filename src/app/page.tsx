@@ -87,21 +87,24 @@ export default function Home() {
       subtitle: 'O seu estilo começa aqui. Tênis e roupas com a atitude que você procura.',
       buttonText: 'Ver Coleção',
       buttonLink: '/produtos',
-      imageUrl: 'https://images.unsplash.com/photo-1580906853149-f82f7601d205?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+      imageUrl: 'https://images.unsplash.com/photo-1580906853149-f82f7601d205?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      imageClassName: 'object-cover',
     },
     {
       title: 'NOVA COLEÇÃO',
       subtitle: 'Conheça os lançamentos que acabaram de chegar.',
       buttonText: 'Ver Lançamentos',
       buttonLink: '/produtos?categoria=lancamentos',
-      imageUrl: 'https://images.unsplash.com/photo-1646122408163-42332de7b4fa?q=80&w=1541&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+      imageUrl: 'https://images.unsplash.com/photo-1646122408163-42332de7b4fa?q=80&w=1541&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      imageClassName: 'object-cover object-top',
     },
     {
       title: 'OFERTAS IMPERDÍVEIS',
       subtitle: 'Produtos selecionados com até 50% de desconto. Aproveite!',
       buttonText: 'Ver Ofertas',
       buttonLink: '/produtos?categoria=ofertas',
-      imageUrl: 'https://images.unsplash.com/photo-1656164061663-3dc536192fcb?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+      imageUrl: 'https://images.unsplash.com/photo-1656164061663-3dc536192fcb?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      imageClassName: 'object-cover',
     }
   ];
   
@@ -153,7 +156,7 @@ export default function Home() {
                     src={banner.imageUrl}
                     alt={banner.title}
                     fill
-                    className="object-cover"
+                    className={banner.imageClassName}
                     priority={index === 0}
                   />
                   <div className="absolute inset-0 bg-black/50" />

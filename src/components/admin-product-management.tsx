@@ -771,7 +771,11 @@ export default function ProductManagement() {
           </TableHeader>
           <TableBody>
             {products.map((product) => {
-              const imageUrl = product.variants?.[0]?.images?.[0];
+              let imageUrl = product.variants?.[0]?.images?.[0];
+              if (imageUrl && !imageUrl.startsWith('http')) {
+                imageUrl = `https://${imageUrl}`;
+              }
+              
               return (
               <TableRow key={product.firestoreId}>
                 <TableCell>

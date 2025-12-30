@@ -182,9 +182,17 @@ export default function CheckoutPage() {
                   ? item.selectedImage 
                   : item.variant.images[0]
           })),
-          couponCode: appliedCoupon?.code,
-          discountAmount: discountAmount,
+          couponCode: appliedCoupon?.code || undefined,
+          discountAmount: discountAmount > 0 ? discountAmount : undefined,
       };
+      
+      // Remove campos 'undefined' antes de enviar ao Firestore
+      Object.keys(orderData).forEach(key => {
+        const typedKey = key as keyof typeof orderData;
+        if (orderData[typedKey] === undefined) {
+          delete orderData[typedKey];
+        }
+      });
 
       const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
       await addDoc(userOrdersRef, orderData);
@@ -367,5 +375,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-    

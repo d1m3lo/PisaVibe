@@ -91,6 +91,11 @@ export default function ProductsPage() {
     return specialCases[lowerPart] || capitalize(lowerPart);
 };
 
+  // A more relaxed version for the title, as it doesn't affect filtering
+  const formatTitleLax = (part: string | null) => {
+    if (!part) return '';
+    return formatTitlePart(part.replace('&', 'e'));
+  };
 
   const title = useMemo(() => {
     if (searchQuery) {
@@ -117,11 +122,6 @@ export default function ProductsPage() {
     return "Todos os Produtos";
   }, [searchQuery, category, gender, subCategory]);
   
-  // A more relaxed version for the title, as it doesn't affect filtering
-  const formatTitleLax = (part: string | null) => {
-    if (!part) return '';
-    return formatTitlePart(part.replace('&', 'e'));
-  };
 
 
   return (

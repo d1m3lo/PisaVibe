@@ -43,17 +43,9 @@ export default function CheckoutPage() {
   const YOUR_PUBLIC_KEY = "APP_USR-4c08d9e0-b44d-42f0-a1eb-a28fe5126bd1";
 
   // URL da sua Cloud Function de pagamento.
-  const [paymentFunctionUrl, setPaymentFunctionUrl] = useState('');
-
-  useEffect(() => {
-    // Constrói a URL da função dinamicamente para evitar problemas de CORS/rede no ambiente de desenvolvimento.
-    if (typeof window !== 'undefined') {
-      const url = process.env.NODE_ENV === 'production'
-        ? 'https://processpayment-ewmivjnydq-rj.a.run.app' // Exemplo de URL de produção
-        : `${window.location.origin}/pisa-vibe-db/southamerica-east1/processPayment`;
-      setPaymentFunctionUrl(url);
-    }
-  }, []);
+  const PAYMENT_FUNCTION_URL = process.env.NODE_ENV === 'production'
+    ? 'https://processpayment-ewmivjnydq-rj.a.run.app' // URL de produção da sua função
+    : 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment';
 
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -232,7 +224,7 @@ export default function CheckoutPage() {
         });
         throw new Error("Usuário não autenticado");
     }
-    if (!paymentFunctionUrl) {
+    if (!PAYMENT_FUNCTION_URL) {
        toast({
             variant: "destructive",
             title: "Erro de Configuração",
@@ -254,7 +246,7 @@ export default function CheckoutPage() {
     };
     
     // Envia os dados para a Cloud Function para processamento seguro
-    return await fetch(paymentFunctionUrl, {
+    return await fetch(PAYMENT_FUNCTION_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -378,7 +370,7 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {!isFormInvalid && YOUR_PUBLIC_KEY && paymentFunctionUrl ? (
+                    {!isFormInvalid && YOUR_PUBLIC_KEY && PAYMENT_FUNCTION_URL ? (
                       <Payment
                         initialization={initialization}
                         customization={customization}
@@ -487,4 +479,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+    
     

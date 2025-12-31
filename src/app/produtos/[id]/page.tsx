@@ -88,9 +88,9 @@ const ImportedProductBadge = () => (
         <Tooltip>
             <TooltipTrigger>
                  <div className="absolute left-2 top-2 z-20">
-                    <Badge variant="outline" className="select-none transition-transform duration-200 hover:-translate-y-1 gap-1 text-xs py-0.5 px-2 bg-sky-100 text-sky-800 border-sky-200">
+                    <Badge variant="outline" className="select-none items-center gap-1 border-blue-300 bg-blue-600/90 px-2.5 py-1 text-xs text-white shadow-md transition-transform duration-200 hover:-translate-y-1">
                         <Globe className="h-3 w-3" />
-                        <span className="font-semibold">Importado</span>
+                        <span className="font-bold uppercase tracking-wider">Importado</span>
                     </Badge>
                 </div>
             </TooltipTrigger>
@@ -284,7 +284,7 @@ export default function ProductPage() {
                           src={img}
                           alt={`${displayName} - Imagem ${index + 1}`}
                           fill
-                          className="object-cover mx-auto"
+                          className="object-contain mx-auto"
                           style={{ maxWidth: '80%' }}
                           priority={index === 0}
                         />

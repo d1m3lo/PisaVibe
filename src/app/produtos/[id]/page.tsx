@@ -446,7 +446,7 @@ export default function ProductPage() {
                     </div>
                 )}
                 
-                {isClothing && <SizeChart selectedSize={selectedSize} />}
+                {product.showSizeChart && <SizeChart selectedSize={selectedSize} />}
 
                  {(isBackpack || isCap || isWatch || hasSingleSize) && stockForSelectedSize > 0 && (
                     <div className="mt-8 flex items-center gap-2">
@@ -468,5 +468,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    

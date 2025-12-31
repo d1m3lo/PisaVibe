@@ -31,6 +31,7 @@ export type Product = {
   tags?: string[];
   quality?: 'Essential' | 'Select' | 'Elite';
   isImported?: boolean; // Selo de produto importado
+  showSizeChart?: boolean; // Exibir tabela de medidas
   origin?: string; // Campo de origem para uso do admin
 };
 

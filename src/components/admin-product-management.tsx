@@ -9,6 +9,8 @@ import {
   deleteDoc,
   doc,
   Firestore,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -131,6 +133,7 @@ const ProductForm = ({
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
     isImported: product?.isImported || false,
+    showSizeChart: product?.showSizeChart || false,
     origin: product?.origin || '',
   });
 
@@ -336,6 +339,7 @@ const ProductForm = ({
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
       isImported: formData.isImported,
+      showSizeChart: formData.showSizeChart,
       origin: formData.origin,
     };
     
@@ -475,6 +479,14 @@ const ProductForm = ({
                         onCheckedChange={(checked) => setFormData(prev => ({...prev, isImported: !!checked}))}
                     />
                     <Label htmlFor="isImported">Produto Importado</Label>
+                </div>
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                        id="showSizeChart"
+                        checked={formData.showSizeChart}
+                        onCheckedChange={(checked) => setFormData(prev => ({...prev, showSizeChart: !!checked}))}
+                    />
+                    <Label htmlFor="showSizeChart">Exibir Tabela de Medidas</Label>
                 </div>
 
           </div>
@@ -667,15 +679,14 @@ export default function ProductManagement() {
 
   useEffect(() => {
     if (!firestore) return;
+    const q = query(collection(firestore, 'products'), orderBy('name', 'asc'));
     const unsubscribe = onSnapshot(
-      collection(firestore, 'products'),
+      q,
       (snapshot) => {
         const productsData = snapshot.docs.map((doc) => ({
           firestoreId: doc.id,
           ...(doc.data() as Product),
         })).filter(p => p.name && p.variants); // Basic data validation
-        
-        productsData.sort((a, b) => a.name.localeCompare(b.name));
         
         setProducts(productsData);
       },

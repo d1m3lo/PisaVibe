@@ -36,6 +36,8 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentBrick, setPaymentBrick] = useState<React.ReactNode | null>(null);
+
 
   // TODO: Substitua pela sua Chave Pública do Mercado Pago. Esta chave é segura para ser usada no frontend.
   const YOUR_PUBLIC_KEY = "APP_USR-4c08d9e0-b44d-42f0-a1eb-a28fe5126bd1";
@@ -43,13 +45,6 @@ export default function CheckoutPage() {
   // URL da sua Cloud Function de pagamento.
   // Em produção, substitua pelo URL da sua função deployada.
   const PAYMENT_FUNCTION_URL = 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment';
-
-
-  useEffect(() => {
-    if (YOUR_PUBLIC_KEY) {
-      initMercadoPago(YOUR_PUBLIC_KEY, { locale: 'pt-BR' });
-    }
-  }, [YOUR_PUBLIC_KEY]);
 
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -63,7 +58,7 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    // Redireciona se o carrinho estiver vazio, roda no cliente após a montagem
+    // Redireciona se o carrinho estiver vazio
     if (!isUserLoading && cartItems.length === 0) {
       router.push("/");
     }
@@ -77,11 +72,6 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, router, isUserLoading, user, shippingInfo.email]);
 
-  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setShippingInfo(prev => ({ ...prev, [id]: value }));
-  }
-
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
     if (appliedCoupon.discountType === 'percentage') {
@@ -94,6 +84,60 @@ export default function CheckoutPage() {
       const total = cartTotal - discountAmount;
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
+
+  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
+  
+  useEffect(() => {
+    // Inicializa o SDK do Mercado Pago
+    if (YOUR_PUBLIC_KEY) {
+      initMercadoPago(YOUR_PUBLIC_KEY, { locale: 'pt-BR' });
+    }
+    
+    // Renderiza o Brick de Pagamento somente quando todas as informações necessárias estiverem disponíveis
+    if (!isUserLoading && finalTotal > 0 && YOUR_PUBLIC_KEY && !isFormInvalid) {
+      const initialization = {
+        amount: finalTotal,
+        payer: {
+          firstName: shippingInfo.name.split(' ')[0],
+          lastName: shippingInfo.name.split(' ').slice(1).join(' '),
+          email: shippingInfo.email,
+        },
+      };
+
+      const customization = {
+        paymentMethods: {
+          creditCard: 'all' as const,
+          debitCard: 'all' as const,
+          pix: 'all' as const,
+        },
+        visual: {
+          style: {
+            theme: 'default' as const,
+          },
+        },
+      };
+
+      setPaymentBrick(
+        <Payment
+          initialization={initialization}
+          customization={customization}
+          onSubmit={onSubmit}
+          onReady={onReady}
+          onError={onError}
+        />
+      );
+    } else {
+      setPaymentBrick(null); // Limpa o brick se as condições não forem atendidas
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUserLoading, finalTotal, YOUR_PUBLIC_KEY, isFormInvalid, shippingInfo.email, shippingInfo.name]);
+
+
+  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setShippingInfo(prev => ({ ...prev, [id]: value }));
+  }
+
   
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -274,22 +318,6 @@ export default function CheckoutPage() {
     setIsProcessing(false);
   };
 
-
-  const customization = {
-    paymentMethods: {
-      creditCard: 'all' as const,
-      debitCard: 'all' as const,
-      pix: 'all' as const,
-    },
-    visual: {
-        style: {
-          theme: 'default' as const,
-        },
-    },
-  };
-  
-  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
-
   if (cartItems.length === 0 && !isUserLoading) {
     return null;
   }
@@ -345,20 +373,14 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {isUserLoading || finalTotal === 0 || !YOUR_PUBLIC_KEY || isFormInvalid ? (
+                    {paymentBrick ? (
+                      paymentBrick
+                    ) : (
                         <div className="text-center text-muted-foreground p-8">
                           {isFormInvalid 
                             ? "Preencha as informações de entrega para continuar."
                             : "Carregando informações de pagamento..."}
                         </div>
-                    ) : (
-                        <Payment
-                            initialization={{ amount: finalTotal, payer: { email: shippingInfo.email } }}
-                            customization={customization}
-                            onSubmit={onSubmit}
-                            onReady={onReady}
-                            onError={onError}
-                        />
                     )}
                      <p className="pt-4 text-xs text-muted-foreground">
                         Pagamentos processados com segurança pelo Mercado Pago.

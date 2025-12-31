@@ -43,8 +43,17 @@ export default function CheckoutPage() {
   const YOUR_PUBLIC_KEY = "APP_USR-4c08d9e0-b44d-42f0-a1eb-a28fe5126bd1";
 
   // URL da sua Cloud Function de pagamento.
-  // Em produção, substitua pelo URL da sua função deployada.
-  const PAYMENT_FUNCTION_URL = 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment';
+  const [paymentFunctionUrl, setPaymentFunctionUrl] = useState('');
+
+  useEffect(() => {
+    // Constrói a URL da função dinamicamente para evitar problemas de CORS/rede no ambiente de desenvolvimento.
+    if (typeof window !== 'undefined') {
+      const url = process.env.NODE_ENV === 'production'
+        ? 'https://processpayment-ewmivjnydq-rj.a.run.app' // Exemplo de URL de produção
+        : `${window.location.origin}/pisa-vibe-db/southamerica-east1/processPayment`;
+      setPaymentFunctionUrl(url);
+    }
+  }, []);
 
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -223,6 +232,14 @@ export default function CheckoutPage() {
         });
         throw new Error("Usuário não autenticado");
     }
+    if (!paymentFunctionUrl) {
+       toast({
+            variant: "destructive",
+            title: "Erro de Configuração",
+            description: "A URL de pagamento não está configurada. Tente recarregar a página.",
+        });
+        throw new Error("URL de pagamento não configurada");
+    }
     setIsProcessing(true);
     
     // Adiciona as informações do cliente ao formData
@@ -237,7 +254,7 @@ export default function CheckoutPage() {
     };
     
     // Envia os dados para a Cloud Function para processamento seguro
-    return await fetch(PAYMENT_FUNCTION_URL, {
+    return await fetch(paymentFunctionUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -361,7 +378,7 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {!isFormInvalid && YOUR_PUBLIC_KEY ? (
+                    {!isFormInvalid && YOUR_PUBLIC_KEY && paymentFunctionUrl ? (
                       <Payment
                         initialization={initialization}
                         customization={customization}

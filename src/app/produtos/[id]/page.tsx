@@ -265,7 +265,7 @@ export default function ProductPage() {
                           alt={`${displayName} - Imagem ${index + 1}`}
                           fill
                           className="object-cover mx-auto"
-                          style={{ maxWidth: '82%' }}
+                          style={{ maxWidth: '80%' }}
                           priority={index === 0}
                         />
                       </div>

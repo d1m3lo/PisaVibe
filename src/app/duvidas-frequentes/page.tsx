@@ -15,7 +15,7 @@ export default function FaqPage() {
     {
       question: "Quais são as formas de pagamento aceitas?",
       answer:
-        "Aceitamos as principais bandeiras de cartão de crédito (Visa, MasterCard, American Express), Pix e boleto bancário. O pagamento pode ser parcelado em até 6x sem juros no cartão de crédito.",
+        "Para sua conveniência, oferecemos múltiplas formas de pagamento seguras. Você pode finalizar sua compra utilizando as principais bandeiras de cartão de crédito (Visa, MasterCard, American Express), Pix para aprovação imediata, ou boleto bancário.",
     },
     {
       question: "Qual é o prazo de entrega?",

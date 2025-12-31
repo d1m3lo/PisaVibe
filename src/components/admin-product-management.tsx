@@ -674,6 +674,9 @@ export default function ProductManagement() {
           firestoreId: doc.id,
           ...(doc.data() as Product),
         })).filter(p => p.name && p.variants); // Basic data validation
+        
+        productsData.sort((a, b) => a.name.localeCompare(b.name));
+        
         setProducts(productsData);
       },
       (error) => {

@@ -279,12 +279,11 @@ export default function CheckoutPage() {
     paymentMethods: {
       creditCard: 'all' as const,
       debitCard: 'all' as const,
-      ticket: 'all' as const,
       pix: 'all' as const,
     },
     visual: {
         style: {
-          theme: 'default' as const, // pode ser 'dark' ou 'bootstrap'
+          theme: 'default' as const,
         },
     },
   };

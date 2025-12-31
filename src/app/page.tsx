@@ -135,7 +135,7 @@ export default function Home() {
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
   const lancamentos = useMemo(() => products?.filter(p => p.tags?.includes('lancamentos')) || [], [products]);
-  const destaques = useMemo(() => products || [], [products]);
+  const destaques = useMemo(() => products?.filter(p => p.tags?.includes('destaques')) || [], [products]);
   const ofertas = useMemo(() => products?.filter(p => p.tags?.includes('ofertas')) || [], [products]);
 
   return (
@@ -208,3 +208,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

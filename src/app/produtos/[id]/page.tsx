@@ -267,45 +267,47 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <Carousel 
-              setApi={setCarouselApi} 
-              className="w-full"
-              opts={{
-                loop: allImages.length > 1,
-              }}
-            >
-              <CarouselContent>
-                {allImages.length > 0 ? (
-                  allImages.map((img, index) => (
-                    <CarouselItem key={index}>
-                      <div className="relative aspect-square w-full overflow-hidden rounded-lg">
-                        {product.isImported && <ImportedProductBadge />}
-                        <Image
-                          src={img}
-                          alt={`${displayName} - Imagem ${index + 1}`}
-                          fill
-                          className="object-contain mx-auto"
-                          style={{ maxWidth: '80%' }}
-                          priority={index === 0}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))
-                ) : (
-                  <CarouselItem>
-                    <div className="flex h-full aspect-square w-full items-center justify-center rounded-lg bg-secondary">
-                        <span className="text-muted-foreground">Sem imagem</span>
-                    </div>
-                  </CarouselItem>
-                )}
-              </CarouselContent>
-               {allImages.length > 1 && (
-                  <>
-                    <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
-                    <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
-                  </>
-                )}
-            </Carousel>
+            <div className="relative">
+                 {product.isImported && <ImportedProductBadge />}
+                <Carousel 
+                  setApi={setCarouselApi} 
+                  className="w-full"
+                  opts={{
+                    loop: allImages.length > 1,
+                  }}
+                >
+                  <CarouselContent>
+                    {allImages.length > 0 ? (
+                      allImages.map((img, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                            <Image
+                              src={img}
+                              alt={`${displayName} - Imagem ${index + 1}`}
+                              fill
+                              className="object-contain mx-auto"
+                              style={{ maxWidth: '80%' }}
+                              priority={index === 0}
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem>
+                        <div className="flex h-full aspect-square w-full items-center justify-center rounded-lg bg-secondary">
+                            <span className="text-muted-foreground">Sem imagem</span>
+                        </div>
+                      </CarouselItem>
+                    )}
+                  </CarouselContent>
+                   {allImages.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                      </>
+                    )}
+                </Carousel>
+            </div>
 
             {allImages.length > 1 && (
                  <div className="grid grid-cols-5 gap-2">

@@ -64,12 +64,12 @@ export function ProductCard({ product }: ProductCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
-        <CardHeader className="p-0">
+        <CardHeader className="p-0 relative">
+          <div className="absolute right-2 top-2 z-20 flex flex-col items-end gap-2">
+            {product.isImported && <ImportedProductBadge />}
+            <QualityBadge quality={product.quality} size="sm" />
+          </div>
           <div className="relative h-64 w-full">
-            <div className="absolute right-2 top-2 z-20 flex flex-col items-end gap-2">
-                {product.isImported && <ImportedProductBadge />}
-                <QualityBadge quality={product.quality} size="sm" />
-            </div>
             
             {firstImage && (
               <>

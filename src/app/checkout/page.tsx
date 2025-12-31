@@ -40,7 +40,7 @@ export default function CheckoutPage() {
 
 
   // TODO: Substitua pela sua Chave Pública do Mercado Pago. Esta chave é segura para ser usada no frontend.
-  const YOUR_PUBLIC_KEY = "APP_USR-4c08d9e0-b44d-42f0-a1eb-a28fe5126bd1";
+  const YOUR_PUBLIC_KEY = "SUA_CHAVE_PUBLICA_AQUI";
 
   // URL da sua Cloud Function de pagamento.
   const PAYMENT_FUNCTION_URL = process.env.NODE_ENV === 'production'

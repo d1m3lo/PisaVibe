@@ -22,7 +22,7 @@ import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
-import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit, PaymentBrickInstance } from "@mercadopago/sdk-react/bricks/payment/type";
+import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit } from "@mercadopago/sdk-react/bricks/payment/type";
 
 
 export default function CheckoutPage() {
@@ -36,7 +36,7 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentBrick, setPaymentBrick] = useState<React.ReactNode | null>(null);
+  const [paymentBrickController, setPaymentBrickController] = useState<any>(null);
 
 
   // TODO: Substitua pela sua Chave Pública do Mercado Pago. Esta chave é segura para ser usada no frontend.
@@ -85,60 +85,36 @@ export default function CheckoutPage() {
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
 
-  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
-  
   useEffect(() => {
-    // Inicializa o SDK do Mercado Pago
     if (YOUR_PUBLIC_KEY) {
       initMercadoPago(YOUR_PUBLIC_KEY, { locale: 'pt-BR' });
     }
-    
-    // Renderiza o Brick de Pagamento somente quando todas as informações necessárias estiverem disponíveis
-    if (!isUserLoading && finalTotal > 0 && YOUR_PUBLIC_KEY && !isFormInvalid) {
-      const initialization = {
-        amount: finalTotal,
-        payer: {
-          firstName: shippingInfo.name.split(' ')[0],
-          lastName: shippingInfo.name.split(' ').slice(1).join(' '),
-          email: shippingInfo.email,
-        },
-      };
+  }, [YOUR_PUBLIC_KEY]);
 
-      const customization = {
-        paymentMethods: {
-          creditCard: 'all' as const,
-          debitCard: 'all' as const,
-          pix: 'all' as const,
-        },
-        visual: {
-          style: {
-            theme: 'default' as const,
-          },
-        },
-      };
-
-      setPaymentBrick(
-        <Payment
-          initialization={initialization}
-          customization={customization}
-          onSubmit={onSubmit}
-          onReady={onReady}
-          onError={onError}
-        />
-      );
-    } else {
-      setPaymentBrick(null); // Limpa o brick se as condições não forem atendidas
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUserLoading, finalTotal, YOUR_PUBLIC_KEY, isFormInvalid, shippingInfo.email, shippingInfo.name]);
-
-
-  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setShippingInfo(prev => ({ ...prev, [id]: value }));
-  }
-
+  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
   
+  const initialization = {
+    amount: finalTotal,
+    payer: {
+      firstName: shippingInfo.name.split(' ')[0],
+      lastName: shippingInfo.name.split(' ').slice(1).join(' '),
+      email: shippingInfo.email,
+    },
+  };
+
+  const customization = {
+    paymentMethods: {
+      creditCard: 'all' as const,
+      debitCard: 'all' as const,
+      pix: 'all' as const,
+    },
+    visual: {
+      style: {
+        theme: 'default' as const,
+      },
+    },
+  };
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
         setCouponMessage("Por favor, insira um código de cupom.");
@@ -233,6 +209,7 @@ export default function CheckoutPage() {
 
   // Callback para quando o Brick estiver pronto
   const onReady: IPaymentBrick_onReady = async (bricks) => {
+    setPaymentBrickController(bricks?.getPaymentBrickController());
     console.log('Brick de pagamento pronto!', bricks);
   };
 
@@ -318,6 +295,17 @@ export default function CheckoutPage() {
     setIsProcessing(false);
   };
 
+  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setShippingInfo(prev => ({ ...prev, [id]: value }));
+  }
+
+  const handleCheckout = async () => {
+    if (paymentBrickController) {
+      paymentBrickController.submit();
+    }
+  }
+
   if (cartItems.length === 0 && !isUserLoading) {
     return null;
   }
@@ -373,8 +361,14 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {paymentBrick ? (
-                      paymentBrick
+                    {!isFormInvalid && YOUR_PUBLIC_KEY ? (
+                      <Payment
+                        initialization={initialization}
+                        customization={customization}
+                        onSubmit={onSubmit}
+                        onReady={onReady}
+                        onError={onError}
+                      />
                     ) : (
                         <div className="text-center text-muted-foreground p-8">
                           {isFormInvalid 
@@ -460,6 +454,9 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
+                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isFormInvalid || isProcessing || !paymentBrickController}>
+                  {isProcessing ? 'Processando...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.', ',')}`}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -473,3 +470,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+    

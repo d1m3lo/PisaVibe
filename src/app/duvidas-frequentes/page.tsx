@@ -40,7 +40,7 @@ export default function FaqPage() {
      {
       question: "Como entro em contato com o suporte ao cliente?",
       answer:
-        "Você pode entrar em contato conosco através do formulário na página 'Fale Conosco', pelo e-mail suporte@pisavibe.com ou pelo nosso WhatsApp durante o horário comercial. Estamos sempre prontos para ajudar!",
+        "Você pode entrar em contato conosco pelo e-mail suporte@pisavibe.com ou pelo nosso WhatsApp durante o horário comercial. Estamos sempre prontos para ajudar!",
     },
   ];
 

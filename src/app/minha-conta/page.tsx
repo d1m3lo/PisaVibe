@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, fixImageUrl } from '@/lib/utils';
 import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
@@ -131,7 +131,7 @@ const OrderHistory = () => {
                                       <div className="space-y-4">
                                           {order.items.map((item, index) => (
                                               <div key={index} className="flex items-center gap-4">
-                                                  <Image src={item.imageUrl} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                  <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
                                                   <div className="flex-grow">
                                                       <p className="font-semibold text-sm">{item.productName}</p>
                                                       <p className="text-xs text-muted-foreground">

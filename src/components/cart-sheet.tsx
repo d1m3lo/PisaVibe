@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { Product, CartItem } from "@/lib/types";
+import { fixImageUrl } from "@/lib/utils";
 
 export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: boolean }) {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
@@ -43,9 +44,9 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
   
   const getDisplayImage = (item: CartItem) => {
     if (item.product.subCategory === 'mochilas' && item.selectedImage) {
-        return item.selectedImage;
+        return fixImageUrl(item.selectedImage);
     }
-    return item.variant.images[0];
+    return fixImageUrl(item.variant.images[0]);
   }
 
 

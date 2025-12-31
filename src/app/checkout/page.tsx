@@ -22,6 +22,7 @@ import { collection, query, where, getDocs, addDoc, doc } from "firebase/firesto
 import { useFirestore, useUser } from "@/firebase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QrCode } from "lucide-react";
+import { fixImageUrl } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
@@ -197,9 +198,9 @@ export default function CheckoutPage() {
               size: item.size,
               quantity: item.quantity,
               price: item.product.price,
-              imageUrl: (item.product.subCategory === 'mochilas' && item.selectedImage) 
+              imageUrl: fixImageUrl((item.product.subCategory === 'mochilas' && item.selectedImage) 
                   ? item.selectedImage 
-                  : item.variant.images[0]
+                  : item.variant.images[0])
           })),
           couponCode: appliedCoupon?.code,
           discountAmount: discountAmount > 0 ? discountAmount : undefined,
@@ -352,7 +353,7 @@ export default function CheckoutPage() {
             <CardContent>
               <div className="space-y-4">
                 {cartItems.map(({ product, variant, size, quantity, selectedImage, displayName }) => {
-                  const displayImage = product.subCategory === 'mochilas' && selectedImage ? selectedImage : variant.images[0];
+                  const displayImage = fixImageUrl(product.subCategory === 'mochilas' && selectedImage ? selectedImage : variant.images[0]);
                   return (
                     <div key={`${product.id}-${variant.id}-${size}-${selectedImage}`} className="flex items-center gap-4">
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">

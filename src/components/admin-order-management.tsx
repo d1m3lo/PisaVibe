@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { fixImageUrl } from '@/lib/utils';
 
 
 interface OrderWithId extends Order {
@@ -227,7 +228,7 @@ export default function AdminOrderManagement() {
                                       <div className="space-y-4">
                                           {order.items.map((item, index) => (
                                               <div key={index} className="flex items-center gap-4">
-                                                  <Image src={item.imageUrl} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                  <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
                                                   <div className="flex-grow">
                                                       <p className="font-semibold">{item.productName}</p>
                                                       <p className="text-sm text-muted-foreground">

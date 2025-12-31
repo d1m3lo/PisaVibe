@@ -18,7 +18,7 @@ import { useFirestore } from '@/firebase';
 import type { Product, Variant } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, fixImageUrl } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
 import Link from "next/link";
@@ -72,17 +72,6 @@ const ProductPageSkeleton = () => (
     </div>
   </div>
 );
-
-const fixImageUrl = (url?: string) => {
-  if (!url) return undefined;
-  if (url.startsWith('//')) {
-    return `https:${url}`;
-  }
-   if (!url.startsWith('http')) {
-    return `https://${url}`;
-  }
-  return url;
-};
 
 const ImportedProductBadge = () => (
     <TooltipProvider>

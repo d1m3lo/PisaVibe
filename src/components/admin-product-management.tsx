@@ -73,6 +73,7 @@ import {
 import { Checkbox } from './ui/checkbox';
 import { QualityBadge } from './quality-badge';
 import { ColorSwatch } from './color-swatch';
+import { fixImageUrl } from '@/lib/utils';
 
 type ProductWithId = Product & { firestoreId: string };
 
@@ -657,17 +658,6 @@ const ProductForm = ({
       </DialogFooter>
     </form>
   );
-};
-
-const fixImageUrl = (url?: string) => {
-  if (!url) return '';
-  if (url.startsWith('//')) {
-    return `https:${url}`;
-  }
-  if (!url.startsWith('http')) {
-    return `https://${url}`;
-  }
-  return url;
 };
 
 export default function ProductManagement() {

@@ -26,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "./ui/collapsible";
-import { cn } from "@/lib/utils";
+import { cn, fixImageUrl } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -216,7 +216,7 @@ const SearchBar = () => {
               >
                 <div className="relative h-16 w-16 flex-shrink-0">
                   <Image
-                    src={product.variants[0].images[0]}
+                    src={fixImageUrl(product.variants[0].images[0])}
                     alt={product.name}
                     fill
                     className="rounded-md object-cover"

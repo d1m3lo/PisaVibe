@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import AddToCartButton from "./add-to-cart-button";
 import { QualityBadge } from "./quality-badge";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, fixImageUrl } from "@/lib/utils";
 import { Globe } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -16,17 +16,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 interface ProductCardProps {
   product: Product;
 }
-
-const fixImageUrl = (url?: string) => {
-  if (!url) return undefined;
-  if (url.startsWith('//')) {
-    return `https:${url}`;
-  }
-  if (!url.startsWith('http')) {
-    return `https://${url}`;
-  }
-  return url;
-};
 
 const ImportedProductBadge = () => (
     <TooltipProvider>

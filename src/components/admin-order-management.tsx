@@ -191,7 +191,7 @@ export default function AdminOrderManagement() {
             ) : orders.length > 0 ? (
               orders.map((order) => (
                 <Collapsible asChild key={order.id} open={openOrderId === order.id} onOpenChange={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
-                  <React.Fragment>
+                    <>
                       <TableRow className="cursor-pointer">
                           <TableCell>
                               <CollapsibleTrigger asChild>
@@ -262,7 +262,7 @@ export default function AdminOrderManagement() {
                               </TableCell>
                           </tr>
                       </CollapsibleContent>
-                  </React.Fragment>
+                    </>
                 </Collapsible>
               ))
             ) : (

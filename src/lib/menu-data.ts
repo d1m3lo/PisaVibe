@@ -31,6 +31,7 @@ export const megaMenuData: MenuCategory[] = [
         title: "Roupas",
         links: [
           { title: "Camisetas", href: "/produtos?genero=masculino&categoria=roupas&tipo=camisetas" },
+          { title: "Moletom", href: "/produtos?genero=masculino&categoria=roupas&tipo=moletom" },
           { title: "Calças", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },
           { title: "Bermudas", href: "/produtos?genero=masculino&categoria=roupas&tipo=bermudas" },
           { title: "Polos", href: "/produtos?genero=masculino&categoria=roupas&tipo=polos" },
@@ -70,6 +71,7 @@ export const megaMenuData: MenuCategory[] = [
         title: "Roupas",
         links: [
           { title: "Vestidos", href: "/produtos?genero=feminino&categoria=roupas&tipo=vestidos" },
+          { title: "Moletom", href: "/produtos?genero=feminino&categoria=roupas&tipo=moletom" },
           { title: "Calças", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
           { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },
         ],

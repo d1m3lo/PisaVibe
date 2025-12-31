@@ -18,11 +18,12 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, FormEvent, useEffect } from "react";
 import type { Coupon, Order } from "@/lib/types";
-import { collection, query, where, getDocs, addDoc, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QrCode } from "lucide-react";
 import { fixImageUrl } from "@/lib/utils";
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
+import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit } from "@mercadopago/sdk-react/bricks/payment/type";
+
 
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
@@ -35,7 +36,15 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("card");
+
+  // TODO: Substitua pela sua Chave Pública do Mercado Pago
+  const YOUR_PUBLIC_KEY = "TEST-cff27896-17b5-4a7b-a54b-dcf46875955e";
+
+  useEffect(() => {
+    if (YOUR_PUBLIC_KEY) {
+      initMercadoPago(YOUR_PUBLIC_KEY, { locale: 'pt-BR' });
+    }
+  }, [YOUR_PUBLIC_KEY]);
 
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -48,27 +57,24 @@ export default function CheckoutPage() {
     zip: '',
   });
 
-  const [paymentInfo, setPaymentInfo] = useState({
-      cardHolderName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvc: '',
-  });
-
   useEffect(() => {
-    // Redirect if cart is empty, runs only on client after mount
-    if (cartItems.length === 0) {
+    // Redireciona se o carrinho estiver vazio, roda no cliente após a montagem
+    if (!isUserLoading && cartItems.length === 0) {
       router.push("/");
     }
-  }, [cartItems, router]);
+    // Preenche o formulário com os dados do usuário, se disponíveis
+    if (user && !shippingInfo.email) {
+      setShippingInfo(prev => ({
+        ...prev,
+        name: user.displayName || '',
+        email: user.email || '',
+      }));
+    }
+  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email]);
 
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    if (id in shippingInfo) {
-      setShippingInfo(prev => ({ ...prev, [id]: value }));
-    } else {
-      setPaymentInfo(prev => ({ ...prev, [id]: value }));
-    }
+    setShippingInfo(prev => ({ ...prev, [id]: value }));
   }
 
   const discountAmount = useMemo(() => {
@@ -129,55 +135,35 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  // Callback para quando o Brick estiver pronto
+  const onReady: IPaymentBrick_onReady = async () => {
+    console.log('Brick de pagamento pronto!');
+  };
+
+  // Callback para lidar com o envio do pagamento
+  const onSubmit: IPaymentBrick_onSubmit = async ({ selectedPaymentMethod, formData }) => {
     if (!user || !firestore) {
         toast({
             variant: "destructive",
             title: "Erro",
             description: "Você precisa estar logado para finalizar a compra.",
         });
+        setIsProcessing(false);
         return;
     }
     setIsProcessing(true);
     
-    // =================================================================
-    // SIMULAÇÃO DE INTEGRAÇÃO COM A API DE PAGAMENTO (EX: MERCADO PAGO)
-    // =================================================================
+    // NOTA: Em uma aplicação real, você enviaria formData para o seu backend
+    // para criar o pagamento de forma segura com sua Chave de Acesso (Access Token).
+    // O backend então se comunicaria com a API do Mercado Pago.
+    // Para esta demonstração, vamos simular o sucesso e registrar o pedido.
+    
+    console.log('Dados do pagamento recebidos:', { selectedPaymentMethod, formData });
+
     try {
-        if (paymentMethod === 'card') {
-            // 1. SIMULAÇÃO: Validar os dados do cartão.
-            if (!paymentInfo.cardHolderName ||!paymentInfo.cardNumber || !paymentInfo.expiryDate || !paymentInfo.cvc) {
-                throw new Error("Por favor, preencha todos os dados de pagamento.");
-            }
-            console.log("Simulando validação de dados do cartão...");
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // 2. SIMULAÇÃO: O SDK do Mercado Pago criaria um token seguro aqui.
-            // const cardToken = await mp.sdk.cardToken.create({ ... });
-            const simulatedCardToken = `tok_${Date.now()}`;
-            console.log("Simulando criação de Card Token:", simulatedCardToken);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // 3. SIMULAÇÃO: Envio do token para um backend seguro para processar o pagamento.
-            // const paymentResponse = await fetch('/api/process-payment', { 
-            //   method: 'POST', 
-            //   body: JSON.stringify({ token: simulatedCardToken, amount: finalTotal }) 
-            // });
-            // if (!paymentResponse.ok) throw new Error("Falha no pagamento.");
-            console.log("Simulando envio do token ao backend e processamento...");
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log("Simulação de pagamento com cartão aprovado!");
-        } else { // 'pix'
-             console.log("Simulando aguardo de pagamento Pix...");
-             // Poderia ter uma lógica de polling aqui em um cenário real.
-             // Para a simulação, vamos apenas aguardar um tempo.
-             await new Promise(resolve => setTimeout(resolve, 3000));
-             console.log("Simulação de pagamento com Pix aprovado!");
-        }
-
-
-      // 4. Se o pagamento foi aprovado (na simulação, ele sempre é), cria o pedido no Firestore.
+      // Simulação de que o pagamento foi aprovado
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       const fullAddress = `${shippingInfo.address}, ${shippingInfo.complemento ? shippingInfo.complemento + ', ' : ''}${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
       
       const orderData: Omit<Order, 'id'> = {
@@ -204,10 +190,9 @@ export default function CheckoutPage() {
           })),
           couponCode: appliedCoupon?.code,
           discountAmount: discountAmount > 0 ? discountAmount : undefined,
-          paymentMethod,
+          paymentMethod: selectedPaymentMethod as 'card' | 'pix',
       };
       
-      // Remove campos 'undefined' antes de enviar ao Firestore
       Object.keys(orderData).forEach(key => {
         const typedKey = key as keyof typeof orderData;
         if (orderData[typedKey] === undefined) {
@@ -227,19 +212,45 @@ export default function CheckoutPage() {
       router.push("/minha-conta");
 
     } catch (error: any) {
-        console.error("Error during checkout simulation:", error);
+        console.error("Error during checkout:", error);
         toast({
             variant: "destructive",
             title: "Erro ao finalizar a compra",
-            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
+            description: "Não foi possível processar seu pedido. Tente novamente.",
         });
     } finally {
         setIsProcessing(false);
     }
-  }
+  };
+  
+  const onError = async (error: any) => {
+    console.error('Erro no Brick de pagamento:', error);
+    toast({
+        variant: "destructive",
+        title: "Erro no Pagamento",
+        description: "Ocorreu um erro ao processar o pagamento. Verifique seus dados e tente novamente."
+    });
+    setIsProcessing(false);
+  };
 
-  // Prevents rendering if cart is empty before useEffect can redirect
-  if (cartItems.length === 0) {
+
+  const customization = {
+    paymentMethods: {
+      creditCard: 'all' as const,
+      debitCard: 'all' as const,
+      ticket: 'all' as const,
+      pix: 'all' as const,
+    },
+    visual: {
+        style: {
+          theme: 'default' as const, // pode ser 'dark' ou 'bootstrap'
+        },
+    },
+  };
+  
+  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
+
+  if (cartItems.length === 0 && !isUserLoading) {
     return null;
   }
 
@@ -248,105 +259,76 @@ export default function CheckoutPage() {
       <h1 className="mb-8 font-headline text-4xl font-bold">Checkout</h1>
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div>
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações de Entrega</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="address">Endereço</Label>
-                    <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="complemento">Complemento (Opcional)</Label>
-                    <Input id="complemento" value={shippingInfo.complemento} onChange={handleInfoChange} placeholder="Apto, bloco, casa, etc." />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado</Label>
-                    <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip">CEP</Label>
-                    <Input id="zip" value={shippingInfo.zip} onChange={handleInfoChange} required />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-8">
+                <Card>
+                <CardHeader>
+                    <CardTitle>1. Informações de Entrega</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo</Label>
+                    <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="address">Endereço</Label>
+                        <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="complemento">Complemento (Opcional)</Label>
+                        <Input id="complemento" value={shippingInfo.complemento} onChange={handleInfoChange} placeholder="Apto, bloco, casa, etc." />
+                    </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="city">Cidade</Label>
+                        <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="state">Estado</Label>
+                        <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="zip">CEP</Label>
+                        <Input id="zip" value={shippingInfo.zip} onChange={handleInfoChange} required />
+                    </div>
+                    </div>
+                </CardContent>
+                </Card>
 
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle>Pagamento</CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="card">Cartão de Crédito</TabsTrigger>
-                        <TabsTrigger value="pix">Pix</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="card" className="mt-6 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="cardHolderName">Nome do Titular do Cartão</Label>
-                            <Input id="cardHolderName" placeholder="Como está no cartão" value={paymentInfo.cardHolderName} onChange={handleInfoChange} required={paymentMethod === 'card'} />
+                <Card>
+                <CardHeader>
+                    <CardTitle>2. Pagamento</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {isUserLoading || finalTotal === 0 || !YOUR_PUBLIC_KEY || isFormInvalid ? (
+                        <div className="text-center text-muted-foreground p-8">
+                          {isFormInvalid 
+                            ? "Preencha as informações de entrega para continuar."
+                            : "Carregando informações de pagamento..."}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="cardNumber">Número do Cartão</Label>
-                            <Input id="cardNumber" placeholder="XXXX XXXX XXXX XXXX" value={paymentInfo.cardNumber} onChange={handleInfoChange} required={paymentMethod === 'card'} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="expiryDate">Validade</Label>
-                                <Input id="expiryDate" placeholder="MM/AA" value={paymentInfo.expiryDate} onChange={handleInfoChange} required={paymentMethod === 'card'} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="cvc">CVC</Label>
-                                <Input id="cvc" placeholder="123" value={paymentInfo.cvc} onChange={handleInfoChange} required={paymentMethod === 'card'} />
-                            </div>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="pix" className="mt-6">
-                        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border p-6">
-                           <QrCode className="h-8 w-8"/>
-                           <p className="font-bold text-lg">Pague com Pix</p>
-                           <Image src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=EsteEhUmQrCodeDeExemplo" alt="QR Code Pix" width={200} height={200} />
-                           <p className="text-center text-sm text-muted-foreground">
-                             1. Abra o app do seu banco e escaneie o código.<br/>
-                             2. Confirme o pagamento e pronto!
-                           </p>
-                           <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText("EsteEhUmQrCodeDeExemplo")}>
-                            Copiar código Pix
-                           </Button>
-                        </div>
-                    </TabsContent>
-                 </Tabs>
-                 <p className="pt-4 text-xs text-muted-foreground">
-                    Este é um ambiente de demonstração. Nenhum pagamento real será processado.
-                 </p>
-              </CardContent>
-            </Card>
-
-            <Button type="submit" size="lg" className="mt-8 w-full" disabled={isProcessing || isUserLoading}>
-              {isProcessing ? 'Processando...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.',',')}`}
-            </Button>
-          </form>
+                    ) : (
+                        <Payment
+                            initialization={{ amount: finalTotal }}
+                            customization={customization}
+                            onSubmit={onSubmit}
+                            onReady={onReady}
+                            onError={onError}
+                        />
+                    )}
+                     <p className="pt-4 text-xs text-muted-foreground">
+                        Pagamentos processados com segurança pelo Mercado Pago.
+                     </p>
+                </CardContent>
+                </Card>
+            </div>
         </div>
         <div>
-          <Card>
+          <Card className="sticky top-24">
             <CardHeader>
               <CardTitle>Resumo do Pedido</CardTitle>
             </CardHeader>
@@ -429,5 +411,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-    

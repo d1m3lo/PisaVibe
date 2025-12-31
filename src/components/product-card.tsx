@@ -9,6 +9,9 @@ import AddToCartButton from "./add-to-cart-button";
 import { QualityBadge } from "./quality-badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Globe } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface ProductCardProps {
   product: Product;
@@ -24,6 +27,24 @@ const fixImageUrl = (url?: string) => {
   }
   return url;
 };
+
+const ImportedProductBadge = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                 <div className="absolute left-2 top-2 z-20">
+                    <Badge variant="outline" className="select-none gap-1 text-xs py-0.5 px-2 bg-sky-100 text-sky-800 border-sky-200">
+                        <Globe className="h-3 w-3" />
+                        <span className="font-semibold">Importado</span>
+                    </Badge>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Este é um produto de origem internacional.</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+)
 
 export function ProductCard({ product }: ProductCardProps) {
   const firstVariant = product.variants?.[0];
@@ -45,11 +66,10 @@ export function ProductCard({ product }: ProductCardProps) {
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
         <CardHeader className="p-0">
           <div className="relative h-64 w-full">
-            {product.quality && (
-                <div className="absolute right-2 top-2 z-20">
-                    <QualityBadge quality={product.quality} size="sm" />
-                </div>
-            )}
+            <div className="absolute right-2 top-2 z-20 flex flex-col items-end gap-2">
+                {product.isImported && <ImportedProductBadge />}
+                <QualityBadge quality={product.quality} size="sm" />
+            </div>
             
             {firstImage && (
               <>

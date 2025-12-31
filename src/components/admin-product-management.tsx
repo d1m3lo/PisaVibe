@@ -130,6 +130,7 @@ const ProductForm = ({
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
+    isImported: product?.isImported || false,
     origin: product?.origin || '',
   });
 
@@ -334,6 +335,7 @@ const ProductForm = ({
       reviews: product?.reviews || 0,
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
+      isImported: formData.isImported,
       origin: formData.origin,
     };
     
@@ -466,6 +468,15 @@ const ProductForm = ({
                     </div>
                 </div>
 
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                        id="isImported"
+                        checked={formData.isImported}
+                        onCheckedChange={(checked) => setFormData(prev => ({...prev, isImported: !!checked}))}
+                    />
+                    <Label htmlFor="isImported">Produto Importado</Label>
+                </div>
+
           </div>
 
           <div className="space-y-4">
@@ -483,7 +494,7 @@ const ProductForm = ({
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        {!isPerfume && (
+                        {(!isPerfume || isBackpack) && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label>Nome da Cor</Label>

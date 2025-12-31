@@ -25,7 +25,8 @@ import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Info } from "lucide-react";
+import { Globe, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const ProductPageSkeleton = () => (
@@ -81,6 +82,24 @@ const fixImageUrl = (url?: string) => {
   }
   return url;
 };
+
+const ImportedProductBadge = () => (
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger>
+                 <div className="absolute left-2 top-2 z-20">
+                    <Badge variant="outline" className="select-none transition-transform duration-200 hover:-translate-y-1 gap-1 text-xs py-0.5 px-2 bg-sky-100 text-sky-800 border-sky-200">
+                        <Globe className="h-3 w-3" />
+                        <span className="font-semibold">Importado</span>
+                    </Badge>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Este é um produto de origem internacional.</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+)
 
 export default function ProductPage() {
   const params = useParams();
@@ -260,6 +279,7 @@ export default function ProductPage() {
                   allImages.map((img, index) => (
                     <CarouselItem key={index}>
                       <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                        {product.isImported && <ImportedProductBadge />}
                         <Image
                           src={img}
                           alt={`${displayName} - Imagem ${index + 1}`}

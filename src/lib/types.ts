@@ -30,6 +30,7 @@ export type Product = {
   status: 'ativo' | 'inativo';
   tags?: string[];
   quality?: 'Essential' | 'Select' | 'Elite';
+  isImported?: boolean; // Selo de produto importado
   origin?: string; // Campo de origem para uso do admin
 };
 

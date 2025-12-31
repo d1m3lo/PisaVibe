@@ -54,6 +54,10 @@
           "type": "number",
           "description": "Number of units currently in stock."
         },
+        "isImported": {
+            "type": "boolean",
+            "description": "Flag to indicate if the product is imported."
+        },
         "origin": {
           "type": "string",
           "description": "Origin of the product for admin use (e.g., supplier name)."

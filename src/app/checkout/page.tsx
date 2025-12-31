@@ -22,7 +22,7 @@ import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
-import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit } from "@mercadopago/sdk-react/bricks/payment/type";
+import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit, PaymentBrickInstance } from "@mercadopago/sdk-react/bricks/payment/type";
 
 
 export default function CheckoutPage() {
@@ -37,8 +37,13 @@ export default function CheckoutPage() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // TODO: Substitua pela sua Chave Pública do Mercado Pago
-  const YOUR_PUBLIC_KEY = "TEST-cff27896-17b5-4a7b-a54b-dcf46875955e";
+  // TODO: Substitua pela sua Chave Pública do Mercado Pago. Esta chave é segura para ser usada no frontend.
+  const YOUR_PUBLIC_KEY = "APP_USR-4c08d9e0-b44d-42f0-a1eb-a28fe5126bd1";
+
+  // URL da sua Cloud Function de pagamento.
+  // Em produção, substitua pelo URL da sua função deployada.
+  const PAYMENT_FUNCTION_URL = 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment';
+
 
   useEffect(() => {
     if (YOUR_PUBLIC_KEY) {
@@ -135,92 +140,128 @@ export default function CheckoutPage() {
     }
   }
 
+  // Função para criar o pedido no Firestore
+  const createOrderInFirestore = async (paymentMethod: string) => {
+    if (!user || !firestore) {
+      throw new Error("Usuário ou Firestore não disponível.");
+    }
+    
+    const fullAddress = `${shippingInfo.address}, ${shippingInfo.complemento ? shippingInfo.complemento + ', ' : ''}${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
+    
+    const orderData: Omit<Order, 'id'> = {
+        userId: user.uid,
+        customerInfo: {
+          name: shippingInfo.name,
+          email: shippingInfo.email,
+          complemento: shippingInfo.complemento,
+        },
+        orderDate: new Date().toISOString(),
+        totalAmount: finalTotal,
+        shippingAddress: fullAddress,
+        status: 'Processing',
+        items: cartItems.map(item => ({
+            productId: item.product.id,
+            productName: item.displayName || item.product.name,
+            variantColor: item.variant.color,
+            size: item.size,
+            quantity: item.quantity,
+            price: item.product.price,
+            imageUrl: fixImageUrl((item.product.subCategory === 'mochilas' && item.selectedImage) 
+                ? item.selectedImage 
+                : item.variant.images[0])
+        })),
+        couponCode: appliedCoupon?.code,
+        discountAmount: discountAmount > 0 ? discountAmount : undefined,
+        paymentMethod: paymentMethod as 'card' | 'pix',
+    };
+    
+    // Limpa chaves undefined para o Firestore
+    Object.keys(orderData).forEach(key => {
+      const typedKey = key as keyof typeof orderData;
+      if (orderData[typedKey] === undefined) {
+        delete (orderData as any)[typedKey];
+      }
+    });
+
+    const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
+    await addDoc(userOrdersRef, orderData);
+  }
+
   // Callback para quando o Brick estiver pronto
-  const onReady: IPaymentBrick_onReady = async () => {
-    console.log('Brick de pagamento pronto!');
+  const onReady: IPaymentBrick_onReady = async (bricks) => {
+    console.log('Brick de pagamento pronto!', bricks);
   };
 
   // Callback para lidar com o envio do pagamento
   const onSubmit: IPaymentBrick_onSubmit = async ({ selectedPaymentMethod, formData }) => {
-    if (!user || !firestore) {
+    if (!user) {
         toast({
             variant: "destructive",
-            title: "Erro",
+            title: "Erro de Autenticação",
             description: "Você precisa estar logado para finalizar a compra.",
         });
-        setIsProcessing(false);
-        return;
+        throw new Error("Usuário não autenticado");
     }
     setIsProcessing(true);
     
-    // NOTA: Em uma aplicação real, você enviaria formData para o seu backend
-    // para criar o pagamento de forma segura com sua Chave de Acesso (Access Token).
-    // O backend então se comunicaria com a API do Mercado Pago.
-    // Para esta demonstração, vamos simular o sucesso e registrar o pedido.
+    // Adiciona as informações do cliente ao formData
+    const finalFormData = {
+      ...formData,
+      payer: {
+        ...formData?.payer,
+        first_name: shippingInfo.name.split(' ')[0],
+        last_name: shippingInfo.name.split(' ').slice(1).join(' '),
+        email: shippingInfo.email,
+      }
+    };
     
-    console.log('Dados do pagamento recebidos:', { selectedPaymentMethod, formData });
-
-    try {
-      // Simulação de que o pagamento foi aprovado
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const fullAddress = `${shippingInfo.address}, ${shippingInfo.complemento ? shippingInfo.complemento + ', ' : ''}${shippingInfo.city}, ${shippingInfo.state} - ${shippingInfo.zip}`;
-      
-      const orderData: Omit<Order, 'id'> = {
-          userId: user.uid,
-          customerInfo: {
-            name: shippingInfo.name,
-            email: shippingInfo.email,
-            complemento: shippingInfo.complemento,
-          },
-          orderDate: new Date().toISOString(),
-          totalAmount: finalTotal,
-          shippingAddress: fullAddress,
-          status: 'Processing',
-          items: cartItems.map(item => ({
-              productId: item.product.id,
-              productName: item.displayName || item.product.name,
-              variantColor: item.variant.color,
-              size: item.size,
-              quantity: item.quantity,
-              price: item.product.price,
-              imageUrl: fixImageUrl((item.product.subCategory === 'mochilas' && item.selectedImage) 
-                  ? item.selectedImage 
-                  : item.variant.images[0])
-          })),
-          couponCode: appliedCoupon?.code,
-          discountAmount: discountAmount > 0 ? discountAmount : undefined,
-          paymentMethod: selectedPaymentMethod as 'card' | 'pix',
-      };
-      
-      Object.keys(orderData).forEach(key => {
-        const typedKey = key as keyof typeof orderData;
-        if (orderData[typedKey] === undefined) {
-          delete (orderData as any)[typedKey];
+    // Envia os dados para a Cloud Function para processamento seguro
+    return await fetch(PAYMENT_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ formData: finalFormData }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.details?.error || 'Falha na comunicação com o servidor de pagamento.') });
         }
-      });
-      if (orderData.couponCode === undefined) delete orderData.couponCode;
-
-      const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
-      await addDoc(userOrdersRef, orderData);
-
-      toast({
-          title: "Compra finalizada com sucesso!",
-          description: "Obrigado por comprar na PISA VIBE.",
-      });
-      clearCart();
-      router.push("/minha-conta");
-
-    } catch (error: any) {
-        console.error("Error during checkout:", error);
+        return response.json();
+    })
+    .then(async (data) => {
+        // Se o pagamento for bem-sucedido (status "approved" ou "in_process")
+        if (data.status === 'approved' || data.status === 'in_process') {
+            await createOrderInFirestore(selectedPaymentMethod);
+            toast({
+                title: "Compra finalizada com sucesso!",
+                description: "Obrigado por comprar na PISA VIBE.",
+            });
+            clearCart();
+            router.push("/minha-conta");
+        } else {
+             // Lidar com outros status de pagamento (ex: 'rejected')
+            const errorMessage = data.status_detail || 'Pagamento rejeitado.';
+            toast({
+                variant: 'destructive',
+                title: 'Pagamento Falhou',
+                description: `Seu pagamento foi rejeitado: ${errorMessage}`
+            });
+            throw new Error(errorMessage);
+        }
+    })
+    .catch((error) => {
+        console.error("Erro durante o processamento do pagamento:", error);
         toast({
             variant: "destructive",
-            title: "Erro ao finalizar a compra",
-            description: "Não foi possível processar seu pedido. Tente novamente.",
+            title: "Erro ao Finalizar a Compra",
+            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
         });
-    } finally {
+        throw error; // Re-lança o erro para o Brick do Mercado Pago lidar
+    })
+    .finally(() => {
         setIsProcessing(false);
-    }
+    });
   };
   
   const onError = async (error: any) => {
@@ -313,7 +354,7 @@ export default function CheckoutPage() {
                         </div>
                     ) : (
                         <Payment
-                            initialization={{ amount: finalTotal }}
+                            initialization={{ amount: finalTotal, payer: { email: shippingInfo.email } }}
                             customization={customization}
                             onSubmit={onSubmit}
                             onReady={onReady}

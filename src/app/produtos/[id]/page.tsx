@@ -86,8 +86,8 @@ const fixImageUrl = (url?: string) => {
 const ImportedProductBadge = () => (
     <TooltipProvider>
         <Tooltip>
-            <TooltipTrigger>
-                 <div className="absolute left-2 top-2 z-20">
+            <TooltipTrigger asChild>
+                <div className="absolute left-2 top-2 z-10">
                     <Badge variant="outline" className="select-none items-center gap-1 border-blue-300 bg-blue-600/90 px-2.5 py-1 text-xs text-white shadow-md transition-transform duration-200 hover:-translate-y-1">
                         <Globe className="h-3 w-3" />
                         <span className="font-bold uppercase tracking-wider">Importado</span>
@@ -286,7 +286,6 @@ export default function ProductPage() {
                               alt={`${displayName} - Imagem ${index + 1}`}
                               fill
                               className="object-contain mx-auto"
-                              style={{ maxWidth: '80%' }}
                               priority={index === 0}
                             />
                           </div>

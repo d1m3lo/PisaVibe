@@ -31,8 +31,8 @@ const fixImageUrl = (url?: string) => {
 const ImportedProductBadge = () => (
     <TooltipProvider>
         <Tooltip>
-            <TooltipTrigger>
-                 <div className="absolute left-2 top-2 z-20">
+            <TooltipTrigger asChild>
+                 <div className="z-10">
                     <Badge variant="outline" className="select-none items-center gap-1 border-blue-300 bg-blue-600/90 px-2.5 py-1 text-xs text-white shadow-md transition-transform duration-200 hover:-translate-y-1">
                         <Globe className="h-3 w-3" />
                         <span className="font-bold uppercase tracking-wider">Importado</span>
@@ -59,17 +59,19 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card 
-      className="flex h-full transform flex-col overflow-hidden rounded-lg border-0 shadow-sm transition-transform duration-300 hover:shadow-lg hover:-translate-y-2 group"
+      className="flex h-full transform flex-col rounded-lg border-0 shadow-sm transition-transform duration-300 hover:shadow-lg hover:-translate-y-2 group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
         <CardHeader className="p-0 relative">
-          <div className="absolute right-2 top-2 z-20 flex flex-col items-end gap-2">
-            {product.isImported && <ImportedProductBadge />}
+          <div className="absolute left-2 top-2 z-10 flex flex-col items-start gap-2">
+              {product.isImported && <ImportedProductBadge />}
+          </div>
+          <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-2">
             <QualityBadge quality={product.quality} size="sm" />
           </div>
-          <div className="relative h-64 w-full">
+          <div className="relative h-64 w-full overflow-hidden rounded-t-lg">
             
             {firstImage && (
               <>

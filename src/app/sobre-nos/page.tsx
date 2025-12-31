@@ -23,7 +23,7 @@ export default function AboutUsPage() {
 
                 <div className="relative mb-16 h-80 w-full overflow-hidden rounded-lg">
                     <Image
-                        src="https://images.unsplash.com/photo-1529339944249-111a843e942f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx1cmJhbiUyMGZhc2hpb24lMjBncm91cHxlbnwwfHx8fDE3NjY4MjY3NDl8MA&ixlib=rb-4.1.0&q=80&w=1080"
+                        src="https://i.postimg.cc/1XqHYS1r/af3bdd73-e389-4a52-a9f5-bb1086cd5b2d.png"
                         alt="Grupo de pessoas com estilo urbano"
                         fill
                         className="object-cover"

@@ -56,7 +56,7 @@ const ProductPageSkeleton = () => (
             </div>
         </div>
          <div className="mt-8 space-y-4">
-            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-6 w-1/d" />
             <div className="flex gap-2">
                 <Skeleton className="h-10 w-20 rounded-md" />
                 <Skeleton className="h-10 w-20 rounded-md" />
@@ -264,7 +264,8 @@ export default function ProductPage() {
                           src={img}
                           alt={`${displayName} - Imagem ${index + 1}`}
                           fill
-                          className="object-cover"
+                          className="object-cover mx-auto"
+                          style={{ maxWidth: '85%' }}
                           priority={index === 0}
                         />
                       </div>

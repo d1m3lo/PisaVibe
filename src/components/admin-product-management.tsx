@@ -159,15 +159,27 @@ const ProductForm = ({
     }
     
     // Se a categoria não for calçados, usa o padrão. Se for, espera a geração.
-    if(formData.category !== 'calcados') {
+    if(formData.category !== 'calcados' && formData.category !== 'roupas') {
         setAvailableSizes(allSizes[formData.category as keyof typeof allSizes] || []);
     } else {
         // Se já houver tamanhos no produto sendo editado, popule a lista
         const allVariantSizes = product?.variants.flatMap(v => v.sizes.map(s => s.size)) || [];
-        const uniqueSizes = [...new Set(allVariantSizes)].sort((a,b) => Number(a) - Number(b));
+        const uniqueSizes = [...new Set(allVariantSizes)].sort((a,b) => {
+             const aIsNum = !isNaN(Number(a));
+             const bIsNum = !isNaN(Number(b));
+             if (aIsNum && bIsNum) return Number(a) - Number(b);
+             if (aIsNum) return -1;
+             if (bIsNum) return 1;
+             return a.localeCompare(b);
+        });
+
         if (uniqueSizes.length > 0) {
             setAvailableSizes(uniqueSizes);
-        } else {
+        } else if (formData.category === 'roupas') {
+             setAvailableSizes(allSizes.roupas);
+        }
+        
+        else {
             setAvailableSizes([]);
         }
     }
@@ -356,6 +368,8 @@ const ProductForm = ({
 
   const isPerfume = formData.category === 'perfumes';
   const isBackpack = formData.subCategory === 'mochilas';
+  const isSizeGeneratorVisible = ['calcados', 'roupas'].includes(formData.category);
+
 
   return (
     <form onSubmit={handleSubmit}>
@@ -588,13 +602,13 @@ const ProductForm = ({
                         ) : (
                          <div className="space-y-3">
                                 <Label>Tamanhos e Estoque</Label>
-                                {formData.category === 'calcados' && (
+                                {isSizeGeneratorVisible && (
                                     <div className="flex items-end gap-2 rounded-md border p-3">
                                         <div className="flex-grow space-y-1">
                                             <Label htmlFor="size-range" className="text-xs">Intervalo de Tamanhos</Label>
                                             <Input 
                                                 id="size-range"
-                                                placeholder="Ex: 34-45"
+                                                placeholder="Ex: 34-45 ou P,M,G"
                                                 value={sizeRange}
                                                 onChange={(e) => setSizeRange(e.target.value)}
                                             />
@@ -623,7 +637,7 @@ const ProductForm = ({
                                         })}
                                     </div>
                                 ) : (
-                                    formData.category !== 'calcados' && <p className="text-sm text-muted-foreground">Selecione uma categoria para ver os tamanhos.</p>
+                                    !isSizeGeneratorVisible && <p className="text-sm text-muted-foreground">Selecione uma categoria para ver os tamanhos.</p>
                                 )}
                             </div>
                           )}

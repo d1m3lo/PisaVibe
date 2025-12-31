@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Globe, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SizeChart } from "@/components/size-chart";
 
 
 const ProductPageSkeleton = () => (
@@ -124,7 +125,7 @@ export default function ProductPage() {
   const sortedSizes = useMemo(() => {
     if (!selectedVariant?.sizes) return [];
     
-    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
+    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
     
     return [...selectedVariant.sizes].sort((a, b) => {
         const aIsNumeric = !isNaN(parseFloat(a.size));
@@ -145,6 +146,7 @@ export default function ProductPage() {
   const isBackpack = product?.subCategory === 'mochilas';
   const isCap = product?.subCategory === 'bonés';
   const isWatch = product?.subCategory === 'relógios';
+  const isClothing = product?.category === 'roupas';
   const hasSingleSize = useMemo(() => {
     if (!selectedVariant) return false;
     const allSizesAreU = selectedVariant.sizes.every(s => s.size === 'U');
@@ -267,7 +269,7 @@ export default function ProductPage() {
         
         {/* Image Gallery */}
         <div className="grid grid-cols-1 gap-4">
-            <div className="relative">
+            <div className="relative w-full max-w-[80%] mx-auto">
                  {product.isImported && <ImportedProductBadge />}
                 <Carousel 
                   setApi={setCarouselApi} 
@@ -443,6 +445,8 @@ export default function ProductPage() {
                         </div>
                     </div>
                 )}
+                
+                {isClothing && <SizeChart />}
 
                  {(isBackpack || isCap || isWatch || hasSingleSize) && stockForSelectedSize > 0 && (
                     <div className="mt-8 flex items-center gap-2">

@@ -21,7 +21,7 @@ export const ColorSwatch = ({ colorHex, className, title }: ColorSwatchProps) =>
         )}
         title={title}
         style={{
-          background: `linear-gradient(135deg, ${colors[0]} 0%, ${colors[0]} 50%, ${colors[1]} 50%, ${colors[1]} 100%)`,
+          background: `linear-gradient(135deg, ${colors[0]} 50%, ${colors[1]} 50%)`,
         }}
       >
         <span className="sr-only">{title}</span>

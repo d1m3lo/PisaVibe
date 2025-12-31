@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import type { CartItem, Product, Variant } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +19,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const getCartItemId = (product: Product, variant: Variant, size: string, selectedImage?: string) => {
     // For backpacks with selectable images, the image URL is part of the unique ID
-    if (product.subCategory === 'mochilas') {
+    if (product.subCategory === 'mochilas' && selectedImage) {
         return `${product.id}-${variant.id}-${selectedImage}`;
     }
     // For other products, it's product + variant + size
@@ -30,6 +30,30 @@ export const getCartItemId = (product: Product, variant: Variant, size: string, 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+
+  // Load cart from localStorage on initial render
+  useEffect(() => {
+    try {
+      const storedCart = localStorage.getItem('pisa-vibe-cart');
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      }
+    } catch (error) {
+        console.error("Failed to parse cart from localStorage", error);
+        // If parsing fails, clear the corrupted cart data
+        localStorage.removeItem('pisa-vibe-cart');
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('pisa-vibe-cart', JSON.stringify(cartItems));
+    } catch (error) {
+      console.error("Failed to save cart to localStorage", error);
+    }
+  }, [cartItems]);
+
 
   const addToCart = (product: Product, variant: Variant, size: string, quantity: number = 1, selectedImage?: string, displayName?: string) => {
     setCartItems((prevItems) => {

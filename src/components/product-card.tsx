@@ -32,8 +32,8 @@ const ImportedProductBadge = () => (
     <TooltipProvider>
         <Tooltip>
             <TooltipTrigger asChild>
-                 <div className="z-10">
-                    <Badge variant="outline" className="select-none items-center gap-1 border-blue-300 bg-blue-600/90 px-2.5 py-1 text-xs text-white shadow-md transition-transform duration-200 hover:-translate-y-1">
+                 <div className="z-20">
+                    <Badge variant="outline" className="select-none items-center gap-1 border-red-300 bg-red-600/90 px-2.5 py-1 text-xs text-white shadow-md transition-transform duration-200 hover:-translate-y-1">
                         <Globe className="h-3 w-3" />
                         <span className="font-bold uppercase tracking-wider">Importado</span>
                     </Badge>
@@ -65,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <Link href={`/produtos/${product.id}`} className="flex h-full flex-col">
         <CardHeader className="p-0 relative">
-          <div className="absolute left-2 top-2 z-10 flex flex-col items-start gap-2">
+          <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-2">
               {product.isImported && <ImportedProductBadge />}
           </div>
           <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-2">

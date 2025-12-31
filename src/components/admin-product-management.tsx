@@ -89,14 +89,14 @@ const categoryMappings = {
   },
   unissex: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Streetwear'],
+    'roupas': ['Camisetas', 'Moletom', 'Streetwear'],
     'acessorios': ['Bonés', 'Mochilas'],
     'perfumes': [],
   }
 };
 
 const allSizes = {
-    roupas: ['P', 'M', 'G', 'GG'],
+    roupas: ['P', 'M', 'G', 'GG', 'G1', 'G2', 'G3'],
     calcados: [], // Será preenchido dinamicamente
     acessorios: ['U'],
     perfumes: ['U']

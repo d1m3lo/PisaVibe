@@ -28,19 +28,6 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Adiciona um proxy para redirecionar as chamadas de API no ambiente de desenvolvimento
-  async rewrites() {
-    return [
-      {
-        source: '/api/processPayment',
-        destination: 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment',
-      },
-       {
-        source: '/api/processCardPayment',
-        destination: 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processCardPayment',
-      },
-    ]
-  },
 };
 
 export default nextConfig;

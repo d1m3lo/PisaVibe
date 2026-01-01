@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -11,18 +10,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, FormEvent, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Coupon, Order } from "@/lib/types";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
-import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
-import type { IPaymentBrick_onReady, IPaymentBrick_onSubmit } from "@mercadopago/sdk-react/bricks/payment/type";
+import { Clipboard, Check } from "lucide-react";
 
 
 export default function CheckoutPage() {
@@ -35,22 +40,25 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponMessage, setCouponMessage] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentBrickController, setPaymentBrickController] = useState<any>(null);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [pixData, setPixData] = useState<{ qrcode: string; payload: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
 
-  // TODO: Substitua pela sua Chave Pública do Mercado Pago. Esta chave é segura para ser usada no frontend.
-  const YOUR_PUBLIC_KEY = "SUA_CHAVE_PUBLICA_AQUI";
-
-  // URL da sua Cloud Function de pagamento.
-  const PAYMENT_FUNCTION_URL = process.env.NODE_ENV === 'production'
-    ? 'https://processpayment-ewmivjnydq-rj.a.run.app' // URL de produção da sua função
-    : 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment';
-
-
+  const PAYMENT_FUNCTION_URL = useMemo(() => {
+    if (process.env.NODE_ENV === 'production') {
+      return 'https://processpayment-ewmivjnydq-rj.a.run.app';
+    }
+    // Para desenvolvimento, usamos uma URL relativa que o proxy do Next.js irá redirecionar
+    return '/api/processPayment';
+  }, []);
+  
   const [shippingInfo, setShippingInfo] = useState({
     name: '',
     email: '',
+    cpf: '',
     address: '',
     complemento: '',
     city: '',
@@ -59,11 +67,9 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    // Redireciona se o carrinho estiver vazio
     if (!isUserLoading && cartItems.length === 0) {
       router.push("/");
     }
-    // Preenche o formulário com os dados do usuário, se disponíveis
     if (user && !shippingInfo.email) {
       setShippingInfo(prev => ({
         ...prev,
@@ -86,36 +92,8 @@ export default function CheckoutPage() {
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
 
-  useEffect(() => {
-    if (YOUR_PUBLIC_KEY) {
-      initMercadoPago(YOUR_PUBLIC_KEY, { locale: 'pt-BR' });
-    }
-  }, [YOUR_PUBLIC_KEY]);
-
-  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
+  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.cpf || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
   
-  const initialization = {
-    amount: finalTotal,
-    payer: {
-      firstName: shippingInfo.name.split(' ')[0],
-      lastName: shippingInfo.name.split(' ').slice(1).join(' '),
-      email: shippingInfo.email,
-    },
-  };
-
-  const customization = {
-    paymentMethods: {
-      creditCard: 'all' as const,
-      debitCard: 'all' as const,
-      pix: 'all' as const,
-    },
-    visual: {
-      style: {
-        theme: 'default' as const,
-      },
-    },
-  };
-
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
         setCouponMessage("Por favor, insira um código de cupom.");
@@ -161,8 +139,7 @@ export default function CheckoutPage() {
     }
   }
 
-  // Função para criar o pedido no Firestore
-  const createOrderInFirestore = async (paymentMethod: string) => {
+  const createOrderInFirestore = async () => {
     if (!user || !firestore) {
       throw new Error("Usuário ou Firestore não disponível.");
     }
@@ -193,10 +170,9 @@ export default function CheckoutPage() {
         })),
         couponCode: appliedCoupon?.code,
         discountAmount: discountAmount > 0 ? discountAmount : undefined,
-        paymentMethod: paymentMethod as 'card' | 'pix',
+        paymentMethod: 'pix',
     };
     
-    // Limpa chaves undefined para o Firestore
     Object.keys(orderData).forEach(key => {
       const typedKey = key as keyof typeof orderData;
       if (orderData[typedKey] === undefined) {
@@ -208,110 +184,66 @@ export default function CheckoutPage() {
     await addDoc(userOrdersRef, orderData);
   }
 
-  // Callback para quando o Brick estiver pronto
-  const onReady: IPaymentBrick_onReady = async (bricks) => {
-    setPaymentBrickController(bricks?.getPaymentBrickController());
-    console.log('Brick de pagamento pronto!', bricks);
-  };
-
-  // Callback para lidar com o envio do pagamento
-  const onSubmit: IPaymentBrick_onSubmit = async ({ selectedPaymentMethod, formData }) => {
-    if (!user) {
-        toast({
-            variant: "destructive",
-            title: "Erro de Autenticação",
-            description: "Você precisa estar logado para finalizar a compra.",
-        });
-        throw new Error("Usuário não autenticado");
-    }
-    if (!PAYMENT_FUNCTION_URL) {
-       toast({
-            variant: "destructive",
-            title: "Erro de Configuração",
-            description: "A URL de pagamento não está configurada. Tente recarregar a página.",
-        });
-        throw new Error("URL de pagamento não configurada");
-    }
-    setIsProcessing(true);
-    
-    // Adiciona as informações do cliente ao formData
-    const finalFormData = {
-      ...formData,
-      payer: {
-        ...formData?.payer,
-        first_name: shippingInfo.name.split(' ')[0],
-        last_name: shippingInfo.name.split(' ').slice(1).join(' '),
-        email: shippingInfo.email,
-      }
-    };
-    
-    // Envia os dados para a Cloud Function para processamento seguro
-    return await fetch(PAYMENT_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ formData: finalFormData }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.details?.error || 'Falha na comunicação com o servidor de pagamento.') });
-        }
-        return response.json();
-    })
-    .then(async (data) => {
-        // Se o pagamento for bem-sucedido (status "approved" ou "in_process")
-        if (data.status === 'approved' || data.status === 'in_process') {
-            await createOrderInFirestore(selectedPaymentMethod);
-            toast({
-                title: "Compra finalizada com sucesso!",
-                description: "Obrigado por comprar na PISA VIBE.",
-            });
-            clearCart();
-            router.push("/minha-conta");
-        } else {
-             // Lidar com outros status de pagamento (ex: 'rejected')
-            const errorMessage = data.status_detail || 'Pagamento rejeitado.';
-            toast({
-                variant: 'destructive',
-                title: 'Pagamento Falhou',
-                description: `Seu pagamento foi rejeitado: ${errorMessage}`
-            });
-            throw new Error(errorMessage);
-        }
-    })
-    .catch((error) => {
-        console.error("Erro durante o processamento do pagamento:", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Finalizar a Compra",
-            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
-        });
-        throw error; // Re-lança o erro para o Brick do Mercado Pago lidar
-    })
-    .finally(() => {
-        setIsProcessing(false);
-    });
-  };
-  
-  const onError = async (error: any) => {
-    console.error('Erro no Brick de pagamento:', error);
-    toast({
-        variant: "destructive",
-        title: "Erro no Pagamento",
-        description: "Ocorreu um erro ao processar o pagamento. Verifique seus dados e tente novamente."
-    });
-    setIsProcessing(false);
-  };
-
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setShippingInfo(prev => ({ ...prev, [id]: value }));
   }
 
   const handleCheckout = async () => {
-    if (paymentBrickController) {
-      paymentBrickController.submit();
+    if (isFormInvalid || !user) {
+        toast({
+            variant: "destructive",
+            title: "Formulário Incompleto",
+            description: "Por favor, preencha todos os dados de entrega.",
+        });
+        return;
+    }
+    setIsProcessing(true);
+
+    try {
+        const response = await fetch(PAYMENT_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: finalTotal,
+                customer: {
+                    name: shippingInfo.name,
+                    cpf: shippingInfo.cpf,
+                }
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.details || 'Falha ao gerar cobrança Pix.');
+        }
+
+        const pixResult = await response.json();
+        
+        await createOrderInFirestore();
+        
+        setPixData(pixResult);
+        setPixModalOpen(true);
+        clearCart();
+        
+    } catch (error: any) {
+        console.error("Erro durante o checkout:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Finalizar a Compra",
+            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
+        });
+    } finally {
+        setIsProcessing(false);
+    }
+  }
+
+  const handleCopyPixPayload = () => {
+    if (pixData?.payload) {
+        navigator.clipboard.writeText(pixData.payload);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast({ title: 'Código Pix copiado!' });
     }
   }
 
@@ -320,6 +252,7 @@ export default function CheckoutPage() {
   }
 
   return (
+    <>
     <div className="container mx-auto px-4 py-12">
       <h1 className="mb-8 font-headline text-4xl font-bold">Checkout</h1>
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
@@ -327,40 +260,46 @@ export default function CheckoutPage() {
             <div className="space-y-8">
                 <Card>
                 <CardHeader>
-                    <CardTitle>1. Informações de Entrega</CardTitle>
+                    <CardTitle>1. Informações de Entrega e Contato</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
+                        <Label htmlFor="name">Nome Completo</Label>
+                        <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
                     </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="cpf">CPF</Label>
+                            <Input id="cpf" value={shippingInfo.cpf} onChange={handleInfoChange} required placeholder="000.000.000-00"/>
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2 sm:col-span-2">
-                        <Label htmlFor="address">Endereço</Label>
-                        <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                        <Label htmlFor="complemento">Complemento (Opcional)</Label>
-                        <Input id="complemento" value={shippingInfo.complemento} onChange={handleInfoChange} placeholder="Apto, bloco, casa, etc." />
-                    </div>
+                        <div className="space-y-2 sm:col-span-2">
+                            <Label htmlFor="address">Endereço</Label>
+                            <Input id="address" value={shippingInfo.address} onChange={handleInfoChange} required placeholder="Rua, Av, etc. e número" />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                            <Label htmlFor="complemento">Complemento (Opcional)</Label>
+                            <Input id="complemento" value={shippingInfo.complemento} onChange={handleInfoChange} placeholder="Apto, bloco, casa, etc." />
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                        <Label htmlFor="city">Cidade</Label>
-                        <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="state">Estado</Label>
-                        <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="zip">CEP</Label>
-                        <Input id="zip" value={shippingInfo.zip} onChange={handleInfoChange} required />
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="city">Cidade</Label>
+                            <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="state">Estado</Label>
+                            <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="zip">CEP</Label>
+                            <Input id="zip" value={shippingInfo.zip} onChange={handleInfoChange} required />
+                        </div>
                     </div>
                 </CardContent>
                 </Card>
@@ -370,24 +309,17 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {!isFormInvalid && YOUR_PUBLIC_KEY && PAYMENT_FUNCTION_URL ? (
-                      <Payment
-                        initialization={initialization}
-                        customization={customization}
-                        onSubmit={onSubmit}
-                        onReady={onReady}
-                        onError={onError}
-                      />
-                    ) : (
-                        <div className="text-center text-muted-foreground p-8">
-                          {isFormInvalid 
-                            ? "Preencha as informações de entrega para continuar."
-                            : "Carregando informações de pagamento..."}
+                    <div className="rounded-md border p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.421 21.943c-1.285 0-2.39-.421-3.27-1.284C3.27 19.796 2.85 18.69 2.85 17.405V10.15c0-1.285.42-2.39 1.284-3.27.857-.88 1.963-1.321 3.27-1.321H16.58c1.285 0 2.39.44 3.27 1.32.88.88 1.321 1.986 1.321 3.27v7.255c0 1.285-.44 2.39-1.32 3.27-.88.857-1.986 1.284-3.27 1.284H7.42Zm-.17-14.314c-.81 0-1.49.25-2.037.768-.546.518-.81 1.164-.81 1.964v7.255c0 .8.264 1.447.81 1.964.546.518 1.226.768 2.036.768H16.58c.81 0 1.49-.25 2.037-.768.546-.517.81-1.164.81-1.964V10.15c0-.8-.264-1.446-.81-1.964-.546-.518-1.226-.768-2.036-.768H7.25Zm6.39 12.01c-1.357 0-2.5-.473-3.428-1.42-1.01-1.01-1.524-2.22-1.524-3.633 0-1.357.495-2.547 1.488-3.57.993-1.024 2.172-1.536 3.537-1.536 1.357 0 2.524.488 3.5 1.464.976.976 1.464 2.172 1.464 3.57 0 1.413-.488 2.619-1.464 3.633-.976.994-2.143 1.488-3.5 1.488Zm0-1.63c.893 0 1.66-.312 2.298-.936.638-.624.948-1.38.948-2.273s-.31-1.66-.948-2.298c-.638-.638-1.405-.948-2.298-.948-.893 0-1.66.31-2.298.948-.638.638-.957 1.405-.957 2.298s.32 1.65.957 2.274c.638.624 1.405.935 2.298.935Zm-6.526-7.854c.482 0 .88.164 1.192.495.31.33.473.71.473 1.131a1.53 1.53 0 0 1-.495 1.181c-.33.31-.728.474-1.18.474-.482 0-.88-.164-1.192-.474-.31-.31-.474-.71-.474-1.18 0-.422.164-.8.495-1.132.33-.33.71-.495 1.18-.495Z" fill="currentColor"></path>
+                            </svg>
+                            <span className="font-semibold">Pix</span>
                         </div>
-                    )}
-                     <p className="pt-4 text-xs text-muted-foreground">
-                        Pagamentos processados com segurança pelo Mercado Pago.
-                     </p>
+                        <div className="h-5 w-5 rounded-full border-2 border-primary bg-background ring-4 ring-transparent flex items-center justify-center">
+                            <div className="h-2 w-2 rounded-full bg-primary"></div>
+                        </div>
+                    </div>
                 </CardContent>
                 </Card>
             </div>
@@ -463,8 +395,8 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
-                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isFormInvalid || isProcessing || !paymentBrickController}>
-                  {isProcessing ? 'Processando...' : `Pagar R$ ${finalTotal.toFixed(2).replace('.', ',')}`}
+                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isFormInvalid || isProcessing}>
+                  {isProcessing ? 'Processando...' : `Pagar com Pix R$ ${finalTotal.toFixed(2).replace('.', ',')}`}
                 </Button>
               </div>
             </CardContent>
@@ -477,7 +409,50 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+    <Dialog open={pixModalOpen} onOpenChange={setPixModalOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+            <DialogTitle>Pague com Pix</DialogTitle>
+            <DialogDescription>
+                Abra o app do seu banco e escaneie o QR Code ou use o código Copia e Cola.
+            </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col items-center gap-6 py-4">
+                {pixData?.qrcode && (
+                    <Image 
+                        src={pixData.qrcode} 
+                        alt="PIX QR Code" 
+                        width={250} 
+                        height={250}
+                        className="rounded-lg border p-2"
+                    />
+                )}
+                <div className="w-full space-y-2">
+                    <Label htmlFor="pix-payload">Pix Copia e Cola</Label>
+                    <div className="relative">
+                        <Input 
+                            id="pix-payload"
+                            value={pixData?.payload || ''}
+                            readOnly
+                            className="pr-10 h-11"
+                        />
+                        <Button 
+                            type="button" 
+                            size="icon" 
+                            variant="ghost" 
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                            onClick={handleCopyPixPayload}
+                        >
+                            {copied ? <Check className="h-5 w-5 text-green-600" /> : <Clipboard className="h-5 w-5" />}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+             <Button asChild onClick={() => router.push('/minha-conta')}>
+                <Link href="/minha-conta">Confirmar Pagamento e Ir para Meus Pedidos</Link>
+            </Button>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
-    
-    

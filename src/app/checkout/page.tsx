@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -27,8 +28,16 @@ import type { Coupon, Order } from "@/lib/types";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
-import { Clipboard, Check } from "lucide-react";
+import { Clipboard, Check, CreditCard, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
+
+declare global {
+  interface Window {
+    Efi: any;
+  }
+}
 
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
@@ -45,14 +54,32 @@ export default function CheckoutPage() {
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [pixData, setPixData] = useState<{ qrcode: string; payload: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('pix');
+  const [cardInfo, setCardInfo] = useState({
+      number: '',
+      name: '',
+      expiry: '', // MM/YY
+      cvc: ''
+  });
+  const [installments, setInstallments] = useState(1);
+  const [cardError, setCardError] = useState<string | null>(null);
+  
+  const EFI_CLIENT_ID = process.env.NEXT_PUBLIC_EFI_CLIENT_ID_SANDBOX || '';
 
 
-  const PAYMENT_FUNCTION_URL = useMemo(() => {
+  const PIX_PAYMENT_URL = useMemo(() => {
     if (process.env.NODE_ENV === 'production') {
       return 'https://processpayment-ewmivjnydq-rj.a.run.app';
     }
-    // Para desenvolvimento, usamos uma URL relativa que o proxy do Next.js irá redirecionar
     return '/api/processPayment';
+  }, []);
+
+  const CARD_PAYMENT_URL = useMemo(() => {
+    if (process.env.NODE_ENV === 'production') {
+      return 'https://processcardpayment-ewmivjnydq-rj.a.run.app';
+    }
+    return '/api/processCardPayment';
   }, []);
   
   const [shippingInfo, setShippingInfo] = useState({
@@ -92,8 +119,10 @@ export default function CheckoutPage() {
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
 
-  const isFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.cpf || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
-  
+  const isShippingFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.cpf || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zip;
+  const isCardFormInvalid = !cardInfo.name || !cardInfo.number || !cardInfo.expiry || !cardInfo.cvc || cardInfo.number.length < 16 || cardInfo.cvc.length < 3;
+  const isCheckoutDisabled = isShippingFormInvalid || isProcessing || (paymentMethod === 'card' && isCardFormInvalid);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
         setCouponMessage("Por favor, insira um código de cupom.");
@@ -170,7 +199,7 @@ export default function CheckoutPage() {
         })),
         couponCode: appliedCoupon?.code,
         discountAmount: discountAmount > 0 ? discountAmount : undefined,
-        paymentMethod: 'pix',
+        paymentMethod,
     };
     
     Object.keys(orderData).forEach(key => {
@@ -186,11 +215,15 @@ export default function CheckoutPage() {
 
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setShippingInfo(prev => ({ ...prev, [id]: value }));
+    if (id in shippingInfo) {
+      setShippingInfo(prev => ({ ...prev, [id]: value }));
+    } else if (id in cardInfo) {
+      setCardInfo(prev => ({ ...prev, [id]: value }));
+    }
   }
 
   const handleCheckout = async () => {
-    if (isFormInvalid || !user) {
+    if (isShippingFormInvalid || !user) {
         toast({
             variant: "destructive",
             title: "Formulário Incompleto",
@@ -200,8 +233,16 @@ export default function CheckoutPage() {
     }
     setIsProcessing(true);
 
-    try {
-        const response = await fetch(PAYMENT_FUNCTION_URL, {
+    if (paymentMethod === 'pix') {
+      await handlePixCheckout();
+    } else if (paymentMethod === 'card') {
+      await handleCardCheckout();
+    }
+  };
+
+  const handlePixCheckout = async () => {
+     try {
+        const response = await fetch(PIX_PAYMENT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -219,15 +260,13 @@ export default function CheckoutPage() {
         }
 
         const pixResult = await response.json();
-        
         await createOrderInFirestore();
-        
         setPixData(pixResult);
         setPixModalOpen(true);
         clearCart();
         
     } catch (error: any) {
-        console.error("Erro durante o checkout:", error);
+        console.error("Erro durante o checkout PIX:", error);
         toast({
             variant: "destructive",
             title: "Erro ao Finalizar a Compra",
@@ -236,6 +275,75 @@ export default function CheckoutPage() {
     } finally {
         setIsProcessing(false);
     }
+  }
+  
+  const handleCardCheckout = async () => {
+    setCardError(null);
+    const [expiryMonth, expiryYear] = cardInfo.expiry.split('/');
+    
+    const cardData = {
+        brand: cardInfo.number.length > 15 ? 'visa' : 'mastercard', // Simplified brand detection
+        number: cardInfo.number,
+        cvv: cardInfo.cvc,
+        expiration_month: expiryMonth,
+        expiration_year: `20${expiryYear}`,
+        reuse: false
+    };
+
+    const efi = new window.Efi({
+        client_id: EFI_CLIENT_ID,
+        sandbox: process.env.NODE_ENV !== 'production'
+    });
+
+    efi.getCardToken({
+        card: cardData
+    }, async (error: any, result: any) => {
+        if (error) {
+            console.error('Efi tokenization error:', error);
+            setCardError('Dados do cartão inválidos. Verifique as informações.');
+            setIsProcessing(false);
+            return;
+        }
+
+        try {
+            const paymentToken = result.data.payment_token;
+            
+            const response = await fetch(CARD_PAYMENT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: finalTotal,
+                    paymentToken,
+                    installments,
+                    customer: {
+                        name: shippingInfo.name,
+                        cpf: shippingInfo.cpf,
+                        email: shippingInfo.email,
+                    }
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.details || 'Falha ao processar pagamento com cartão.');
+            }
+
+            // Payment successful
+            await createOrderInFirestore();
+            clearCart();
+            toast({
+                title: 'Pagamento Aprovado!',
+                description: 'Sua compra foi concluída com sucesso.',
+            });
+            router.push('/minha-conta');
+
+        } catch (err: any) {
+            console.error("Erro durante o checkout com cartão:", err);
+            setCardError(err.message || "Não foi possível processar seu pagamento. Tente novamente.");
+        } finally {
+            setIsProcessing(false);
+        }
+    });
   }
 
   const handleCopyPixPayload = () => {
@@ -309,17 +417,48 @@ export default function CheckoutPage() {
                     <CardTitle>2. Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7.421 21.943c-1.285 0-2.39-.421-3.27-1.284C3.27 19.796 2.85 18.69 2.85 17.405V10.15c0-1.285.42-2.39 1.284-3.27.857-.88 1.963-1.321 3.27-1.321H16.58c1.285 0 2.39.44 3.27 1.32.88.88 1.321 1.986 1.321 3.27v7.255c0 1.285-.44 2.39-1.32 3.27-.88.857-1.986 1.284-3.27 1.284H7.42Zm-.17-14.314c-.81 0-1.49.25-2.037.768-.546.518-.81 1.164-.81 1.964v7.255c0 .8.264 1.447.81 1.964.546.518 1.226.768 2.036.768H16.58c.81 0 1.49-.25 2.037-.768.546-.517.81-1.164.81-1.964V10.15c0-.8-.264-1.446-.81-1.964-.546-.518-1.226-.768-2.036-.768H7.25Zm6.39 12.01c-1.357 0-2.5-.473-3.428-1.42-1.01-1.01-1.524-2.22-1.524-3.633 0-1.357.495-2.547 1.488-3.57.993-1.024 2.172-1.536 3.537-1.536 1.357 0 2.524.488 3.5 1.464.976.976 1.464 2.172 1.464 3.57 0 1.413-.488 2.619-1.464 3.633-.976.994-2.143 1.488-3.5 1.488Zm0-1.63c.893 0 1.66-.312 2.298-.936.638-.624.948-1.38.948-2.273s-.31-1.66-.948-2.298c-.638-.638-1.405-.948-2.298-.948-.893 0-1.66.31-2.298.948-.638.638-.957 1.405-.957 2.298s.32 1.65.957 2.274c.638.624 1.405.935 2.298.935Zm-6.526-7.854c.482 0 .88.164 1.192.495.31.33.473.71.473 1.131a1.53 1.53 0 0 1-.495 1.181c-.33.31-.728.474-1.18.474-.482 0-.88-.164-1.192-.474-.31-.31-.474-.71-.474-1.18 0-.422.164-.8.495-1.132.33-.33.71-.495 1.18-.495Z" fill="currentColor"></path>
-                            </svg>
-                            <span className="font-semibold">Pix</span>
+                  <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'pix' | 'card')} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="pix">
+                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                             <path d="M7.421 21.943c-1.285 0-2.39-.421-3.27-1.284C3.27 19.796 2.85 18.69 2.85 17.405V10.15c0-1.285.42-2.39 1.284-3.27.857-.88 1.963-1.321 3.27-1.321H16.58c1.285 0 2.39.44 3.27 1.32.88.88 1.321 1.986 1.321 3.27v7.255c0 1.285-.44 2.39-1.32 3.27-.88.857-1.986 1.284-3.27 1.284H7.42Zm-.17-14.314c-.81 0-1.49.25-2.037.768-.546.518-.81 1.164-.81 1.964v7.255c0 .8.264 1.447.81 1.964.546.518 1.226.768 2.036.768H16.58c.81 0 1.49-.25 2.037-.768.546-.517.81-1.164.81-1.964V10.15c0-.8-.264-1.446-.81-1.964-.546-.518-1.226-.768-2.036-.768H7.25Zm6.39 12.01c-1.357 0-2.5-.473-3.428-1.42-1.01-1.01-1.524-2.22-1.524-3.633 0-1.357.495-2.547 1.488-3.57.993-1.024 2.172-1.536 3.537-1.536 1.357 0 2.524.488 3.5 1.464.976.976 1.464 2.172 1.464 3.57 0 1.413-.488 2.619-1.464 3.633-.976.994-2.143 1.488-3.5 1.488Zm0-1.63c.893 0 1.66-.312 2.298-.936.638-.624.948-1.38.948-2.273s-.31-1.66-.948-2.298c-.638-.638-1.405-.948-2.298-.948-.893 0-1.66.31-2.298.948-.638.638-.957 1.405-.957 2.298s.32 1.65.957 2.274c.638.624 1.405.935 2.298.935Zm-6.526-7.854c.482 0 .88.164 1.192.495.31.33.473.71.473 1.131a1.53 1.53 0 0 1-.495 1.181c-.33.31-.728.474-1.18.474-.482 0-.88-.164-1.192-.474-.31-.31-.474-.71-.474-1.18 0-.422.164-.8.495-1.132.33-.33.71-.495 1.18-.495Z" fill="currentColor"></path>
+                        </svg>
+                        Pix
+                      </TabsTrigger>
+                      <TabsTrigger value="card">
+                        <CreditCard className="mr-2 h-5 w-5" />
+                        Cartão de Crédito
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="pix" className="mt-4">
+                      <div className="rounded-md border p-4 flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">O QR Code para pagamento será gerado ao finalizar o pedido.</p>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="card" className="mt-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                           <Label htmlFor="number">Número do Cartão</Label>
+                           <Input id="number" value={cardInfo.number} onChange={handleInfoChange} required placeholder="0000 0000 0000 0000" />
                         </div>
-                        <div className="h-5 w-5 rounded-full border-2 border-primary bg-background ring-4 ring-transparent flex items-center justify-center">
-                            <div className="h-2 w-2 rounded-full bg-primary"></div>
+                        <div className="space-y-2">
+                           <Label htmlFor="name">Nome no Cartão</Label>
+                           <Input id="name" value={cardInfo.name} onChange={handleInfoChange} required placeholder="Seu nome completo" />
                         </div>
-                    </div>
+                         <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2 col-span-2">
+                              <Label htmlFor="expiry">Validade</Label>
+                              <Input id="expiry" value={cardInfo.expiry} onChange={handleInfoChange} required placeholder="MM/AA" />
+                            </div>
+                             <div className="space-y-2">
+                               <Label htmlFor="cvc">CVC</Label>
+                               <Input id="cvc" value={cardInfo.cvc} onChange={handleInfoChange} required placeholder="123" />
+                            </div>
+                         </div>
+                         {cardError && <Alert variant="destructive"><AlertDescription>{cardError}</AlertDescription></Alert>}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
                 </Card>
             </div>
@@ -395,8 +534,17 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
-                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isFormInvalid || isProcessing}>
-                  {isProcessing ? 'Processando...' : `Pagar com Pix R$ ${finalTotal.toFixed(2).replace('.', ',')}`}
+                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Processando...
+                    </>
+                  ) : paymentMethod === 'pix' ? (
+                     `Pagar com Pix R$ ${finalTotal.toFixed(2).replace('.', ',')}`
+                  ) : (
+                     `Pagar R$ ${finalTotal.toFixed(2).replace('.', ',')}`
+                  )}
                 </Button>
               </div>
             </CardContent>

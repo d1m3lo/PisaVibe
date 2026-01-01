@@ -108,3 +108,73 @@ export const processPayment = onRequest(
     });
   }
 );
+
+
+/**
+ * Cloud Function para processar pagamentos com cartão de crédito via Efí Pay.
+ */
+export const processCardPayment = onRequest(
+  { region: 'southamerica-east1' },
+  (request, response) => {
+    corsHandler(request, response, async () => {
+      if (request.method !== 'POST') {
+        response.status(405).send('Method Not Allowed');
+        return;
+      }
+      
+      const { amount, paymentToken, installments, customer } = request.body;
+
+      if (!amount || !paymentToken || !installments || !customer) {
+        logger.error('Dados incompletos para pagamento com cartão.', request.body);
+        return response.status(400).json({ error: 'Dados do pagamento ausentes.' });
+      }
+
+      logger.info('Recebendo dados para pagamento com cartão:', { amount, installments, customer: customer.name });
+
+      const chargeBody = {
+        items: [{
+          name: "Pedido PISA VIBE",
+          value: Math.round(amount * 100), // Valor em centavos
+          amount: 1
+        }],
+        payment: {
+          credit_card: {
+            installments,
+            payment_token: paymentToken,
+            customer: {
+              name: customer.name,
+              cpf: customer.cpf.replace(/\D/g, ''),
+              email: customer.email,
+            }
+          }
+        }
+      };
+
+      try {
+        // "one step" cria e já executa o pagamento
+        const chargeResult = await efiPay.createOneStepCharge(chargeBody);
+        
+        if (chargeResult.status === 'paid') {
+           logger.info('Pagamento com cartão processado com sucesso:', { chargeId: chargeResult.charge_id });
+           response.status(201).json({ success: true, ...chargeResult });
+        } else {
+          logger.warn('Pagamento com cartão não foi concluído:', { status: chargeResult.status, chargeId: chargeResult.charge_id });
+          response.status(400).json({ 
+            error: 'Pagamento não aprovado.', 
+            details: `Status: ${chargeResult.status}`
+          });
+        }
+      } catch (error: any) {
+        logger.error('Erro ao processar pagamento com cartão na Efí:', error?.response?.data || error);
+
+        const errorMessage =
+          error?.response?.data?.mensagem ||
+          'Ocorreu um erro desconhecido no servidor.';
+        response.status(500).json({
+          error: 'Falha ao processar o pagamento com cartão.',
+          details: errorMessage,
+        });
+      }
+    });
+  }
+);

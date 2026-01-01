@@ -3,6 +3,9 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  env: {
+    NEXT_PUBLIC_EFI_CLIENT_ID_SANDBOX: process.env.EFI_CLIENT_ID_SANDBOX,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -29,8 +32,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/:path*',
+        source: '/api/processPayment',
+        destination: 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processPayment',
+      },
+       {
+        source: '/api/processCardPayment',
+        destination: 'http://127.0.0.1:5001/pisa-vibe-db/southamerica-east1/processCardPayment',
       },
     ]
   },

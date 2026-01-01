@@ -172,7 +172,7 @@ export default function CheckoutPage() {
 
         if (!response.ok) {
             // Use the structured error message from the JSON response.
-            throw new Error(responseData.details || responseData.error || "Falha ao iniciar o pagamento.");
+            throw new Error(responseData.message || responseData.error || "Falha ao iniciar o pagamento.");
         }
         
         const { url } = responseData;

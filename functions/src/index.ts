@@ -8,14 +8,11 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 import { onRequest } from 'firebase-functions/v2/https';
+import { defineString } from 'firebase-functions/params';
 import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 import * as cors from 'cors';
-import * as dotenv from 'dotenv';
 import Stripe from 'stripe';
-
-// Carrega as variáveis de ambiente do .env localmente
-dotenv.config();
 
 // Inicializa o Firebase Admin SDK
 admin.initializeApp();
@@ -23,19 +20,22 @@ admin.initializeApp();
 // Configura o CORS para permitir requisições do seu frontend
 const corsHandler = cors({ origin: true });
 
-// Inicializa o Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2024-06-20',
-});
-
+// Define a chave secreta da Stripe usando a forma segura recomendada pelo Firebase.
+// O valor será obtido do ambiente de produção ou de um arquivo .envrc local.
+const stripeSecretKey = defineString('STRIPE_SECRET_KEY');
 
 /**
  * Cloud Function para criar uma sessão de checkout no Stripe.
  */
 export const createStripeCheckoutSession = onRequest(
-  { region: 'southamerica-east1' },
+  { region: 'southamerica-east1', secrets: ['STRIPE_SECRET_KEY'] },
   (request, response) => {
     corsHandler(request, response, async () => {
+      // Inicializa a Stripe DENTRO da função, usando o valor seguro.
+      const stripe = new Stripe(stripeSecretKey.value(), {
+        apiVersion: '2024-06-20',
+      });
+
       if (request.method !== 'POST') {
         response.status(405).json({ error: 'Method Not Allowed' });
         return;
@@ -86,7 +86,7 @@ export const createStripeCheckoutSession = onRequest(
 
         if (session.url) {
             logger.info('Sessão de checkout criada com sucesso:', { sessionId: session.id });
-            response.status(201).json({ url: session.url });
+            response.status(200).json({ url: session.url });
         } else {
              // Garante que um erro JSON seja retornado se a URL não existir
              throw new Error('Não foi possível obter a URL da sessão de checkout.');

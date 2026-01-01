@@ -8,7 +8,6 @@ import { CartProvider } from "@/context/cart-context";
 import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import ConditionalHeaderFooter from "@/components/conditional-header-footer";
-import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,20 +24,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isProduction = process.env.NODE_ENV === 'production';
 
   return (
     <html lang="pt-BR" className="scroll-smooth" suppressHydrationWarning>
-       <head>
-        {/* EfiPay Script */}
-        <Script
-          id="efipay-script"
-          strategy="beforeInteractive"
-          src={isProduction 
-            ? "https://cdn.efipay.com.br/checkout/prod/efipay.min.js" 
-            : "https://cdn.efipay.com.br/checkout/sandbox/efipay.min.js"}
-        />
-      </head>
+       <head />
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

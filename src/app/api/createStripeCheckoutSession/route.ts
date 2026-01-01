@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Parâmetros obrigatórios ausentes' }, { status: 400 });
     }
 
-    // Pass metadata to the session so we can retrieve it in the webhook
     const line_items = items.map((item: any) => ({
       price_data: {
         currency: 'brl',
@@ -39,7 +38,6 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      // We'll use a webhook to handle order creation, so we can pass metadata here
       metadata: {
         userEmail: userEmail,
         cartItems: JSON.stringify(items.map((item: any) => ({

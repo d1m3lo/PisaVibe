@@ -68,7 +68,6 @@ export type Order = {
   customerInfo: {
     name: string;
     email: string;
-    complemento?: string;
   },
   items: OrderItem[];
   orderDate: string; // ISO String

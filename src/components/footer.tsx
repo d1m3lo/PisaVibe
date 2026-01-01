@@ -57,6 +57,7 @@ export default function Footer() {
                         <FooterLink href="/politica-de-privacidade">Política de Privacidade</FooterLink>
                         <FooterLink href="/termos-de-uso">Termos de Uso</FooterLink>
                         <FooterLink href="/entregas-e-envios">Entregas e Envios</FooterLink>
+                        <FooterLink href="/creditos">Créditos</FooterLink>
                     </ul>
                 </div>
             </div>

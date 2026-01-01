@@ -36,14 +36,6 @@ export default function CreditsPage() {
                     </Button>
                 </section>
                 
-                <section className="border-t pt-8 text-center">
-                     <h2 className="mb-4 font-headline text-2xl font-bold">
-                       Obrigado por fazer parte!
-                    </h2>
-                    <p className="text-muted-foreground">
-                      A PISA VIBE não existiria sem a comunidade e as ferramentas de código aberto. Nosso muito obrigado a todos!
-                    </p>
-                </section>
             </main>
         </div>
     );

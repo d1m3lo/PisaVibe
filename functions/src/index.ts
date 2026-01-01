@@ -1,3 +1,4 @@
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -36,7 +37,7 @@ export const createStripeCheckoutSession = onRequest(
   (request, response) => {
     corsHandler(request, response, async () => {
       if (request.method !== 'POST') {
-        response.status(405).send('Method Not Allowed');
+        response.status(405).json({ error: 'Method Not Allowed' });
         return;
       }
 
@@ -83,11 +84,13 @@ export const createStripeCheckoutSession = onRequest(
             logger.info('Sessão de checkout criada com sucesso:', { sessionId: session.id });
             response.status(201).json({ url: session.url });
         } else {
+             // Garante que um erro JSON seja retornado se a URL não existir
              throw new Error('Não foi possível obter a URL da sessão de checkout.');
         }
 
       } catch (error: any) {
         logger.error('Erro ao criar sessão de checkout no Stripe:', error);
+        // Sempre retorna um erro em formato JSON
         response.status(500).json({
           error: 'Falha ao iniciar o pagamento.',
           details: error.message,

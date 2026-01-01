@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -163,21 +164,18 @@ export default function CheckoutPage() {
             }),
         });
 
-        if (!response.ok) {
-            let errorDetails = "Erro desconhecido.";
-            try {
-                const errorData = await response.json();
-                errorDetails = errorData.details || errorData.error || "Falha ao iniciar o pagamento.";
-            } catch (e) {
-                 errorDetails = await response.text();
-            }
-            throw new Error(errorDetails);
-        }
+        // Backend should always respond with JSON, even for errors.
+        const responseData = await response.json();
 
-        const { url } = await response.json();
+        if (!response.ok) {
+            // Use the error message from the JSON response.
+            throw new Error(responseData.details || responseData.error || "Falha ao iniciar o pagamento.");
+        }
         
-        // Em vez de salvar o pedido agora, salvaremos via webhook do Stripe
-        // ou na página de sucesso. Para simplificar, o redirecionamento é o próximo passo.
+        const { url } = responseData;
+        if (!url) {
+            throw new Error("Não foi possível obter a URL de pagamento.");
+        }
         
         router.push(url);
 

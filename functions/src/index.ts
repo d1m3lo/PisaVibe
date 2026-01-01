@@ -54,7 +54,7 @@ export const createStripeCheckoutSession = onRequest(
             price_data: {
                 currency: 'brl',
                 product_data: {
-                    name: item.displayName || item.product.name,
+                    name: item.displayName || item.name,
                     images: [item.imageUrl],
                     metadata: {
                       productId: item.product.id,
@@ -62,7 +62,7 @@ export const createStripeCheckoutSession = onRequest(
                       size: item.size
                     }
                 },
-                unit_amount: Math.round(item.product.price * 100), // Preço em centavos
+                unit_amount: Math.round(item.price * 100), // Preço em centavos
             },
             quantity: item.quantity,
         }));

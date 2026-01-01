@@ -36,27 +36,6 @@ export default function CreditsPage() {
                     </Button>
                 </section>
                 
-                <section>
-                    <h2 className="mb-6 text-center font-headline text-2xl font-bold">
-                        <Code className="mx-auto mb-2 h-8 w-8 text-primary" />
-                        Construído com as Melhores Ferramentas
-                    </h2>
-                    <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
-                        <div className="flex flex-col items-center">
-                            <h3 className="text-lg font-semibold">Plataforma</h3>
-                            <p className="text-muted-foreground">Next.js</p>
-                        </div>
-                        <div className="flex flex-col items-center">
-                             <h3 className="text-lg font-semibold">Estilização</h3>
-                            <p className="text-muted-foreground">Tailwind CSS & Shadcn/UI</p>
-                        </div>
-                        <div className="flex flex-col items-center">
-                             <h3 className="text-lg font-semibold">Backend & Infra</h3>
-                            <p className="text-muted-foreground">Firebase</p>
-                        </div>
-                    </div>
-                </section>
-                
                 <section className="border-t pt-8 text-center">
                      <h2 className="mb-4 font-headline text-2xl font-bold">
                        Obrigado por fazer parte!

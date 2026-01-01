@@ -21,6 +21,19 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+   webpack: (config, { isServer }) => {
+    // Adiciona a regra para arquivos .p12
+    config.module.rules.push({
+      test: /\.p12$/,
+      use: [
+        {
+          loader: 'raw-loader',
+        },
+      ],
+    });
+
+    return config;
+  },
 };
 
 export default nextConfig;

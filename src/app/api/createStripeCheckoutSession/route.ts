@@ -2,9 +2,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
 
-// A chave secreta é lida diretamente das variáveis de ambiente do servidor.
-// Em produção (App Hosting), você definirá isso como um "Secret".
-// Em desenvolvimento, você pode criar um arquivo .env.local na raiz do projeto.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-06-20',
   typescript: true,
@@ -18,6 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Parâmetros obrigatórios ausentes' }, { status: 400 });
     }
 
+    // Pass metadata to the session so we can retrieve it in the webhook
     const line_items = items.map((item: any) => ({
       price_data: {
         currency: 'brl',
@@ -28,6 +26,8 @@ export async function POST(req: NextRequest) {
             productId: item.productId,
             variantId: item.variantId,
             size: item.size,
+            variantColor: item.variantColor,
+            selectedImage: item.selectedImage || ''
           },
         },
         unit_amount: Math.round(item.price * 100),
@@ -39,8 +39,21 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      customer_email: userEmail,
-      success_url,
+      // We'll use a webhook to handle order creation, so we can pass metadata here
+      metadata: {
+        userEmail: userEmail,
+        cartItems: JSON.stringify(items.map((item: any) => ({
+            productId: item.productId,
+            productName: item.displayName || item.name,
+            variantId: item.variantId,
+            variantColor: item.variantColor,
+            size: item.size,
+            quantity: item.quantity,
+            price: item.price,
+            imageUrl: item.imageUrl,
+        })))
+      },
+      success_url: `${success_url}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url,
       billing_address_collection: 'required',
       shipping_address_collection: {
@@ -57,10 +70,10 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Erro ao criar sessão Stripe:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Erro interno ao criar sessão de pagamento.',
-        message: error.message 
-      }, 
+        message: error.message
+      },
       { status: 500 }
     );
   }

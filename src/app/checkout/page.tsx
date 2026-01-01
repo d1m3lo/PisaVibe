@@ -13,7 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { Coupon, Order } from "@/lib/types";
@@ -28,6 +28,7 @@ export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
   const { cartItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const firestore = useFirestore();
   const [couponCode, setCouponCode] = useState("");
@@ -48,7 +49,19 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && cartItems.length === 0) {
+    // Clear cart if payment was successful
+    if (searchParams.get('session_id')) {
+      toast({
+        title: 'Compra realizada com sucesso!',
+        description: 'Seu pedido foi recebido e está sendo processado. Obrigado!',
+      });
+      clearCart();
+    }
+  }, [searchParams, clearCart, toast]);
+
+
+  useEffect(() => {
+    if (!isUserLoading && cartItems.length === 0 && !searchParams.get('session_id')) {
       router.push("/");
     }
     if (user && !shippingInfo.email) {
@@ -59,7 +72,7 @@ export default function CheckoutPage() {
         phone: user.phoneNumber || ''
       }));
     }
-  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email]);
+  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email, searchParams]);
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -149,11 +162,13 @@ export default function CheckoutPage() {
             size: item.size,
             quantity: item.quantity,
             price: item.product.price,
+            variantColor: item.variant.color,
             imageUrl: fixImageUrl(
                 (item.product.subCategory === 'mochilas' && item.selectedImage) 
                 ? item.selectedImage 
                 : item.variant.images[0]
             ),
+            selectedImage: item.selectedImage
         }));
         
         const response = await fetch(STRIPE_CHECKOUT_URL, {
@@ -162,16 +177,14 @@ export default function CheckoutPage() {
             body: JSON.stringify({
                 items: lineItems,
                 userEmail: shippingInfo.email,
-                success_url: `${window.location.origin}/minha-conta?session_id={CHECKOUT_SESSION_ID}`,
+                success_url: `${window.location.origin}/checkout`,
                 cancel_url: `${window.location.origin}/checkout`,
             }),
         });
 
-        // Backend will always respond with JSON, even for errors.
         const responseData = await response.json();
 
         if (!response.ok) {
-            // Use the structured error message from the JSON response.
             throw new Error(responseData.message || responseData.error || "Falha ao iniciar o pagamento.");
         }
         
@@ -180,7 +193,6 @@ export default function CheckoutPage() {
             throw new Error("Não foi possível obter a URL de pagamento.");
         }
         
-        // Redirect to Stripe Checkout page
         router.push(url);
 
     } catch (error: any) {
@@ -196,6 +208,22 @@ export default function CheckoutPage() {
 
 
   if (cartItems.length === 0 && !isUserLoading) {
+     if (searchParams.get('session_id')) {
+        return (
+            <div className="container mx-auto px-4 py-12 text-center">
+                <h1 className="font-headline text-4xl font-bold">Obrigado pela sua compra!</h1>
+                <p className="mt-4 text-lg text-muted-foreground">Seu pedido foi registrado e em breve você receberá uma confirmação.</p>
+                <div className="mt-8 flex justify-center gap-4">
+                    <Button asChild>
+                        <Link href="/produtos">Continuar Comprando</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/minha-conta">Ver Meus Pedidos</Link>
+                    </Button>
+                </div>
+            </div>
+        )
+    }
     return null;
   }
 

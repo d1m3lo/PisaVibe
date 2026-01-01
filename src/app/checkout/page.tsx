@@ -230,26 +230,40 @@ export default function CheckoutPage() {
     }
   };
 
+  const handlePaymentRequest = async (url: string, body: object) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        let errorDetails = "Erro desconhecido.";
+        try {
+            // Tenta parsear como JSON, mas se falhar, usa o texto puro.
+            const errorData = await response.json();
+            errorDetails = errorData.details || errorData.error || JSON.stringify(errorData);
+        } catch (e) {
+            // Se a resposta não for JSON, use o texto da resposta.
+            errorDetails = await response.text();
+        }
+        throw new Error(`Falha na comunicação com o servidor: ${errorDetails}`);
+    }
+
+    return response.json();
+  }
+
+
   const handlePixCheckout = async () => {
      try {
-        const response = await fetch(PIX_PAYMENT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: finalTotal,
-                customer: {
-                    name: shippingInfo.name,
-                    cpf: shippingInfo.cpf,
-                }
-            }),
+        const pixResult = await handlePaymentRequest(PIX_PAYMENT_URL, {
+            amount: finalTotal,
+            customer: {
+                name: shippingInfo.name,
+                cpf: shippingInfo.cpf,
+            }
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.details || 'Falha ao gerar cobrança Pix.');
-        }
-
-        const pixResult = await response.json();
+        
         await createOrderInFirestore();
         setPixData(pixResult);
         setPixModalOpen(true);
@@ -298,25 +312,16 @@ export default function CheckoutPage() {
         try {
             const paymentToken = result.data.payment_token;
             
-            const response = await fetch(CARD_PAYMENT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: finalTotal,
-                    paymentToken,
-                    installments,
-                    customer: {
-                        name: shippingInfo.name,
-                        cpf: shippingInfo.cpf,
-                        email: shippingInfo.email,
-                    }
-                }),
+            await handlePaymentRequest(CARD_PAYMENT_URL, {
+                amount: finalTotal,
+                paymentToken,
+                installments,
+                customer: {
+                    name: shippingInfo.name,
+                    cpf: shippingInfo.cpf,
+                    email: shippingInfo.email,
+                }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.details || 'Falha ao processar pagamento com cartão.');
-            }
 
             // Payment successful
             await createOrderInFirestore();

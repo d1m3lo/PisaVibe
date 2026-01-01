@@ -12,9 +12,9 @@ import * as admin from 'firebase-admin';
 import EfiPay from 'efipay';
 import * as cors from 'cors';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
 
 // Carrega as variáveis de ambiente do .env localmente
-import * as dotenv from 'dotenv';
 dotenv.config();
 
 // Inicializa o Firebase Admin SDK

@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
         {
           source: '/api/:path*',
           destination:
-            'http://127.0.0.1:5001/studio-4155277971-b1669/southamerica-east1/:path*',
+            'http://127.0.0.1:5001/pisa-vibe-e-commerce-br/southamerica-east1/:path*',
         },
       ];
     }

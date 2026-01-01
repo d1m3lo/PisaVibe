@@ -57,6 +57,9 @@ export async function POST(req: NextRequest) {
       shipping_address_collection: {
         allowed_countries: ['BR'],
       },
+      phone_number_collection: {
+        enabled: true,
+      },
     });
 
     if (session.url) {

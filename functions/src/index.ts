@@ -41,6 +41,8 @@ export const createStripeCheckoutSession = onRequest(
         return;
       }
 
+      logger.info('Iniciando criação de sessão de checkout. Body:', request.body);
+
       const { items, userEmail, success_url, cancel_url } = request.body;
 
       if (!items || !success_url || !cancel_url) {
@@ -57,8 +59,8 @@ export const createStripeCheckoutSession = onRequest(
                     name: item.displayName || item.name,
                     images: [item.imageUrl],
                     metadata: {
-                      productId: item.product.id,
-                      variantId: item.variant.id,
+                      productId: item.productId,
+                      variantId: item.variantId,
                       size: item.size
                     }
                 },
@@ -67,6 +69,8 @@ export const createStripeCheckoutSession = onRequest(
             quantity: item.quantity,
         }));
         
+        logger.info('Line items para a Stripe:', { line_items: JSON.stringify(line_items) });
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card', 'pix'],
             line_items,

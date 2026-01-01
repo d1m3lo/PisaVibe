@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -141,16 +140,20 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+        // Prepare a clean list of items for the backend
         const lineItems = cartItems.map(item => ({
-            product: { id: item.product.id, name: item.product.name },
-            variant: { id: item.variant.id, color: item.variant.color },
+            productId: item.product.id,
+            variantId: item.variant.id,
+            name: item.product.name,
+            displayName: item.displayName,
             size: item.size,
             quantity: item.quantity,
             price: item.product.price,
-            imageUrl: fixImageUrl((item.product.subCategory === 'mochilas' && item.selectedImage) 
+            imageUrl: fixImageUrl(
+                (item.product.subCategory === 'mochilas' && item.selectedImage) 
                 ? item.selectedImage 
-                : item.variant.images[0]),
-            displayName: item.displayName,
+                : item.variant.images[0]
+            ),
         }));
         
         const response = await fetch(STRIPE_CHECKOUT_URL, {
@@ -164,11 +167,11 @@ export default function CheckoutPage() {
             }),
         });
 
-        // Backend should always respond with JSON, even for errors.
+        // Backend will always respond with JSON, even for errors.
         const responseData = await response.json();
 
         if (!response.ok) {
-            // Use the error message from the JSON response.
+            // Use the structured error message from the JSON response.
             throw new Error(responseData.details || responseData.error || "Falha ao iniciar o pagamento.");
         }
         
@@ -177,6 +180,7 @@ export default function CheckoutPage() {
             throw new Error("Não foi possível obter a URL de pagamento.");
         }
         
+        // Redirect to Stripe Checkout page
         router.push(url);
 
     } catch (error: any) {

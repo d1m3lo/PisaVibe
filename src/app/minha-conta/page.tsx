@@ -14,9 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
 import { cn, fixImageUrl } from '@/lib/utils';
-import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
+import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -61,20 +62,22 @@ const OrderHistory = () => {
     const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
 
     const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
-          case 'processing': return 'default';
-          case 'shipped': return 'secondary';
-          case 'delivered': return 'outline';
-          default: return 'destructive';
+        switch (status) {
+            case 'Pedido confirmado': return 'default';
+            case 'Pedido em separação': return 'secondary';
+            case 'Pedido em transporte': return 'secondary';
+            case 'Saiu para entrega': return 'secondary';
+            case 'Pedido entregue': return 'outline';
+            default: return 'destructive';
         }
     }
 
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
             </div>
         )
     }
@@ -93,10 +96,12 @@ const OrderHistory = () => {
             {orders.map((order) => (
                 <Card key={order.id}>
                     <div 
-                        className="flex items-center gap-4 p-4 cursor-pointer"
-                        onClick={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4"
                     >
-                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
+                        <div 
+                            className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center cursor-pointer"
+                            onClick={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}
+                        >
                              <div className="flex flex-col">
                                 <span className="text-xs text-muted-foreground">Pedido</span>
                                 <span className="font-mono text-sm font-semibold truncate">#{order.id.slice(0, 7)}</span>
@@ -114,9 +119,17 @@ const OrderHistory = () => {
                                 <Badge variant={getStatusVariant(order.status)} className="w-fit">{order.status}</Badge>
                              </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </Button>
+                        <div className="flex sm:flex-col items-center gap-2 w-full sm:w-auto">
+                            <Button asChild variant="outline" className="w-full sm:w-auto">
+                                <Link href={`/minha-conta/acompanhar-pedido/${order.id}`}>
+                                    <PackageSearch className="mr-2 h-4 w-4" />
+                                    Acompanhar
+                                </Link>
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 sm:hidden" onClick={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
+                                {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                        </div>
                     </div>
 
                     {openOrderId === order.id && (
@@ -177,7 +190,7 @@ export default function MyAccountPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [activeView, setActiveView] = useState('profile');
+  const [activeView, setActiveView] = useState('orders'); // Default to orders
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -262,8 +275,8 @@ export default function MyAccountPage() {
   }
 
   const menuItems = [
-      { id: 'profile', label: 'Detalhes do Perfil', icon: User },
       { id: 'orders', label: 'Meus Pedidos', icon: ShoppingCart },
+      { id: 'profile', label: 'Detalhes do Perfil', icon: User },
       { id: 'favorites', label: 'Favoritos', icon: Heart },
       { id: 'password', label: 'Alterar Senha', icon: KeyRound },
   ]
@@ -337,7 +350,7 @@ export default function MyAccountPage() {
                         <CardHeader>
                             <CardTitle>Meus Pedidos</CardTitle>
                             <CardDescription>
-                                Acompanhe o histórico de suas compras.
+                                Acompanhe o histórico e o status de suas compras.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -389,5 +402,3 @@ export default function MyAccountPage() {
     </div>
   );
 }
-
-    

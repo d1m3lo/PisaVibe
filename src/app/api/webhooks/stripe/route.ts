@@ -93,7 +93,7 @@ async function createOrderFromSession(session: Stripe.Checkout.Session, firestor
     orderDate: new Date().toISOString(),
     items: cartItems,
     totalAmount: (session.amount_total || 0) / 100,
-    status: 'Processing',
+    status: 'Pedido confirmado',
     shippingAddress: formattedAddress,
     customerInfo: {
         name: session.customer_details.name || '',

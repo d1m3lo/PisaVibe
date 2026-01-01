@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, onSnapshot, query, getDocs, writeBatch } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query, getDocs, writeBatch, doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import {
   Table,
@@ -20,12 +20,12 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
-import { Order } from '@/lib/types';
+import { Order, OrderStatus } from '@/lib/types';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Separator } from './ui/separator';
@@ -40,12 +40,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { fixImageUrl } from '@/lib/utils';
 
 
 interface OrderWithId extends Order {
   id: string;
+  path: string; // Add path to easily reference the document
 }
+
+const orderStatuses: OrderStatus[] = [
+    'Pedido confirmado',
+    'Pedido em separação',
+    'Pedido em transporte',
+    'Saiu para entrega',
+    'Pedido entregue',
+];
 
 export default function AdminOrderManagement() {
   const [orders, setOrders] = useState<OrderWithId[]>([]);
@@ -54,6 +70,7 @@ export default function AdminOrderManagement() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!firestore) return;
@@ -67,6 +84,7 @@ export default function AdminOrderManagement() {
         const ordersData = snapshot.docs.map((doc) => ({
           ...(doc.data() as Order),
           id: doc.id,
+          path: doc.ref.path
         }));
         ordersData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
         setOrders(ordersData);
@@ -84,6 +102,30 @@ export default function AdminOrderManagement() {
     );
     return () => unsubscribe();
   }, [firestore, toast]);
+
+  const handleStatusChange = async (orderPath: string, newStatus: OrderStatus) => {
+    if (!firestore) return;
+    const orderId = orderPath.split('/').pop() || '';
+    setUpdatingStatus(prev => ({...prev, [orderId]: true}));
+    try {
+        const orderRef = doc(firestore, orderPath);
+        await updateDoc(orderRef, { status: newStatus });
+        toast({
+            title: "Status atualizado!",
+            description: `O pedido foi atualizado para "${newStatus}".`
+        });
+    } catch (error) {
+        console.error("Error updating status:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao atualizar status",
+            description: "Não foi possível alterar o status do pedido."
+        });
+    } finally {
+        setUpdatingStatus(prev => ({...prev, [orderId]: false}));
+    }
+  };
+
 
   const handleClearAllOrders = async () => {
     if (!firestore || orders.length === 0) {
@@ -129,15 +171,13 @@ export default function AdminOrderManagement() {
 
 
   const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'processing':
-        return 'default';
-      case 'shipped':
-        return 'secondary';
-      case 'delivered':
-        return 'outline';
-      default:
-        return 'destructive';
+    switch (status) {
+      case 'Pedido confirmado': return 'default';
+      case 'Pedido em separação': return 'secondary';
+      case 'Pedido em transporte': return 'secondary';
+      case 'Saiu para entrega': return 'secondary';
+      case 'Pedido entregue': return 'outline';
+      default: return 'destructive';
     }
   }
 
@@ -178,7 +218,7 @@ export default function AdminOrderManagement() {
               <TableHead>Data</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-[220px]">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -206,9 +246,28 @@ export default function AdminOrderManagement() {
                               R$ {order.totalAmount.toFixed(2).replace('.', ',')}
                           </TableCell>
                           <TableCell>
-                              <Badge variant={getStatusVariant(order.status)}>
-                              {order.status}
-                              </Badge>
+                              {updatingStatus[order.id] ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Atualizando...</span>
+                                </div>
+                              ) : (
+                                <Select
+                                    value={order.status}
+                                    onValueChange={(newStatus: OrderStatus) => handleStatusChange(order.path, newStatus)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Alterar status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {orderStatuses.map(status => (
+                                            <SelectItem key={status} value={status}>
+                                                {status}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                              )}
                           </TableCell>
                       </TableRow>
                       <CollapsibleContent asChild>
@@ -221,6 +280,7 @@ export default function AdminOrderManagement() {
                                           <p><strong>Email:</strong> {order.customerInfo.email}</p>
                                           <p><strong>Endereço:</strong> {order.shippingAddress}</p>
                                           <p className="font-mono text-xs mt-2 text-muted-foreground">User ID: {order.userId}</p>
+                                          <p className="font-mono text-xs mt-2 text-muted-foreground">Order ID: {order.id}</p>
                                       </div>
                                       <div>
                                           <h4 className="font-bold mb-2">Itens do Pedido</h4>

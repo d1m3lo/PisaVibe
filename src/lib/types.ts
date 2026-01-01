@@ -62,6 +62,14 @@ export type OrderItem = {
     imageUrl: string;
 }
 
+export type OrderStatus =
+  | 'Pedido confirmado'
+  | 'Pedido em separação'
+  | 'Pedido em transporte'
+  | 'Saiu para entrega'
+  | 'Pedido entregue';
+
+
 export type Order = {
   id: string;
   userId: string;
@@ -73,7 +81,7 @@ export type Order = {
   orderDate: string; // ISO String
   totalAmount: number;
   shippingAddress: string;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: OrderStatus;
   couponCode?: string;
   discountAmount?: number;
   paymentMethod: 'card' | 'pix';

@@ -23,6 +23,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // UNVERIFIED ORDERS (Aguardando aprovação do admin)
+    match /unverified-orders/{orderId} {
+        allow read, write: if isAdmin();
+    }
+
     // USERS
     match /users/{userId} {
       allow list: if isAdmin();

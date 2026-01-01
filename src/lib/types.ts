@@ -63,12 +63,13 @@ export type OrderItem = {
 }
 
 export type OrderStatus =
+  | 'Pedido recebido' // Apenas para a Central de Controle
   | 'Pedido confirmado'
   | 'Pedido em separação'
   | 'Pedido em transporte'
   | 'Saiu para entrega'
-  | 'Pedido entregue';
-
+  | 'Pedido entregue'
+  | 'Finalizado'; // Status final da Central de Controle
 
 export type Order = {
   id: string;

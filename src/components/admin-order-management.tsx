@@ -185,8 +185,8 @@ export default function AdminOrderManagement() {
     <Card>
       <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Gerenciamento de Pedidos</CardTitle>
-          <CardDescription>Veja todos os pedidos realizados na sua loja.</CardDescription>
+          <CardTitle>Gerenciamento de Pedidos dos Clientes</CardTitle>
+          <CardDescription>Veja e atualize o status de todos os pedidos vinculados aos clientes.</CardDescription>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -303,19 +303,19 @@ export default function AdminOrderManagement() {
                                               {order.discountAmount > 0 && (
                                                   <div className="flex justify-between">
                                                       <span>Subtotal:</span>
-                                                      <span>R$ {(order.totalAmount + order.discountAmount).toFixed(2).replace('.', ',')}</span>
+                                                      <span>R$ {(order.totalAmount + (order.discountAmount || 0)).toFixed(2).replace('.', ',')}</span>
                                                   </div>
                                               )}
                                               {order.discountAmount > 0 && (
                                                   <div className="flex justify-between text-green-600">
                                                       <span>Desconto ({order.couponCode}):</span>
-                                                      <span>- R$ {order.discountAmount.toFixed(2).replace('.', ',')}</span>
+                                                      <span>- R$ {(order.discountAmount || 0).toFixed(2).replace('.', ',')}</span>
                                                   </div>
                                               )}
                                               <div className="flex justify-between font-bold">
                                                       <span>Total do Pedido:</span>
                                                       <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
-                                                  </div>
+                                              </div>
                                           </div>
                                       </div>
                                   </div>

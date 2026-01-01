@@ -49,6 +49,8 @@ interface UnverifiedOrder {
   orderDate: string;
   totalAmount: number;
   status: 'Pedido recebido';
+  shippingAddress: string;
+  paymentMethod: 'card' | 'pix';
 }
 
 export default function AdminCentralControle() {
@@ -107,8 +109,8 @@ export default function AdminCentralControle() {
             orderDate: order.orderDate,
             totalAmount: order.totalAmount,
             status: 'Pedido confirmado', // Status inicial para o cliente
-            shippingAddress: (order as any).shippingAddress || 'Não informado',
-            paymentMethod: (order as any).paymentMethod || 'card',
+            shippingAddress: order.shippingAddress || 'Não informado',
+            paymentMethod: order.paymentMethod || 'card',
         };
 
         const batch = writeBatch(firestore);

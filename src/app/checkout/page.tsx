@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -69,19 +68,8 @@ export default function CheckoutPage() {
 
   const shippingFormRef = useRef<HTMLDivElement>(null);
 
-  const PIX_PAYMENT_URL = useMemo(() => {
-    if (process.env.NODE_ENV === 'production') {
-      return 'https://processpayment-ewmivjnydq-rj.a.run.app';
-    }
-    return '/api/processPayment';
-  }, []);
-
-  const CARD_PAYMENT_URL = useMemo(() => {
-    if (process.env.NODE_ENV === 'production') {
-      return 'https://processcardpayment-ewmivjnydq-rj.a.run.app';
-    }
-    return '/api/processCardPayment';
-  }, []);
+  const PIX_PAYMENT_URL = "/api/processPayment";
+  const CARD_PAYMENT_URL = "/api/processCardPayment";
   
   const [shippingInfo, setShippingInfo] = useState({
     name: '',
@@ -606,5 +594,3 @@ export default function CheckoutPage() {
     </>
   );
 }
-
-    

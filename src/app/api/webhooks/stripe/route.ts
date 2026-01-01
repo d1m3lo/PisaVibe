@@ -2,28 +2,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, credential } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { Order, OrderItem } from '@/lib/types';
-import { credential } from 'firebase-admin';
+import type { Order, OrderItem } from '@/lib/types';
 
 // Esta configuração garante que o SDK Admin seja inicializado apenas uma vez.
 let adminApp: App;
 if (!getApps().length) {
-    // Em um ambiente de produção (como o Firebase App Hosting), 
-    // as credenciais são fornecidas automaticamente.
+    // Para ambientes como o Firebase App Hosting, as credenciais são fornecidas automaticamente.
+    // Para desenvolvimento local, ele pode usar credenciais do gcloud CLI se configurado.
     adminApp = initializeApp();
 } else {
     adminApp = getApps()[0];
 }
 
-const db = getFirestore(adminApp);
+const db: Firestore = getFirestore(adminApp);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
+  typescript: true,
 });
 
-// A chave secreta do webhook é essencial para segurança.
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: NextRequest) {
@@ -40,19 +39,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Lida apenas com o evento de sessão de checkout concluída
-  switch (event.type) {
-    case 'checkout.session.completed':
+  if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('✅ Sessão de checkout concluída:', session.id);
+      console.log('✅ Sessão de checkout concluída recebida:', session.id);
       
       try {
-        await createOrderFromSession(session, db);
+        await createOrderFromSession(session);
       } catch(error: any) {
         console.error('❌ Erro ao criar o pedido a partir da sessão:', error);
         return NextResponse.json({ error: 'Falha ao criar o pedido.', details: error.message }, { status: 500 });
       }
-      break;
-    default:
+  } else {
       console.log(`🤷‍♀️ Evento não tratado: ${event.type}`);
   }
 
@@ -60,26 +57,30 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Cria um documento de pedido no Firestore com base nos dados da sessão da Stripe.
+ * Busca os itens da sessão e cria um documento de pedido no Firestore.
  */
-async function createOrderFromSession(session: Stripe.Checkout.Session, firestore: Firestore) {
-  if (!session.metadata?.userEmail || !session.customer_details || !session.shipping_details) {
+async function createOrderFromSession(session: Stripe.Checkout.Session) {
+  // 1. Validar metadados e detalhes do cliente
+  const { userEmail, cartItems: cartItemsJSON } = session.metadata || {};
+  if (!userEmail || !cartItemsJSON || !session.customer_details || !session.shipping_details) {
     throw new Error('A sessão da Stripe não contém os metadados ou detalhes necessários.');
   }
+   console.log(`Iniciando criação de pedido para o email: ${userEmail}`);
 
-  const userEmail = session.metadata.userEmail;
-  const usersRef = firestore.collection('users');
-  // Encontra o usuário no Firestore pelo e-mail para obter o UID
+  // 2. Encontrar o usuário no Firestore para obter o UID
+  const usersRef = db.collection('users');
   const userQuery = await usersRef.where('email', '==', userEmail).limit(1).get();
 
   if (userQuery.empty) {
     throw new Error(`Usuário com o e-mail ${userEmail} não encontrado.`);
   }
-  const userDoc = userQuery.docs[0];
-  const userId = userDoc.id;
+  const userId = userQuery.docs[0].id;
+  console.log(`Usuário encontrado: ${userId}`);
 
-  const cartItems = JSON.parse(session.metadata.cartItems) as OrderItem[];
+  // 3. Parsear os itens do carrinho a partir dos metadados
+  const cartItems: OrderItem[] = JSON.parse(cartItemsJSON);
 
+  // 4. Formatar o endereço de entrega
   const shippingAddress = session.shipping_details.address;
   const formattedAddress = [
     shippingAddress?.line1,
@@ -88,24 +89,25 @@ async function createOrderFromSession(session: Stripe.Checkout.Session, firestor
     shippingAddress?.country,
   ].filter(Boolean).join(', ');
 
+  // 5. Montar o objeto do novo pedido
   const newOrder: Omit<Order, 'id'> = {
     userId: userId,
-    orderDate: new Date().toISOString(),
+    orderDate: new Date(session.created * 1000).toISOString(),
     items: cartItems,
     totalAmount: (session.amount_total || 0) / 100,
-    status: 'Pedido confirmado',
+    status: 'Pedido confirmado', // Status inicial
     shippingAddress: formattedAddress,
     customerInfo: {
         name: session.customer_details.name || '',
         email: session.customer_details.email || '',
     },
-    paymentMethod: 'card',
+    paymentMethod: 'card', // Assumindo cartão por enquanto
     couponCode: session.total_details?.discount_on_charge?.coupon?.name || undefined,
     discountAmount: (session.total_details?.amount_discount || 0) / 100,
   };
 
-  // Adiciona o novo pedido à subcoleção 'orders' do usuário
-  const orderRef = await firestore.collection('users').doc(userId).collection('orders').add(newOrder);
+  // 6. Adicionar o novo pedido à subcoleção 'orders' do usuário
+  const orderRef = await db.collection('users').doc(userId).collection('orders').add(newOrder);
 
   console.log(`✅ Pedido ${orderRef.id} criado com sucesso para o usuário ${userId}.`);
 }

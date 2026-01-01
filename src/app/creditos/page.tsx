@@ -36,7 +36,7 @@ export default function CreditsPage() {
             </p>
             <Button asChild className="mt-8" size="lg">
               <a
-                href="https://impulsodigital.com.br/"
+                href="https://studio--studio-4417341545-c813a.us-central1.hosted.app"
                 target="_blank"
                 rel="noopener noreferrer"
               >

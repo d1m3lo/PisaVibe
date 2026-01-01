@@ -23,7 +23,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { Coupon, Order } from "@/lib/types";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
@@ -67,6 +67,7 @@ export default function CheckoutPage() {
   
   const EFI_CLIENT_ID = process.env.NEXT_PUBLIC_EFI_CLIENT_ID_SANDBOX || '';
 
+  const shippingFormRef = useRef<HTMLDivElement>(null);
 
   const PIX_PAYMENT_URL = useMemo(() => {
     if (process.env.NODE_ENV === 'production') {
@@ -229,6 +230,7 @@ export default function CheckoutPage() {
             title: "Formulário Incompleto",
             description: "Por favor, preencha todos os dados de entrega.",
         });
+        shippingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     setIsProcessing(true);
@@ -366,7 +368,7 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div>
             <div className="space-y-8">
-                <Card>
+                <Card ref={shippingFormRef}>
                 <CardHeader>
                     <CardTitle>1. Informações de Entrega e Contato</CardTitle>
                 </CardHeader>
@@ -604,3 +606,5 @@ export default function CheckoutPage() {
     </>
   );
 }
+
+    

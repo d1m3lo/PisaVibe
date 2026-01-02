@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   onSnapshot,
@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Variant, SizeInfo } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, X, Palette, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, X, Palette, Image as ImageIcon, Search } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,45 +158,46 @@ const ProductForm = ({
       setFormData(prev => ({ ...prev, subCategory: '' }));
     }
     
-    // Se a categoria não for calçados, usa o padrão. Se for, espera a geração.
-    if(formData.category !== 'calcados' && formData.category !== 'roupas') {
-        setAvailableSizes(allSizes[formData.category as keyof typeof allSizes] || []);
-    } else {
-        // Se já houver tamanhos no produto sendo editado, popule a lista
-        const allVariantSizes = product?.variants.flatMap(v => v.sizes.map(s => s.size)) || [];
-        const uniqueSizes = [...new Set(allVariantSizes)].sort((a,b) => {
-             const aIsNum = !isNaN(Number(a));
-             const bIsNum = !isNaN(Number(b));
-             if (aIsNum && bIsNum) return Number(a) - Number(b);
-             if (aIsNum) return -1;
-             if (bIsNum) return 1;
-             return a.localeCompare(b);
-        });
-
-        if (uniqueSizes.length > 0) {
-            setAvailableSizes(uniqueSizes);
-        } else if (formData.category === 'roupas') {
-             setAvailableSizes(allSizes.roupas);
-        }
-        
-        else {
-            setAvailableSizes([]);
-        }
+    let initialSizes: string[] = [];
+    if (formData.category === 'roupas') {
+      initialSizes = allSizes.roupas;
+    } else if (['acessorios', 'perfumes'].includes(formData.category)) {
+      initialSizes = allSizes[formData.category as 'acessorios' | 'perfumes'];
     }
+
+    const allVariantSizes = formData.variants.flatMap(v => v.sizes.map(s => s.size));
+    const uniqueExistingSizes = [...new Set(allVariantSizes)].sort((a, b) => {
+        const aIsNum = !isNaN(Number(a));
+        const bIsNum = !isNaN(Number(b));
+        if (aIsNum && bIsNum) return Number(a) - Number(b);
+        if (aIsNum) return -1;
+        if (bIsNum) return 1;
+        return a.localeCompare(b);
+    });
+
+    const combinedSizes = [...new Set([...initialSizes, ...uniqueExistingSizes])];
+    setAvailableSizes(combinedSizes);
 
 
   }, [formData.gender, formData.category, product]);
 
   const handleGenerateSizes = () => {
-    const [start, end] = sizeRange.split('-').map(Number);
-    if (!isNaN(start) && !isNaN(end) && start <= end) {
-        const newSizes = [];
-        for (let i = start; i <= end; i++) {
-            newSizes.push(String(i));
+    if (!sizeRange) return;
+
+    if (sizeRange.includes('-')) {
+        const [start, end] = sizeRange.split('-').map(Number);
+        if (!isNaN(start) && !isNaN(end) && start <= end) {
+            const newSizes = [];
+            for (let i = start; i <= end; i++) {
+                newSizes.push(String(i));
+            }
+            setAvailableSizes(newSizes);
+        } else {
+            alert("Formato de intervalo inválido. Use algo como '34-45'.");
         }
-        setAvailableSizes(newSizes);
     } else {
-        alert("Formato inválido. Use algo como '34-45'.");
+        const newSizes = sizeRange.split(',').map(s => s.trim()).filter(Boolean);
+        setAvailableSizes(newSizes);
     }
   };
 
@@ -332,12 +333,12 @@ const ProductForm = ({
         // Filter sizes to only include those present in availableSizes and with a defined stock
         sizes: availableSizes.map(size => {
           const foundSize = v.sizes.find(s => s.size === size);
-          return { size, stock: foundSize?.stock || 0 };
+          return { size, stock: foundSize?.stock ?? 0 };
         }).filter(s => s.stock >= 0) // Ensure we only keep sizes with valid stock values
       };
       
       // If it's a perfume or backpack, ensure it has a single 'U' size entry.
-      if (formData.category === 'perfumes' || formData.subCategory === 'mochilas') {
+      if (formData.category === 'perfumes' || formData.subCategory === 'mochilas' || formData.category === 'acessorios') {
           const singleSize = v.sizes.find(s => s.size === 'U');
           variant.sizes = [{ size: 'U', stock: singleSize?.stock || 0 }];
       }
@@ -608,7 +609,7 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {(isPerfume || isBackpack) ? (
+                        {(isPerfume || isBackpack || formData.category === 'acessorios') ? (
                            <div className="space-y-2">
                                 <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
                                 <Input 
@@ -627,7 +628,7 @@ const ProductForm = ({
                                 {isSizeGeneratorVisible && (
                                     <div className="flex items-end gap-2 rounded-md border p-3">
                                         <div className="flex-grow space-y-1">
-                                            <Label htmlFor="size-range" className="text-xs">Intervalo de Tamanhos</Label>
+                                            <Label htmlFor="size-range" className="text-xs">Gerar Tamanhos</Label>
                                             <Input 
                                                 id="size-range"
                                                 placeholder="Ex: 34-45 ou P,M,G"
@@ -698,6 +699,7 @@ const ProductForm = ({
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<ProductWithId[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithId | null>(null);
   const { toast } = useToast();
@@ -727,6 +729,15 @@ export default function ProductManagement() {
     );
     return () => unsubscribe();
   }, [firestore, toast]);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) {
+        return products;
+    }
+    return products.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [products, searchTerm]);
 
   const handleSave = async (productData: Omit<ProductWithId, 'firestoreId'>) => {
     if (!firestore) return;
@@ -792,31 +803,45 @@ export default function ProductManagement() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Gerenciamento de Produtos</CardTitle>
-          <CardDescription>Adicione, edite ou remova produtos da sua loja.</CardDescription>
-        </div>
-        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
-          if (!isOpen) closeForm();
-          else setIsFormOpen(true);
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={openFormToCreate}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{editingProduct ? 'Editar' : 'Adicionar'} Produto</DialogTitle>
-            </DialogHeader>
-            <ProductForm 
-              product={editingProduct} 
-              onSave={handleSave} 
-              onClose={closeForm} 
-            />
-          </DialogContent>
-        </Dialog>
+      <CardHeader>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Gerenciamento de Produtos</CardTitle>
+              <CardDescription>Adicione, edite ou remova produtos da sua loja.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Buscar produto..."
+                        className="pl-8 sm:w-auto"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+                  if (!isOpen) closeForm();
+                  else setIsFormOpen(true);
+                }}>
+                  <DialogTrigger asChild>
+                    <Button onClick={openFormToCreate}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>{editingProduct ? 'Editar' : 'Adicionar'} Produto</DialogTitle>
+                    </DialogHeader>
+                    <ProductForm 
+                      product={editingProduct} 
+                      onSave={handleSave} 
+                      onClose={closeForm} 
+                    />
+                  </DialogContent>
+                </Dialog>
+            </div>
+          </div>
       </CardHeader>
       <CardContent>
         <Table>
@@ -832,7 +857,7 @@ export default function ProductManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => {
+            {filteredProducts.map((product) => {
               const imageUrl = fixImageUrl(product.variants?.[0]?.images?.[0]);
               
               return (
@@ -892,6 +917,11 @@ export default function ProductManagement() {
             )})}
           </TableBody>
         </Table>
+         {filteredProducts.length === 0 && !products.length && (
+            <div className="text-center p-8 text-muted-foreground">
+                Nenhum produto encontrado.
+            </div>
+        )}
       </CardContent>
     </Card>
   );

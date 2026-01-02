@@ -295,21 +295,31 @@ const ProductForm = ({
   };
 
   const handleSizeStockChange = (variantId: string, size: string, stock: number) => {
-    const newVariants = formData.variants.map(v => {
-        if (v.id === variantId) {
-            const existingSize = v.sizes.find(s => s.size === size);
-            let newSizes: SizeInfo[];
-            if (existingSize) {
-                newSizes = v.sizes.map(s => s.size === size ? { ...s, stock: Math.max(0, stock) } : s);
-            } else {
-                newSizes = [...v.sizes, { size, stock: Math.max(0, stock) }];
+    const newStock = Math.max(0, stock);
+    
+    setFormData(prev => {
+        const newVariants = prev.variants.map(v => {
+            if (v.id === variantId) {
+                const existingSizeIndex = v.sizes.findIndex(s => s.size === size);
+                let newSizes: SizeInfo[];
+                
+                if (existingSizeIndex > -1) {
+                    // Update existing size
+                    newSizes = v.sizes.map((s, index) => 
+                        index === existingSizeIndex ? { ...s, stock: newStock } : s
+                    );
+                } else {
+                    // Add new size
+                    newSizes = [...v.sizes, { size, stock: newStock }];
+                }
+                
+                return { ...v, sizes: newSizes };
             }
-            return { ...v, sizes: newSizes };
-        }
-        return v;
+            return v;
+        });
+        return { ...prev, variants: newVariants };
     });
-    setFormData(prev => ({ ...prev, variants: newVariants }));
-  };
+};
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -319,7 +329,19 @@ const ProductForm = ({
       const variant: Partial<Variant> = {
         ...v,
         images: v.images.filter(Boolean),
+        // Filter sizes to only include those present in availableSizes and with a defined stock
+        sizes: availableSizes.map(size => {
+          const foundSize = v.sizes.find(s => s.size === size);
+          return { size, stock: foundSize?.stock || 0 };
+        }).filter(s => s.stock >= 0) // Ensure we only keep sizes with valid stock values
       };
+      
+      // If it's a perfume or backpack, ensure it has a single 'U' size entry.
+      if (formData.category === 'perfumes' || formData.subCategory === 'mochilas') {
+          const singleSize = v.sizes.find(s => s.size === 'U');
+          variant.sizes = [{ size: 'U', stock: singleSize?.stock || 0 }];
+      }
+
 
       if (formData.subCategory === 'mochilas') {
         variant.imageNames = v.imageNames;

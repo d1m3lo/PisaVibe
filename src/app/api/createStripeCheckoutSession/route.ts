@@ -1,6 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
+import type { Coupon } from '@/lib/types';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-06-20',
@@ -9,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, userEmail, success_url, cancel_url } = await req.json();
+    const { items, userEmail, success_url, cancel_url, coupon } = await req.json();
 
     if (!items || !success_url || !cancel_url) {
       return NextResponse.json({ error: 'Parâmetros obrigatórios ausentes' }, { status: 400 });
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       quantity: item.quantity,
     }));
 
-    const session = await stripe.checkout.sessions.create({
+    let sessionOptions: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
@@ -49,7 +50,9 @@ export async function POST(req: NextRequest) {
             quantity: item.quantity,
             price: item.price,
             imageUrl: item.imageUrl,
-        })))
+        }))),
+        couponCode: coupon?.code || undefined,
+        discountAmount: coupon ? (coupon.discountType === 'fixed' ? coupon.discountValue : undefined) : undefined,
       },
       success_url: `${success_url}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url,
@@ -60,7 +63,23 @@ export async function POST(req: NextRequest) {
       phone_number_collection: {
         enabled: true,
       },
-    });
+    };
+    
+    // Handle coupon logic
+    if (coupon) {
+      const stripeCoupon = await stripe.coupons.create({
+        name: coupon.code,
+        ...(coupon.discountType === 'percentage' 
+          ? { percent_off: coupon.discountValue }
+          : { amount_off: coupon.discountValue * 100, currency: 'brl' }
+        ),
+        duration: 'once',
+      });
+      
+      sessionOptions.discounts = [{ coupon: stripeCoupon.id }];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionOptions);
 
     if (session.url) {
       return NextResponse.json({ url: session.url }, { status: 200 });

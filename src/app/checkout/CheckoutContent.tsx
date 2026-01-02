@@ -186,6 +186,7 @@ export default function CheckoutContent() {
                 userEmail: shippingInfo.email,
                 success_url: `${window.location.origin}/checkout`,
                 cancel_url: `${window.location.origin}/checkout`,
+                coupon: appliedCoupon,
             }),
         });
 

@@ -488,16 +488,15 @@ export default function AdminOrderManagement() {
               ))}
             </TableBody>
           ) : orders.length > 0 ? (
-            <TableBody>
-              {orders.map((order) => (
+            orders.map((order) => (
+              <TableBody key={order.id}>
                 <Collapsible
                   asChild
-                  key={order.id}
                   open={openOrderId === order.id}
                   onOpenChange={() => {
                     if (openOrderId === order.id) {
                       setOpenOrderId(null);
-                      setEditingOrderId(null); // Fecha edição ao fechar o collapsible
+                      setEditingOrderId(null);
                     } else {
                       setOpenOrderId(order.id);
                     }
@@ -507,11 +506,7 @@ export default function AdminOrderManagement() {
                     <TableRow>
                       <TableCell>
                         <CollapsibleTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
                             {openOrderId === order.id ? (
                               <ChevronUp className="h-4 w-4" />
                             ) : (
@@ -559,6 +554,7 @@ export default function AdminOrderManagement() {
                         )}
                       </TableCell>
                     </TableRow>
+
                     <CollapsibleContent asChild>
                       <TableRow className="bg-secondary/50 hover:bg-secondary/50">
                         <TableCell colSpan={5} className="p-4">
@@ -693,8 +689,8 @@ export default function AdminOrderManagement() {
                     </CollapsibleContent>
                   </>
                 </Collapsible>
-              ))}
-            </TableBody>
+              </TableBody>
+            ))
           ) : (
             <TableBody>
               <TableRow>

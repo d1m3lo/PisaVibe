@@ -32,15 +32,16 @@ export default function ProductsContent() {
     let products = [...productsData];
 
     if (searchQuery) {
-      return products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        const normalizedSearchQuery = searchQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        return products.filter(p => 
+            p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedSearchQuery)
+        );
     }
 
-    if (category) {
-      if (category === 'lancamentos' || category === 'ofertas') {
+    if (category === 'ofertas' || category === 'lancamentos') {
         products = products.filter(p => p.tags?.includes(category));
-      } else {
+    } else if (category) {
         products = products.filter(p => p.category === category);
-      }
     }
 
     if (gender) {
@@ -91,12 +92,6 @@ export default function ProductsContent() {
     return specialCases[lowerPart] || capitalize(lowerPart);
 };
 
-  // A more relaxed version for the title, as it doesn't affect filtering
-  const formatTitleLax = (part: string | null) => {
-    if (!part) return '';
-    return formatTitlePart(part.replace('&', 'e'));
-  };
-
   const title = useMemo(() => {
     if (searchQuery) {
         return `Busca por: "${searchQuery}"`;
@@ -104,8 +99,7 @@ export default function ProductsContent() {
 
     const titleParts: string[] = [];
     const isSpecialCategory = category === 'ofertas' || category === 'lancamentos';
-
-    // Order: Special Category -> Gender -> Regular Category/SubCategory
+    
     if (isSpecialCategory) {
         titleParts.push(formatTitlePart(category));
     }
@@ -116,7 +110,7 @@ export default function ProductsContent() {
         titleParts.push(formatTitlePart(category));
     }
      if (subCategory) {
-        titleParts.push(formatTitleLax(subCategory));
+        titleParts.push(formatTitlePart(subCategory));
     }
     
     if (titleParts.length > 0) {

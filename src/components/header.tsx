@@ -143,8 +143,13 @@ const SearchBar = () => {
 
   const searchResults = useMemo(() => {
     if (queryValue.trim().length < 2 || !products) return [];
+    
+    const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    
     return products
-      .filter((p) => p.name.toLowerCase().includes(queryValue.toLowerCase()))
+      .filter((p) => 
+        p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedQuery)
+      )
       .slice(0, 5);
   }, [queryValue, products]);
 

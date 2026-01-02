@@ -221,120 +221,121 @@ export default function AdminOrderManagement() {
               <TableHead className="w-[220px]">Status</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
-                </TableRow>
-              ))
+                 <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                        <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
+                        </TableRow>
+                    ))}
+                 </TableBody>
             ) : orders.length > 0 ? (
               orders.map((order) => (
-                <React.Fragment key={order.id}>
-                    <TableRow className="cursor-pointer">
-                        <TableCell>
-                          <Collapsible open={openOrderId === order.id} onOpenChange={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                </Button>
-                            </CollapsibleTrigger>
-                          </Collapsible>
-                        </TableCell>
-                        <TableCell>{format(new Date(order.orderDate), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
-                        <TableCell className="font-medium">{order.customerInfo.name}</TableCell>
-                        <TableCell className="font-medium">
-                            R$ {order.totalAmount.toFixed(2).replace('.', ',')}
-                        </TableCell>
-                        <TableCell>
-                            {updatingStatus[order.id] ? (
-                              <div className="flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Atualizando...</span>
-                              </div>
-                            ) : (
-                              <Select
-                                  value={order.status}
-                                  onValueChange={(newStatus: OrderStatus) => handleStatusChange(order.path, newStatus)}
-                              >
-                                  <SelectTrigger className="w-full">
-                                      <SelectValue placeholder="Alterar status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                      {orderStatuses.map(status => (
-                                          <SelectItem key={status} value={status}>
-                                              {status}
-                                          </SelectItem>
-                                      ))}
-                                  </SelectContent>
-                              </Select>
-                            )}
-                        </TableCell>
-                    </TableRow>
-                    {openOrderId === order.id && (
-                      <TableRow className="bg-secondary/50 hover:bg-secondary/50">
-                        <TableCell colSpan={5} className="p-0">
-                          <CollapsibleContent className="p-0">
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h4 className="font-bold mb-2">Detalhes do Cliente</h4>
-                                        <p><strong>Nome:</strong> {order.customerInfo.name}</p>
-                                        <p><strong>Email:</strong> {order.customerInfo.email}</p>
-                                        <p><strong>Endereço:</strong> {order.shippingAddress}</p>
-                                        <p className="font-mono text-xs mt-2 text-muted-foreground">User ID: {order.userId}</p>
-                                        <p className="font-mono text-xs mt-2 text-muted-foreground">Order ID: {order.id}</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold mb-2">Itens do Pedido</h4>
-                                        <div className="space-y-4">
-                                            {order.items.map((item, index) => (
-                                                <div key={index} className="flex items-center gap-4">
-                                                    <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
-                                                    <div className="flex-grow">
-                                                        <p className="font-semibold">{item.productName}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">Cor: {item.variantColor} / Tam: {item.size}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                <Collapsible asChild key={order.id} open={openOrderId === order.id} onOpenChange={() => setOpenOrderId(prev => prev === order.id ? null : order.id)}>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                        <span className="sr-only">Toggle Details</span>
+                                    </Button>
+                                </CollapsibleTrigger>
+                            </TableCell>
+                            <TableCell>{format(new Date(order.orderDate), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                            <TableCell className="font-medium">{order.customerInfo.name}</TableCell>
+                            <TableCell className="font-medium">
+                                R$ {order.totalAmount.toFixed(2).replace('.', ',')}
+                            </TableCell>
+                            <TableCell>
+                                {updatingStatus[order.id] ? (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>Atualizando...</span>
+                                </div>
+                                ) : (
+                                <Select
+                                    value={order.status}
+                                    onValueChange={(newStatus: OrderStatus) => handleStatusChange(order.path, newStatus)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Alterar status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {orderStatuses.map(status => (
+                                            <SelectItem key={status} value={status}>
+                                                {status}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                        <CollapsibleContent asChild>
+                           <TableRow className="bg-secondary/50 hover:bg-secondary/50">
+                                <TableCell colSpan={5} className="p-0">
+                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <h4 className="font-bold mb-2">Detalhes do Cliente</h4>
+                                            <p><strong>Nome:</strong> {order.customerInfo.name}</p>
+                                            <p><strong>Email:</strong> {order.customerInfo.email}</p>
+                                            <p><strong>Endereço:</strong> {order.shippingAddress}</p>
+                                            <p className="font-mono text-xs mt-2 text-muted-foreground">User ID: {order.userId}</p>
+                                            <p className="font-mono text-xs mt-2 text-muted-foreground">Order ID: {order.id}</p>
                                         </div>
-                                        <Separator className="my-4" />
-                                        <div className="space-y-1 text-sm">
-                                            {order.discountAmount > 0 && (
-                                                <div className="flex justify-between">
-                                                    <span>Subtotal:</span>
-                                                    <span>R$ {(order.totalAmount + (order.discountAmount || 0)).toFixed(2).replace('.', ',')}</span>
+                                        <div>
+                                            <h4 className="font-bold mb-2">Itens do Pedido</h4>
+                                            <div className="space-y-4">
+                                                {order.items.map((item, index) => (
+                                                    <div key={index} className="flex items-center gap-4">
+                                                        <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                        <div className="flex-grow">
+                                                            <p className="font-semibold">{item.productName}</p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">Cor: {item.variantColor} / Tam: {item.size}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Separator className="my-4" />
+                                            <div className="space-y-1 text-sm">
+                                                {order.discountAmount && order.discountAmount > 0 ? (
+                                                    <>
+                                                        <div className="flex justify-between">
+                                                            <span>Subtotal:</span>
+                                                            <span>R$ {(order.totalAmount + order.discountAmount).toFixed(2).replace('.', ',')}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-green-600">
+                                                            <span>Desconto ({order.couponCode}):</span>
+                                                            <span>- R$ {order.discountAmount.toFixed(2).replace('.', ',')}</span>
+                                                        </div>
+                                                    </>
+                                                ) : null}
+                                                <div className="flex justify-between font-bold">
+                                                        <span>Total do Pedido:</span>
+                                                        <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
                                                 </div>
-                                            )}
-                                            {order.discountAmount > 0 && (
-                                                <div className="flex justify-between text-green-600">
-                                                    <span>Desconto ({order.couponCode}):</span>
-                                                    <span>- R$ {(order.discountAmount || 0).toFixed(2).replace('.', ',')}</span>
-                                                </div>
-                                            )}
-                                            <div className="flex justify-between font-bold">
-                                                    <span>Total do Pedido:</span>
-                                                    <span>R$ {order.totalAmount.toFixed(2).replace('.', ',')}</span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                          </CollapsibleContent>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                </React.Fragment>
+                                </TableCell>
+                            </TableRow>
+                        </CollapsibleContent>
+                    </TableBody>
+                </Collapsible>
               ))
             ) : (
-                <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                        Nenhum pedido encontrado.
-                    </TableCell>
-                </TableRow>
+                <TableBody>
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            Nenhum pedido encontrado.
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
             )}
-          </TableBody>
         </Table>
       </CardContent>
     </Card>

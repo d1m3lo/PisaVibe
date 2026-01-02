@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
 import { fixImageUrl } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 const TrackingPageSkeleton = () => (
     <div className="container mx-auto max-w-4xl px-4 py-12">

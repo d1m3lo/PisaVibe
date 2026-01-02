@@ -156,7 +156,7 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
-      duration: 1000,
+      duration: 1200,
       id,
       open: true,
       onOpenChange: (open) => {

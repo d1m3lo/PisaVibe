@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import {
@@ -489,207 +488,205 @@ export default function AdminOrderManagement() {
             </TableBody>
           ) : orders.length > 0 ? (
             orders.map((order) => (
-              <TableBody key={order.id}>
-                <Collapsible
-                  asChild
-                  open={openOrderId === order.id}
-                  onOpenChange={() => {
-                    if (openOrderId === order.id) {
-                      setOpenOrderId(null);
-                      setEditingOrderId(null);
-                    } else {
-                      setOpenOrderId(order.id);
-                    }
-                  }}
-                >
-                  <>
-                    <TableRow>
-                      <TableCell>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            {openOrderId === order.id ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                            <span className="sr-only">Toggle Details</span>
-                          </Button>
-                        </CollapsibleTrigger>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(order.orderDate), 'dd/MM/yy HH:mm', {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {order.customerInfo.name}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        R$ {order.totalAmount.toFixed(2).replace('.', ',')}
-                      </TableCell>
-                      <TableCell>
-                        {updatingStatus[order.id] ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Atualizando...</span>
-                          </div>
-                        ) : (
-                          <Select
-                            value={order.status}
-                            onValueChange={(newStatus: OrderStatus) =>
-                              handleStatusChange(order.path, newStatus)
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Alterar status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {orderStatuses.map((status) => (
-                                <SelectItem key={status} value={status}>
-                                  {status}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </TableCell>
-                    </TableRow>
-
-                    <CollapsibleContent asChild>
-                      <TableRow className="bg-secondary/50 hover:bg-secondary/50">
-                        <TableCell colSpan={5} className="p-4">
-                          {editingOrderId === order.id ? (
-                            <EditOrderForm
-                              order={order}
-                              products={products}
-                              onSave={(updatedItems) =>
-                                handleSaveOrderEdit(order.path, updatedItems)
-                              }
-                              onCancel={() => setEditingOrderId(null)}
-                            />
+              <Collapsible
+                key={order.id}
+                asChild
+                open={openOrderId === order.id}
+                onOpenChange={() => {
+                  if (openOrderId === order.id) {
+                    setOpenOrderId(null);
+                    setEditingOrderId(null);
+                  } else {
+                    setOpenOrderId(order.id);
+                  }
+                }}
+              >
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          {openOrderId === order.id ? (
+                            <ChevronUp className="h-4 w-4" />
                           ) : (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                  <h4 className="font-bold mb-2">
-                                    Detalhes do Cliente
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">Toggle Details</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(order.orderDate), 'dd/MM/yy HH:mm', {
+                        locale: ptBR,
+                      })}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {order.customerInfo.name}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      R$ {order.totalAmount.toFixed(2).replace('.', ',')}
+                    </TableCell>
+                    <TableCell>
+                      {updatingStatus[order.id] ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Atualizando...</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={order.status}
+                          onValueChange={(newStatus: OrderStatus) =>
+                            handleStatusChange(order.path, newStatus)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Alterar status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orderStatuses.map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {status}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  <CollapsibleContent asChild>
+                    <TableRow className="bg-secondary/50 hover:bg-secondary/50">
+                      <TableCell colSpan={5} className="p-4">
+                        {editingOrderId === order.id ? (
+                          <EditOrderForm
+                            order={order}
+                            products={products}
+                            onSave={(updatedItems) =>
+                              handleSaveOrderEdit(order.path, updatedItems)
+                            }
+                            onCancel={() => setEditingOrderId(null)}
+                          />
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <h4 className="font-bold mb-2">
+                                  Detalhes do Cliente
+                                </h4>
+                                <p>
+                                  <strong>Nome:</strong>{' '}
+                                  {order.customerInfo.name}
+                                </p>
+                                <p>
+                                  <strong>Email:</strong>{' '}
+                                  {order.customerInfo.email}
+                                </p>
+                                <p>
+                                  <strong>Endereço:</strong>{' '}
+                                  {order.shippingAddress}
+                                </p>
+                                <p className="font-mono text-xs mt-2 text-muted-foreground">
+                                  User ID: {order.userId}
+                                </p>
+                                <p className="font-mono text-xs mt-2 text-muted-foreground">
+                                  Order ID: {order.id}
+                                </p>
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-bold">
+                                    Itens do Pedido
                                   </h4>
-                                  <p>
-                                    <strong>Nome:</strong>{' '}
-                                    {order.customerInfo.name}
-                                  </p>
-                                  <p>
-                                    <strong>Email:</strong>{' '}
-                                    {order.customerInfo.email}
-                                  </p>
-                                  <p>
-                                    <strong>Endereço:</strong>{' '}
-                                    {order.shippingAddress}
-                                  </p>
-                                  <p className="font-mono text-xs mt-2 text-muted-foreground">
-                                    User ID: {order.userId}
-                                  </p>
-                                  <p className="font-mono text-xs mt-2 text-muted-foreground">
-                                    Order ID: {order.id}
-                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      setEditingOrderId(order.id)
+                                    }
+                                  >
+                                    <Edit className="mr-2 h-3 w-3" />
+                                    Editar Itens
+                                  </Button>
                                 </div>
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-bold">
-                                      Itens do Pedido
-                                    </h4>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        setEditingOrderId(order.id)
-                                      }
+                                <div className="space-y-4">
+                                  {order.items.map((item, index) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center gap-4"
                                     >
-                                      <Edit className="mr-2 h-3 w-3" />
-                                      Editar Itens
-                                    </Button>
-                                  </div>
-                                  <div className="space-y-4">
-                                    {order.items.map((item, index) => (
-                                      <div
-                                        key={index}
-                                        className="flex items-center gap-4"
-                                      >
-                                        <Image
-                                          src={fixImageUrl(item.imageUrl)}
-                                          alt={item.productName}
-                                          width={50}
-                                          height={50}
-                                          className="rounded-md object-cover"
-                                        />
-                                        <div className="flex-grow">
-                                          <p className="font-semibold">
-                                            {item.productName}
-                                          </p>
-                                          <p className="text-sm text-muted-foreground">
-                                            {item.quantity} x R${' '}
-                                            {item.price
-                                              .toFixed(2)
-                                              .replace('.', ',')}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            Cor: {item.variantColor} / Tam:{' '}
-                                            {item.size}
-                                          </p>
-                                        </div>
+                                      <Image
+                                        src={fixImageUrl(item.imageUrl)}
+                                        alt={item.productName}
+                                        width={50}
+                                        height={50}
+                                        className="rounded-md object-cover"
+                                      />
+                                      <div className="flex-grow">
+                                        <p className="font-semibold">
+                                          {item.productName}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          {item.quantity} x R${' '}
+                                          {item.price
+                                            .toFixed(2)
+                                            .replace('.', ',')}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          Cor: {item.variantColor} / Tam:{' '}
+                                          {item.size}
+                                        </p>
                                       </div>
-                                    ))}
-                                  </div>
-                                  <Separator className="my-4" />
-                                  <div className="space-y-1 text-sm">
-                                    {order.discountAmount &&
-                                    order.discountAmount > 0 ? (
-                                      <>
-                                        <div className="flex justify-between">
-                                          <span>Subtotal:</span>
-                                          <span>
-                                            R${' '}
-                                            {(
-                                              order.totalAmount +
-                                              order.discountAmount
-                                            )
-                                              .toFixed(2)
-                                              .replace('.', ',')}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between text-green-600">
-                                          <span>
-                                            Desconto ({order.couponCode}):
-                                          </span>
-                                          <span>
-                                            - R${' '}
-                                            {order.discountAmount
-                                              .toFixed(2)
-                                              .replace('.', ',')}
-                                          </span>
-                                        </div>
-                                      </>
-                                    ) : null}
-                                    <div className="flex justify-between font-bold">
-                                      <span>Total do Pedido:</span>
-                                      <span>
-                                        R${' '}
-                                        {order.totalAmount
-                                          .toFixed(2)
-                                          .replace('.', ',')}
-                                      </span>
                                     </div>
+                                  ))}
+                                </div>
+                                <Separator className="my-4" />
+                                <div className="space-y-1 text-sm">
+                                  {order.discountAmount &&
+                                  order.discountAmount > 0 ? (
+                                    <>
+                                      <div className="flex justify-between">
+                                        <span>Subtotal:</span>
+                                        <span>
+                                          R${' '}
+                                          {(
+                                            order.totalAmount +
+                                            order.discountAmount
+                                          )
+                                            .toFixed(2)
+                                            .replace('.', ',')}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between text-green-600">
+                                        <span>
+                                          Desconto ({order.couponCode}):
+                                        </span>
+                                        <span>
+                                          - R${' '}
+                                          {order.discountAmount
+                                            .toFixed(2)
+                                            .replace('.', ',')}
+                                        </span>
+                                      </div>
+                                    </>
+                                  ) : null}
+                                  <div className="flex justify-between font-bold">
+                                    <span>Total do Pedido:</span>
+                                    <span>
+                                      R${' '}
+                                      {order.totalAmount
+                                        .toFixed(2)
+                                        .replace('.', ',')}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    </CollapsibleContent>
-                  </>
-                </Collapsible>
-              </TableBody>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </CollapsibleContent>
+                </TableBody>
+              </Collapsible>
             ))
           ) : (
             <TableBody>

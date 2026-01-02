@@ -183,22 +183,26 @@ const ProductForm = ({
 
   const handleGenerateSizes = () => {
     if (!sizeRange) return;
-
+    let newGeneratedSizes: string[] = [];
     if (sizeRange.includes('-')) {
         const [start, end] = sizeRange.split('-').map(Number);
         if (!isNaN(start) && !isNaN(end) && start <= end) {
-            const newSizes = [];
             for (let i = start; i <= end; i++) {
-                newSizes.push(String(i));
+                newGeneratedSizes.push(String(i));
             }
-            setAvailableSizes(newSizes);
         } else {
             alert("Formato de intervalo inválido. Use algo como '34-45'.");
         }
     } else {
-        const newSizes = sizeRange.split(',').map(s => s.trim()).filter(Boolean);
-        setAvailableSizes(newSizes);
+        newGeneratedSizes = sizeRange.split(',').map(s => s.trim()).filter(Boolean);
     }
+    
+    setAvailableSizes(prev => [...new Set([...prev, ...newGeneratedSizes])].sort((a, b) => {
+        const aIsNum = !isNaN(Number(a));
+        const bIsNum = !isNaN(Number(b));
+        if (aIsNum && bIsNum) return Number(a) - Number(b);
+        return a.localeCompare(b);
+    }));
   };
 
 
@@ -305,12 +309,10 @@ const ProductForm = ({
                 let newSizes: SizeInfo[];
                 
                 if (existingSizeIndex > -1) {
-                    // Update existing size
                     newSizes = v.sizes.map((s, index) => 
                         index === existingSizeIndex ? { ...s, stock: newStock } : s
                     );
                 } else {
-                    // Add new size
                     newSizes = [...v.sizes, { size, stock: newStock }];
                 }
                 
@@ -330,19 +332,18 @@ const ProductForm = ({
       const variant: Partial<Variant> = {
         ...v,
         images: v.images.filter(Boolean),
-        // Filter sizes to only include those present in availableSizes and with a defined stock
-        sizes: availableSizes.map(size => {
-          const foundSize = v.sizes.find(s => s.size === size);
-          return { size, stock: foundSize?.stock ?? 0 };
-        }).filter(s => s.stock >= 0) // Ensure we only keep sizes with valid stock values
+        sizes: availableSizes
+          .map(size => {
+            const foundSize = v.sizes.find(s => s.size === size);
+            return { size, stock: foundSize?.stock ?? 0 };
+          })
+          .filter(s => s.stock >= 0)
       };
-      
-      // If it's a perfume or backpack, ensure it has a single 'U' size entry.
+
       if (formData.category === 'perfumes' || formData.subCategory === 'mochilas' || formData.category === 'acessorios') {
-          const singleSize = v.sizes.find(s => s.size === 'U');
+          const singleSize = variant.sizes?.find(s => s.size === 'U');
           variant.sizes = [{ size: 'U', stock: singleSize?.stock || 0 }];
       }
-
 
       if (formData.subCategory === 'mochilas') {
         variant.imageNames = v.imageNames;
@@ -734,8 +735,9 @@ export default function ProductManagement() {
     if (!searchTerm) {
         return products;
     }
+    const normalizedSearchTerm = searchTerm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     return products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+        p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedSearchTerm)
     );
   }, [products, searchTerm]);
 

@@ -103,12 +103,16 @@ export default function ProductsContent() {
     }
 
     const titleParts: string[] = [];
+    const isSpecialCategory = category === 'ofertas' || category === 'lancamentos';
 
-    // Order: Gender -> Category -> SubCategory
+    // Order: Special Category -> Gender -> Regular Category/SubCategory
+    if (isSpecialCategory) {
+        titleParts.push(formatTitlePart(category));
+    }
      if (gender) {
         titleParts.push(formatTitlePart(gender));
     }
-    if (category) {
+    if (category && !isSpecialCategory) {
         titleParts.push(formatTitlePart(category));
     }
      if (subCategory) {

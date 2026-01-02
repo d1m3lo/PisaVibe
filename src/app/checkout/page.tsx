@@ -3,6 +3,8 @@
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CheckoutContent from './CheckoutContent';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 const CheckoutPageSkeleton = () => (
     <div className="container mx-auto px-4 py-12">

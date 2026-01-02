@@ -104,12 +104,12 @@ export default function ProductsContent() {
 
     const titleParts: string[] = [];
 
-    // Order: Tag/Category -> Gender -> SubCategory
-    if (category) {
-        titleParts.push(formatTitlePart(category));
-    }
+    // Order: Gender -> Category -> SubCategory
      if (gender) {
         titleParts.push(formatTitlePart(gender));
+    }
+    if (category) {
+        titleParts.push(formatTitlePart(category));
     }
      if (subCategory) {
         titleParts.push(formatTitleLax(subCategory));

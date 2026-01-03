@@ -5,7 +5,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
-import { updateProfile, signOut } from 'firebase/auth';
+import { updateProfile, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
 import { cn, fixImageUrl } from '@/lib/utils';
-import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch } from 'lucide-react';
+import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -180,6 +180,145 @@ const OrderHistory = () => {
                 </Card>
             ))}
         </div>
+    )
+}
+
+const PasswordChangeForm = () => {
+    const { user } = useUser();
+    const auth = useAuth();
+    const { toast } = useToast();
+
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    
+    const isEmailProvider = user?.providerData.some(
+        (provider) => provider.providerId === EmailAuthProvider.PROVIDER_ID
+    );
+
+    const handlePasswordChange = async (e: FormEvent) => {
+        e.preventDefault();
+        setError(null);
+
+        if (!user || !user.email) {
+            setError("Usuário não encontrado.");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setError("As novas senhas não coincidem.");
+            return;
+        }
+        if (newPassword.length < 6) {
+            setError("A nova senha deve ter pelo menos 6 caracteres.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const credential = EmailAuthProvider.credential(user.email, currentPassword);
+            await reauthenticateWithCredential(user, credential);
+
+            await updatePassword(user, newPassword);
+
+            toast({
+                title: "Senha alterada!",
+                description: "Sua senha foi atualizada com sucesso.",
+            });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+
+        } catch (error: any) {
+             let errorMessage = "Ocorreu um erro desconhecido.";
+            switch (error.code) {
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = 'A senha atual está incorreta.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'A nova senha é muito fraca.';
+                    break;
+                default:
+                    errorMessage = 'Falha ao alterar a senha. Tente novamente.';
+                    break;
+            }
+            setError(errorMessage);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao alterar senha',
+                description: errorMessage,
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+    
+    if (!isEmailProvider) {
+        return (
+            <p className="text-sm text-muted-foreground">
+                A alteração de senha não está disponível para contas criadas via login social (Google).
+            </p>
+        )
+    }
+
+    return (
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+             <div className="space-y-2">
+                <Label htmlFor="current-password">Senha Atual</Label>
+                <div className="relative">
+                    <Input 
+                        id="current-password" 
+                        type={showCurrent ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        required
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" onClick={() => setShowCurrent(!showCurrent)}>
+                        {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="new-password">Nova Senha</Label>
+                 <div className="relative">
+                    <Input 
+                        id="new-password" 
+                        type={showNew ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                    />
+                     <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" onClick={() => setShowNew(!showNew)}>
+                        {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                 <div className="relative">
+                    <Input 
+                        id="confirm-password" 
+                        type={showConfirm ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                    />
+                     <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" onClick={() => setShowConfirm(!showConfirm)}>
+                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Salvando..." : "Salvar Nova Senha"}
+            </Button>
+        </form>
     )
 }
 
@@ -368,16 +507,7 @@ export default function MyAccountPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Funcionalidade a ser implementada.</p>
-                            <div className="space-y-2">
-                                <Label htmlFor="current-password">Senha Atual</Label>
-                                <Input id="current-password" type="password" disabled />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="new-password">Nova Senha</Label>
-                                <Input id="new-password" type="password" disabled />
-                            </div>
-                            <Button disabled>Salvar Nova Senha</Button>
+                           <PasswordChangeForm />
                         </CardContent>
                     </Card>
                 )}
@@ -402,3 +532,4 @@ export default function MyAccountPage() {
     </div>
   );
 }
+

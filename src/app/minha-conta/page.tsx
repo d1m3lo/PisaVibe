@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
 import { cn, fixImageUrl } from '@/lib/utils';
-import { User, KeyRound, Heart, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff } from 'lucide-react';
+import { User, KeyRound, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -416,7 +416,6 @@ export default function MyAccountPage() {
   const menuItems = [
       { id: 'orders', label: 'Meus Pedidos', icon: ShoppingCart },
       { id: 'profile', label: 'Detalhes do Perfil', icon: User },
-      { id: 'favorites', label: 'Favoritos', icon: Heart },
       { id: 'password', label: 'Alterar Senha', icon: KeyRound },
   ]
 
@@ -512,21 +511,6 @@ export default function MyAccountPage() {
                     </Card>
                 )}
 
-                {activeView === 'favorites' && (
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Favoritos</CardTitle>
-                            <CardDescription>
-                               Seus produtos salvos para não perder de vista.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center text-muted-foreground py-8">
-                                 <p>Você ainda não tem produtos favoritos.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     </div>

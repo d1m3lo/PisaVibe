@@ -95,7 +95,7 @@ export default function TermsOfUsePage() {
                       Se tiver alguma dúvida sobre estes Termos de Uso, entre em contato conosco através do e-mail:
                     </p>
                     <p className="mt-4 font-semibold">
-                         <a href="mailto:suporte@pisavibe.com" className="hover:underline">suporte@pisavibe.com</a>
+                         <a href="mailto:suportepisavibe@gmail.com" className="hover:underline">suportepisavibe@gmail.com</a>
                     </p>
                 </section>
             </main>

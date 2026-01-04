@@ -45,7 +45,7 @@ export default function ReturnsPage() {
                     </h2>
                     <div className="space-y-4 text-muted-foreground">
                         <p>
-                            Para iniciar o processo, basta entrar em contato com nossa equipe de atendimento através do e-mail <strong>suporte@pisavibe.com</strong> com o assunto "Troca e Devolução".
+                            Para iniciar o processo, basta entrar em contato com nossa equipe de atendimento através do e-mail <strong>suportepisavibe@gmail.com</strong> com o assunto "Troca e Devolução".
                         </p>
                         <p>No corpo do e-mail, por favor, informe:</p>
                          <ul className="list-inside list-disc space-y-2 pl-4">
@@ -90,7 +90,7 @@ export default function ReturnsPage() {
                        Se tiver qualquer outra pergunta sobre nosso processo de trocas e devoluções, não hesite em nos contatar. Estamos à disposição para ajudar.
                     </p>
                     <p className="mt-4 font-semibold">
-                         📩 suporte@pisavibe.com
+                         📩 suportepisavibe@gmail.com
                     </p>
                 </section>
             </main>

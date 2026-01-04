@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { megaMenuData } from "@/lib/menu-data";
+import { Instagram } from "lucide-react";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <li>
@@ -29,6 +30,12 @@ export default function Footer() {
                 <div className="lg:col-span-2">
                     <h3 className="font-headline text-lg font-bold">PISA VIBE</h3>
                     <p className="mt-2 text-sm text-muted-foreground">O seu estilo começa aqui. Tênis e roupas com a atitude que você procura.</p>
+                     <div className="mt-4">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                            <Instagram className="h-6 w-6" />
+                            <span className="sr-only">Instagram</span>
+                        </a>
+                    </div>
                 </div>
 
                 <div>

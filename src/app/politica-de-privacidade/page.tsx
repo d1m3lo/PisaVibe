@@ -99,7 +99,7 @@ export default function PrivacyPolicyPage() {
                       Você tem o direito de acessar, corrigir ou excluir seus dados pessoais a qualquer momento. Se tiver alguma dúvida sobre nossa política de privacidade ou quiser exercer seus direitos, entre em contato conosco pelo e-mail:
                     </p>
                     <p className="mt-4 font-semibold">
-                         <a href="mailto:privacidade@pisavibe.com" className="hover:underline">privacidade@pisavibe.com</a>
+                         <a href="mailto:suportepisavibe@gmail.com" className="hover:underline">suportepisavibe@gmail.com</a>
                     </p>
                 </section>
             </main>

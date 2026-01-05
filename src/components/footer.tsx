@@ -14,24 +14,6 @@ const FooterLink = ({ href, children }: { href: string; children: React.ReactNod
 );
 
 export default function Footer() {
-  const getCategoryHref = (title: string) => {
-    switch (title) {
-        case 'Masculino':
-            return "/produtos?genero=masculino";
-        case 'Feminino':
-            return "/produtos?genero=feminino";
-        case 'Lançamentos':
-            return "/produtos?categoria=lancamentos";
-        case 'Ofertas':
-            return "/produtos?categoria=ofertas";
-        case 'Importados':
-            return "/produtos?categoria=importados";
-        default:
-            return "#";
-    }
-  }
-
-
   return (
     <footer className="border-t bg-background">
         <div className="container mx-auto px-4 py-12">
@@ -50,11 +32,11 @@ export default function Footer() {
                 <div>
                     <h4 className="font-semibold">Categorias</h4>
                     <ul className="mt-4 space-y-2">
-                       {megaMenuData.map((category) => (
-                           <FooterLink key={category.title} href={getCategoryHref(category.title)}>
-                                {category.title}
-                           </FooterLink>
-                       ))}
+                       <FooterLink href="/produtos?genero=masculino">Masculino</FooterLink>
+                       <FooterLink href="/produtos?genero=feminino">Feminino</FooterLink>
+                       <FooterLink href="/produtos?categoria=lancamentos">Lançamentos</FooterLink>
+                       <FooterLink href="/produtos?categoria=ofertas">Ofertas</FooterLink>
+                       <FooterLink href="/produtos?categoria=importados">Importados</FooterLink>
                     </ul>
                 </div>
 

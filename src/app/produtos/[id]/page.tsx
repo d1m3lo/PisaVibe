@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { Globe, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SizeChart } from "@/components/size-chart";
+import { useToast } from "@/hooks/use-toast";
 
 
 const ProductPageSkeleton = () => (
@@ -98,6 +99,7 @@ export default function ProductPage() {
   const { addToCart } = useCart();
   const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   const productRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -217,7 +219,11 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     if (!user) {
-        router.push('/login');
+        toast({
+            variant: "destructive",
+            title: "Acesso Necessário",
+            description: "Para adicionar produtos ao carrinho, por favor, faça o login ou crie sua conta.",
+        });
         return;
     }
     if (!product || !selectedVariant) return;

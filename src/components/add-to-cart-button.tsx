@@ -20,7 +20,11 @@ export default function AddToCartButton({ product, ...props }: { product: Produc
     e.stopPropagation();
 
     if (!user) {
-        router.push('/login');
+        toast({
+            variant: "destructive",
+            title: "Acesso Necessário",
+            description: "Para adicionar produtos ao carrinho, por favor, faça o login ou crie sua conta.",
+        });
         return;
     }
 

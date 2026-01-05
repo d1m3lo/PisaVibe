@@ -103,7 +103,7 @@ export default function Home() {
       subtitle: 'Explore nossa seleção de produtos internacionais.',
       buttonText: 'Ver Importados',
       buttonLink: '/produtos?categoria=importados',
-      imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      imageUrl: 'https://images.unsplash.com/photo-1626951899326-fd7e7d7cfc71?q=80&w=1550&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       imageClassName: 'object-cover object-center',
     },
     {

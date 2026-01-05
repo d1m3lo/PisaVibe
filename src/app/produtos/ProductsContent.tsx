@@ -74,7 +74,7 @@ export default function ProductsContent() {
     const specialCases: Record<string, string> = {
         'lancamentos': 'Lançamentos',
         'ofertas': 'Ofertas',
-        'importados': 'Importados',
+        'importados': 'IMPORTADOS',
         'calcados': 'Calçados',
         'calçados': 'Calçados',
         'acessorios': 'Acessórios',

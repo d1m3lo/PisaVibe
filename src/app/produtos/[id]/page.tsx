@@ -1,7 +1,7 @@
 
 "use client";
 
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Carousel,
@@ -12,7 +12,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
-import { useDoc, useMemoFirebase } from "@/firebase";
+import { useDoc, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product, Variant } from "@/lib/types";
@@ -96,6 +96,8 @@ export default function ProductPage() {
   const id = params.id as string;
   const firestore = useFirestore();
   const { addToCart } = useCart();
+  const { user } = useUser();
+  const router = useRouter();
 
   const productRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -214,6 +216,10 @@ export default function ProductPage() {
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+        router.push('/login');
+        return;
+    }
     if (!product || !selectedVariant) return;
 
     if (isPerfume || isBackpack || isCap || isWatch) {
@@ -457,3 +463,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    

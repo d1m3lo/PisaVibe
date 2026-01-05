@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -5,14 +6,23 @@ import { Button } from "./ui/button";
 import type { Product } from "@/lib/types";
 import { ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
 
 export default function AddToCartButton({ product, ...props }: { product: Product } & React.ComponentProps<typeof Button>) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { user } = useUser();
+  const router = useRouter();
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+        router.push('/login');
+        return;
+    }
 
     // Basic logic: add the first variant and first available size
     const firstVariant = product.variants[0];
@@ -45,3 +55,5 @@ export default function AddToCartButton({ product, ...props }: { product: Produc
     </Button>
   );
 }
+
+    

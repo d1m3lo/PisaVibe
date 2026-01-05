@@ -8,6 +8,7 @@ import { CartProvider } from "@/context/cart-context";
 import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import ConditionalHeaderFooter from "@/components/conditional-header-footer";
+import Footer from "@/components/footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,9 +42,11 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <CartProvider>
-              <ConditionalHeaderFooter>
-                {children}
-              </ConditionalHeaderFooter>
+                <div className="relative flex min-h-dvh flex-col bg-background">
+                  <ConditionalHeaderFooter />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
             </CartProvider>
           </FirebaseClientProvider>
           <Toaster />

@@ -38,7 +38,7 @@ export default function ProductsContent() {
         );
     }
 
-    if (category === 'ofertas' || category === 'lancamentos') {
+    if (category === 'ofertas' || category === 'lancamentos' || category === 'importados') {
         products = products.filter(p => p.tags?.includes(category));
     } else if (category) {
         products = products.filter(p => p.category === category);
@@ -74,6 +74,7 @@ export default function ProductsContent() {
     const specialCases: Record<string, string> = {
         'lancamentos': 'Lançamentos',
         'ofertas': 'Ofertas',
+        'importados': 'Importados',
         'calcados': 'Calçados',
         'calçados': 'Calçados',
         'acessorios': 'Acessórios',
@@ -98,7 +99,7 @@ export default function ProductsContent() {
     }
 
     const titleParts: string[] = [];
-    const isSpecialCategory = category === 'ofertas' || category === 'lancamentos';
+    const isSpecialCategory = category === 'ofertas' || category === 'lancamentos' || category === 'importados';
     
     if (isSpecialCategory) {
         titleParts.push(formatTitlePart(category));

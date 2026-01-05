@@ -99,6 +99,14 @@ export default function Home() {
       imageClassName: 'object-cover object-top',
     },
     {
+      title: 'EXCLUSIVOS IMPORTADOS',
+      subtitle: 'Explore nossa seleção de produtos internacionais.',
+      buttonText: 'Ver Importados',
+      buttonLink: '/produtos?categoria=importados',
+      imageUrl: 'https://images.unsplash.com/photo-1542280756-74b2f55e71ab?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      imageClassName: 'object-cover object-center',
+    },
+    {
       title: 'OFERTAS IMPERDÍVEIS',
       subtitle: 'Produtos selecionados com até 50% de desconto. Aproveite!',
       buttonText: 'Ver Ofertas',

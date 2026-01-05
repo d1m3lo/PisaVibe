@@ -136,5 +136,22 @@ export const megaMenuData: MenuCategory[] = [
         ],
       },
     ],
+  },
+  {
+    title: "Importados",
+    columns: [
+      {
+        title: "Masculino",
+        links: [
+            { title: "Todos", href: "/produtos?categoria=importados&genero=masculino" },
+        ],
+      },
+      {
+        title: "Feminino",
+        links: [
+            { title: "Todos", href: "/produtos?categoria=importados&genero=feminino" },
+        ],
+      },
+    ],
   }
 ];

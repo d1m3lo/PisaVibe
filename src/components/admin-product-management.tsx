@@ -109,6 +109,7 @@ const allTags = [
     { id: 'lancamentos', label: 'Lançamentos' },
     { id: 'destaques', label: 'Destaques' },
     { id: 'ofertas', label: 'Ofertas' },
+    { id: 'importados', label: 'Importados' },
 ]
 
 const ProductForm = ({

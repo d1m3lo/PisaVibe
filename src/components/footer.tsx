@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { megaMenuData } from "@/lib/menu-data";
 import { Instagram } from "lucide-react";
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (

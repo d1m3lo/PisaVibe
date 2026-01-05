@@ -38,11 +38,14 @@ export default function ProductsContent() {
         );
     }
 
-    if (category === 'ofertas' || category === 'lancamentos' || category === 'importados') {
+    if (category === 'importados') {
+        products = products.filter(p => p.isImported === true);
+    } else if (category === 'ofertas' || category === 'lancamentos') {
         products = products.filter(p => p.tags?.includes(category));
     } else if (category) {
         products = products.filter(p => p.category === category);
     }
+
 
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');

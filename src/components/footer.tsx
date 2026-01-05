@@ -15,13 +15,20 @@ const FooterLink = ({ href, children }: { href: string; children: React.ReactNod
 
 export default function Footer() {
   const getCategoryHref = (title: string) => {
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle === 'masculino') return "/produtos?genero=masculino";
-    if (lowerTitle === 'feminino') return "/produtos?genero=feminino";
-    if (lowerTitle === 'lançamentos') return "/produtos?categoria=lancamentos";
-    if (lowerTitle === 'ofertas') return "/produtos?categoria=ofertas";
-    if (lowerTitle === 'importados') return "/produtos?categoria=importados";
-    return "#";
+    switch (title) {
+        case 'Masculino':
+            return "/produtos?genero=masculino";
+        case 'Feminino':
+            return "/produtos?genero=feminino";
+        case 'Lançamentos':
+            return "/produtos?categoria=lancamentos";
+        case 'Ofertas':
+            return "/produtos?categoria=ofertas";
+        case 'Importados':
+            return "/produtos?categoria=importados";
+        default:
+            return "#";
+    }
   }
 
 

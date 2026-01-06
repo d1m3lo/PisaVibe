@@ -22,7 +22,16 @@ import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
-import { loadStripe } from '@stripe/stripe-js';
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
+
+
+const MERCADOPAGO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || '';
+
+if (MERCADOPAGO_PUBLIC_KEY) {
+  initMercadoPago(MERCADOPAGO_PUBLIC_KEY, { locale: 'pt-BR' });
+} else {
+  console.error("Chave pública do Mercado Pago não encontrada.");
+}
 
 
 export default function CheckoutContent() {
@@ -38,42 +47,52 @@ export default function CheckoutContent() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPaymentReady, setIsPaymentReady] = useState(false);
   
-  const shippingFormRef = useRef<HTMLDivElement>(null);
+  const [preferenceId, setPreferenceId] = useState<string | null>(null);
 
-  const STRIPE_CHECKOUT_URL = "/api/createStripeCheckoutSession";
+  const contactFormRef = useRef<HTMLDivElement>(null);
   
-  const [shippingInfo, setShippingInfo] = useState({
+  const [contactInfo, setContactInfo] = useState({
     name: '',
     email: '',
     phone: ''
   });
 
   useEffect(() => {
-    // Clear cart if payment was successful
-    if (searchParams.get('session_id')) {
+    const paymentStatus = searchParams.get('status');
+    const paymentId = searchParams.get('payment_id');
+    
+    if (paymentStatus === 'approved' && paymentId) {
       toast({
         title: 'Compra realizada com sucesso!',
         description: 'Seu pedido foi recebido e está sendo processado. Obrigado!',
       });
       clearCart();
+    } else if (paymentStatus === 'rejected' || paymentStatus === 'cancelled') {
+       toast({
+        variant: "destructive",
+        title: 'Pagamento falhou',
+        description: 'Não foi possível processar seu pagamento. Por favor, tente novamente.',
+      });
     }
+
   }, [searchParams, clearCart, toast]);
 
 
   useEffect(() => {
-    if (!isUserLoading && cartItems.length === 0 && !searchParams.get('session_id')) {
+    if (!isUserLoading && cartItems.length === 0 && !searchParams.get('payment_id')) {
       router.push("/");
     }
-    if (user && !shippingInfo.email) {
-      setShippingInfo(prev => ({
+    if (user && !contactInfo.email) {
+      setContactInfo(prev => ({
         ...prev,
         name: user.displayName || '',
         email: user.email || '',
         phone: user.phoneNumber || ''
       }));
     }
-  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email, searchParams]);
+  }, [cartItems.length, router, isUserLoading, user, contactInfo.email, searchParams]);
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -88,8 +107,8 @@ export default function CheckoutContent() {
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
 
-  const isShippingFormInvalid = !shippingInfo.name || !shippingInfo.email;
-  const isCheckoutDisabled = isShippingFormInvalid || isProcessing;
+  const isContactFormInvalid = !contactInfo.name || !contactInfo.email;
+  const isCheckoutDisabled = isContactFormInvalid || isProcessing || !isPaymentReady;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -138,54 +157,49 @@ export default function CheckoutContent() {
 
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setShippingInfo(prev => ({ ...prev, [id]: value }));
+    setContactInfo(prev => ({ ...prev, [id]: value }));
   }
 
-  const handleCheckout = async () => {
-    if (isShippingFormInvalid || !user) {
+  const handleStartCheckout = async () => {
+    if (isContactFormInvalid || !user) {
         toast({
             variant: "destructive",
             title: "Formulário Incompleto",
             description: "Por favor, preencha todos os dados de contato.",
         });
-        shippingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        contactFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
+    if (preferenceId) {
+        // Preference already created, maybe just scroll to payment form
+        document.getElementById('payment-brick-container')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+    
     setIsProcessing(true);
 
     try {
-        // Prepare a clean list of items for the backend
-        const validItems = cartItems.filter(item => item && item.product && item.variant && item.product.price > 0);
+        const validItems = cartItems.filter(item => item && item.product && item.product.price > 0);
 
         if (validItems.length === 0) {
             throw new Error("Nenhum item válido para processar.");
         }
         
         const lineItems = validItems.map(item => ({
-            productId: item.product.id,
-            variantId: item.variant.id,
-            name: item.product.name,
-            displayName: item.displayName,
-            size: item.size,
+            id: item.product.id,
+            title: item.displayName || item.product.name,
+            description: `${item.variant.color} / ${item.size}`,
+            picture_url: fixImageUrl((item.product.subCategory === 'mochilas' && item.selectedImage) ? item.selectedImage : item.variant.images[0]),
             quantity: item.quantity,
-            price: item.product.price,
-            variantColor: item.variant.color,
-            imageUrl: fixImageUrl(
-                (item.product.subCategory === 'mochilas' && item.selectedImage) 
-                ? item.selectedImage 
-                : item.variant.images[0]
-            ),
-            selectedImage: item.selectedImage
+            unit_price: item.product.price,
         }));
         
-        const response = await fetch(STRIPE_CHECKOUT_URL, {
+        const response = await fetch('/api/create-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 items: lineItems,
-                userEmail: shippingInfo.email,
-                success_url: `${window.location.origin}/checkout`,
-                cancel_url: `${window.location.origin}/checkout`,
+                payer: { name: contactInfo.name, email: contactInfo.email },
                 coupon: appliedCoupon,
             }),
         });
@@ -196,27 +210,46 @@ export default function CheckoutContent() {
             throw new Error(responseData.message || responseData.error || "Falha ao iniciar o pagamento.");
         }
         
-        const { url } = responseData;
-        if (!url) {
-            throw new Error("Não foi possível obter a URL de pagamento.");
+        const { preferenceId: newPreferenceId } = responseData;
+        if (!newPreferenceId) {
+            throw new Error("Não foi possível obter a preferência de pagamento.");
         }
         
-        router.push(url);
+        setPreferenceId(newPreferenceId);
 
     } catch (error: any) {
-        console.error("Erro durante o checkout com Stripe:", error);
+        console.error("Erro durante o início do checkout com Mercado Pago:", error);
         toast({
             variant: "destructive",
-            title: "Erro ao Finalizar a Compra",
-            description: error.message || "Não foi possível processar seu pedido. Tente novamente.",
+            title: "Erro ao Iniciar a Compra",
+            description: error.message || "Não foi possível preparar seu pedido. Tente novamente.",
         });
-        setIsProcessing(false);
+    } finally {
+      setIsProcessing(false);
     }
   };
+  
+  const paymentInitialization = {
+      amount: finalTotal,
+      preferenceId: preferenceId,
+  };
 
+  const paymentCustomization = {
+    visual: {
+      style: {
+        theme: 'default', // 'dark' ou 'bootstrap'
+      },
+    },
+    paymentMethods: {
+      creditCard: 'all' as const,
+      debitCard: 'all' as const,
+      ticket: 'all' as const,
+      pix: 'all' as const,
+    },
+  };
 
   if (cartItems.length === 0 && !isUserLoading) {
-     if (searchParams.get('session_id')) {
+     if (searchParams.get('payment_id')) {
         return (
             <div className="container mx-auto px-4 py-12 text-center">
                 <h1 className="font-headline text-4xl font-bold">Obrigado pela sua compra!</h1>
@@ -242,28 +275,55 @@ export default function CheckoutContent() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div>
             <div className="space-y-8">
-                <Card ref={shippingFormRef}>
+                <Card ref={contactFormRef}>
                 <CardHeader>
                     <CardTitle>1. Informações de Contato</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Nome Completo</Label>
-                        <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required />
+                        <Input id="name" value={contactInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required />
+                            <Input id="email" type="email" value={contactInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="phone">Telefone (Opcional)</Label>
-                            <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000"/>
+                            <Input id="phone" value={contactInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
                         </div>
                     </div>
-                     <p className="text-sm text-muted-foreground pt-4">O endereço de entrega será solicitado na página de pagamento segura da Stripe.</p>
+                     {!preferenceId && (
+                        <Button size="lg" className="w-full mt-4" onClick={handleStartCheckout} disabled={isContactFormInvalid || isProcessing}>
+                            {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</> : "Continuar para Pagamento"}
+                        </Button>
+                    )}
                 </CardContent>
                 </Card>
+
+                 {preferenceId && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>2. Pagamento</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div id="payment-brick-container">
+                                <Payment 
+                                    initialization={paymentInitialization} 
+                                    customization={paymentCustomization}
+                                    onReady={() => setIsPaymentReady(true)}
+                                    onError={(error) => console.error(error)}
+                                    onSubmit={async ({ formData }) => {
+                                        // A submissão é tratada pelo Brick, aqui podemos apenas logar ou mostrar um loader.
+                                        // O backend receberá a notificação via webhook.
+                                        console.log("Formulário de pagamento submetido.");
+                                    }}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                 )}
             </div>
         </div>
         <div>
@@ -310,11 +370,11 @@ export default function CheckoutContent() {
                             placeholder="Insira seu cupom"
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
-                            disabled={isApplyingCoupon || !!appliedCoupon}
+                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId}
                         />
                         <Button 
                             onClick={handleApplyCoupon} 
-                            disabled={isApplyingCoupon || !!appliedCoupon}
+                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId}
                         >
                             {isApplyingCoupon ? "Aplicando..." : "Aplicar"}
                         </Button>
@@ -337,16 +397,6 @@ export default function CheckoutContent() {
                   <span>Total</span>
                   <span>R$ {finalTotal.toFixed(2).replace(".", ",")}</span>
                 </div>
-                <Button size="lg" className="w-full h-12 text-lg" onClick={handleCheckout} disabled={isCheckoutDisabled}>
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                     `Pagar R$ ${finalTotal.toFixed(2).replace('.', ',')}`
-                  )}
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -361,4 +411,3 @@ export default function CheckoutContent() {
     </>
   );
 }
-

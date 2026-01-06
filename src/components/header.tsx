@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,7 @@ import { collection, query, where } from "firebase/firestore";
 import type { Product } from "@/lib/types";
 import { useTheme } from "next-themes";
 import { signOut } from "firebase/auth";
+import { ScrollArea } from "./ui/scroll-area";
 
 function ModeToggle() {
   const { theme, setTheme } = useTheme();
@@ -150,7 +153,7 @@ const SearchBar = () => {
       .filter((p) => 
         p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedQuery)
       )
-      .slice(0, 5);
+      .slice(0, 15);
   }, [queryValue, products]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -209,40 +212,44 @@ const SearchBar = () => {
           </Button>
         </form>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-2 lg:w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-        {searchResults.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {searchResults.map((product) => (
-              <Link
-                key={product.id}
-                href={`/produtos/${product.id}`}
-                className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
-                onClick={closePopover}
-              >
-                <div className="relative h-16 w-16 flex-shrink-0">
-                  <Image
-                    src={fixImageUrl(product.variants[0].images[0])}
-                    alt={product.name}
-                    fill
-                    className="rounded-md object-cover"
-                  />
+      <PopoverContent className="w-[320px] p-0 lg:w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <ScrollArea className="max-h-[50vh]">
+            <div className="p-2">
+                {searchResults.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                    {searchResults.map((product) => (
+                    <Link
+                        key={product.id}
+                        href={`/produtos/${product.id}`}
+                        className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                        onClick={closePopover}
+                    >
+                        <div className="relative h-16 w-16 flex-shrink-0">
+                        <Image
+                            src={fixImageUrl(product.variants[0].images[0])}
+                            alt={product.name}
+                            fill
+                            className="rounded-md object-cover"
+                        />
+                        </div>
+                        <div>
+                        <p className="font-semibold">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                            R$ {product.price.toFixed(2).replace(".", ",")}
+                        </p>
+                        </div>
+                    </Link>
+                    ))}
                 </div>
-                <div>
-                  <p className="font-semibold">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    R$ {product.price.toFixed(2).replace(".", ",")}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          queryValue.trim().length > 1 && (
-            <p className="p-4 text-center text-sm text-muted-foreground">
-              Nenhum resultado encontrado.
-            </p>
-          )
-        )}
+                ) : (
+                queryValue.trim().length > 1 && (
+                    <p className="p-4 text-center text-sm text-muted-foreground">
+                    Nenhum resultado encontrado.
+                    </p>
+                )
+                )}
+            </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );
@@ -372,10 +379,10 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-full max-w-sm">
+              <SheetHeader>
+                <SheetTitle className="font-headline text-xl font-bold">Menu</SheetTitle>
+              </SheetHeader>
               <div className="flex flex-col gap-6 p-4">
-                <Link href="/" className="font-headline text-xl font-bold" onClick={() => setIsSheetOpen(false)}>
-                  PISA VIBE
-                </Link>
                 <nav className="flex flex-col gap-1">
                    {megaMenuData.map((cat) => (
                     <MobileSubMenu key={cat.title} category={cat} onClose={() => setIsSheetOpen(false)} />
@@ -389,5 +396,3 @@ export default function Header() {
     </header>
   );
 }
-
-    

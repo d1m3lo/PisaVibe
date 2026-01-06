@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import type { Coupon } from '@/lib/types';
@@ -53,9 +54,9 @@ export async function POST(req: NextRequest) {
           email: payer.email,
         },
         back_urls: {
-            success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
-            failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
-            pending: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
+            success: "https://pisavibe.shop/checkout/sucesso",
+            failure: "https://pisavibe.shop/checkout/erro",
+            pending: "https://pisavibe.shop/checkout/pendente",
         },
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,

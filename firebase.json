@@ -9,5 +9,8 @@
     "frameworksBackend": {
       "region": "southamerica-east1"
     }
+  },
+  "functions": {
+    "source": "functions"
   }
 }

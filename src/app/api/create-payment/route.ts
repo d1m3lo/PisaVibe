@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
             failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
             pending: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
         },
-        auto_return: 'approved',
+        auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
             userEmail: payer.email,

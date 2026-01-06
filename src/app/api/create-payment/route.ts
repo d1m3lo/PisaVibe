@@ -1,10 +1,18 @@
-
 import { NextResponse, type NextRequest } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import type { Coupon } from '@/lib/types';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+if (!accessToken) {
+  throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
+}
 
 const client = new MercadoPagoConfig({ 
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+    accessToken,
 });
 
 export async function POST(req: NextRequest) {
@@ -64,10 +72,13 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao criar preferência de pagamento:', error);
+    const errorMessage = error.cause?.message || error.message || 'Erro interno ao criar preferência de pagamento.';
+    const errorDetails = error.cause?.error || null;
+    
     return NextResponse.json(
       {
-        error: 'Erro interno ao criar preferência de pagamento.',
-        message: error.message
+        error: errorMessage,
+        details: errorDetails,
       },
       { status: 500 }
     );

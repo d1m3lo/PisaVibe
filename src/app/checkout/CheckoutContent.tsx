@@ -21,7 +21,7 @@ import type { Coupon } from "@/lib/types";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy } from "lucide-react";
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 
 
@@ -50,6 +50,10 @@ export default function CheckoutContent() {
   const [isPaymentReady, setIsPaymentReady] = useState(false);
   
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
+
+  const [pixData, setPixData] = useState<{ qrCodeBase64: string, payload: string } | null>(null);
+  const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+
 
   const shippingFormRef = useRef<HTMLDivElement>(null);
   
@@ -167,16 +171,22 @@ export default function CheckoutContent() {
     setShippingInfo(prev => ({ ...prev, [id]: value }));
   }
 
-  const handleStartCheckout = async () => {
-    if (isShippingFormInvalid || !user) {
+  const validateShippingForm = () => {
+    if (isShippingFormInvalid) {
         toast({
             variant: "destructive",
             title: "Formulário Incompleto",
             description: "Por favor, preencha todos os dados de contato e endereço.",
         });
         shippingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
+        return false;
     }
+    return true;
+  }
+
+  const handleStartCheckout = async () => {
+    if (!validateShippingForm() || !user) return;
+    
     if (preferenceId) {
         document.getElementById('payment-brick-container')?.scrollIntoView({ behavior: 'smooth' });
         return;
@@ -186,10 +196,7 @@ export default function CheckoutContent() {
 
     try {
         const validItems = cartItems.filter(item => item && item.product && item.product.price > 0);
-
-        if (validItems.length === 0) {
-            throw new Error("Nenhum item válido para processar.");
-        }
+        if (validItems.length === 0) throw new Error("Nenhum item válido para processar.");
         
         const lineItems = validItems.map(item => ({
             id: item.product.id,
@@ -203,26 +210,16 @@ export default function CheckoutContent() {
         const response = await fetch('/api/create-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                items: lineItems,
-                shippingInfo: shippingInfo,
-                coupon: appliedCoupon,
-            }),
+            body: JSON.stringify({ items: lineItems, shippingInfo, coupon: appliedCoupon }),
         });
 
         const responseData = await response.json();
-
-        if (!response.ok) {
-            throw new Error(responseData.message || responseData.error || "Falha ao iniciar o pagamento.");
-        }
+        if (!response.ok) throw new Error(responseData.error || "Falha ao iniciar o pagamento.");
         
         const { preferenceId: newPreferenceId } = responseData;
-        if (!newPreferenceId) {
-            throw new Error("Não foi possível obter a preferência de pagamento.");
-        }
+        if (!newPreferenceId) throw new Error("Não foi possível obter a preferência de pagamento.");
         
         setPreferenceId(newPreferenceId);
-
     } catch (error: any) {
         console.error("Erro durante o início do checkout com Mercado Pago:", error);
         toast({
@@ -235,6 +232,57 @@ export default function CheckoutContent() {
     }
   };
   
+  const handlePixPayment = async () => {
+    if (!validateShippingForm()) return;
+    setIsGeneratingPix(true);
+    setPixData(null);
+
+    const lineItems = cartItems.map(item => ({
+        id: item.product.id,
+        title: item.displayName || item.product.name,
+        description: `${item.variant.color} / ${item.size}`,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+    }));
+    
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_FUNCTIONS_URL}/createPixPayment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: lineItems,
+                customer: shippingInfo,
+                coupon: appliedCoupon
+            }),
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Falha ao gerar o PIX.');
+        }
+        
+        setPixData({ qrCodeBase64: data.qr_code_base64, payload: data.qr_code });
+        toast({
+            title: 'PIX Gerado com Sucesso!',
+            description: 'Escaneie o QR Code ou copie o código para pagar.',
+        });
+
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro ao Gerar PIX',
+            description: error.message || 'Tente novamente.',
+        });
+    } finally {
+        setIsGeneratingPix(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Código PIX copiado!' });
+  };
+  
   const paymentInitialization = {
       amount: finalTotal,
       preferenceId: preferenceId,
@@ -242,14 +290,10 @@ export default function CheckoutContent() {
 
   const paymentCustomization = {
     visual: {
-      style: {
-        theme: 'default', // 'dark' ou 'bootstrap'
-      },
+      style: { theme: 'default' },
     },
     paymentMethods: {
       creditCard: 'all' as const,
-      debitCard: 'all' as const,
-      ticket: 'all' as const,
       pix: 'all' as const,
     },
   };
@@ -286,71 +330,72 @@ export default function CheckoutContent() {
                     <CardTitle>1. Informações de Entrega</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-4">
+                    <div className="space-y-2">
+                        <h3 className="font-semibold text-lg">Informações de Contato</h3>
+                    </div>
+                     <div className="space-y-4">
                          <div className="space-y-2">
                             <Label htmlFor="name">Nome Completo</Label>
-                            <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
+                            <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Telefone (Opcional)</Label>
-                                <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
+                                <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId || !!pixData}/>
                             </div>
                         </div>
                     </div>
                      <Separator />
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-lg">Endereço de Entrega</h3>
+                    </div>
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="zipCode">CEP</Label>
-                                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 sm:col-span-1">
                                 <Label htmlFor="street">Rua / Logradouro</Label>
-                                <Input id="street" value={shippingInfo.street} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="street" value={shippingInfo.street} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
                         </div>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr] gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="number">Número</Label>
-                                <Input id="number" value={shippingInfo.number} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="number" value={shippingInfo.number} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="neighborhood">Bairro</Label>
-                                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="complement">Complemento</Label>
-                            <Input id="complement" value={shippingInfo.complement} onChange={handleInfoChange} placeholder="Apto, Bloco" disabled={!!preferenceId}/>
+                            <Input id="complement" value={shippingInfo.complement} onChange={handleInfoChange} placeholder="Apto, Bloco" disabled={!!preferenceId || !!pixData}/>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="city">Cidade</Label>
-                                <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                                <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData}/>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="state">Estado</Label>
-                                <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required disabled={!!preferenceId} maxLength={2} placeholder="UF"/>
+                                <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required disabled={!!preferenceId || !!pixData} maxLength={2} placeholder="UF"/>
                             </div>
                         </div>
                     </div>
-                     {!preferenceId && (
-                        <Button size="lg" className="w-full mt-6" onClick={handleStartCheckout} disabled={isShippingFormInvalid || isProcessing}>
-                            {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</> : "Continuar para Pagamento"}
-                        </Button>
-                    )}
                 </CardContent>
                 </Card>
 
                  {preferenceId && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>2. Pagamento</CardTitle>
+                            <CardTitle>2. Pagamento com Cartão</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div id="payment-brick-container">
@@ -364,6 +409,36 @@ export default function CheckoutContent() {
                                     }}
                                 />
                             </div>
+                        </CardContent>
+                    </Card>
+                 )}
+
+                 {!preferenceId && (
+                    <div className="space-y-4">
+                        <Button size="lg" className="w-full" onClick={handleStartCheckout} disabled={isProcessing}>
+                            {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</> : "Pagar com Cartão"}
+                        </Button>
+                         <Button size="lg" variant="outline" className="w-full" onClick={handlePixPayment} disabled={isGeneratingPix || !!pixData}>
+                            {isGeneratingPix ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando PIX...</> : "Pagar com PIX"}
+                        </Button>
+                    </div>
+                 )}
+
+                 {pixData && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Pague com PIX</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-center gap-4">
+                            <Image src={`data:image/png;base64,${pixData.qrCodeBase64}`} alt="PIX QR Code" width={200} height={200} />
+                            <p className="text-sm text-center text-muted-foreground">Escaneie o QR Code com o app do seu banco ou copie o código abaixo.</p>
+                            <div className="w-full relative">
+                                <Input value={pixData.payload} readOnly className="pr-10"/>
+                                <Button size="icon" variant="ghost" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => copyToClipboard(pixData.payload)}>
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <p className="text-xs text-center text-muted-foreground mt-2">O PIX expira em 1 hora. O pagamento será confirmado automaticamente.</p>
                         </CardContent>
                     </Card>
                  )}
@@ -413,11 +488,11 @@ export default function CheckoutContent() {
                             placeholder="Insira seu cupom"
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
-                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId}
+                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId || !!pixData}
                         />
                         <Button 
                             onClick={handleApplyCoupon} 
-                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId}
+                            disabled={isApplyingCoupon || !!appliedCoupon || !!preferenceId || !!pixData}
                         >
                             {isApplyingCoupon ? "Aplicando..." : "Aplicar"}
                         </Button>
@@ -454,5 +529,3 @@ export default function CheckoutContent() {
     </>
   );
 }
-
-    

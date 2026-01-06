@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -80,7 +79,7 @@ type ProductWithId = Product & { firestoreId: string };
 const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Camisetas', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Streetwear'],
+    'roupas': ['Camisetas', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Streetwear', 'Casual'],
     'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
     'perfumes': [],
   },

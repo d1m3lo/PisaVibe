@@ -285,57 +285,62 @@ export default function CheckoutContent() {
                 <CardHeader>
                     <CardTitle>1. Informações de Entrega</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Nome Completo</Label>
-                        <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="name">Nome Completo</Label>
+                            <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Telefone (Opcional)</Label>
-                            <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="zipCode">CEP</Label>
-                            <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInfoChange} required disabled={!!preferenceId}/>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="street">Rua / Logradouro</Label>
-                            <Input id="street" value={shippingInfo.street} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Telefone (Opcional)</Label>
+                                <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
+                            </div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr] gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="number">Número</Label>
-                            <Input id="number" value={shippingInfo.number} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                     <Separator />
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="zipCode">CEP</Label>
+                                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="street">Rua / Logradouro</Label>
+                                <Input id="street" value={shippingInfo.street} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
+                        </div>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="number">Número</Label>
+                                <Input id="number" value={shippingInfo.number} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="neighborhood">Bairro</Label>
+                                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="complement">Complemento</Label>
                             <Input id="complement" value={shippingInfo.complement} onChange={handleInfoChange} placeholder="Apto, Bloco" disabled={!!preferenceId}/>
                         </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="neighborhood">Bairro</Label>
-                            <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInfoChange} required disabled={!!preferenceId}/>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="city">Cidade</Label>
-                            <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required disabled={!!preferenceId}/>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="state">Estado</Label>
-                            <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required disabled={!!preferenceId} maxLength={2}/>
+                        <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="city">Cidade</Label>
+                                <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="state">Estado</Label>
+                                <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required disabled={!!preferenceId} maxLength={2} placeholder="UF"/>
+                            </div>
                         </div>
                     </div>
                      {!preferenceId && (
-                        <Button size="lg" className="w-full mt-4" onClick={handleStartCheckout} disabled={isShippingFormInvalid || isProcessing}>
+                        <Button size="lg" className="w-full mt-6" onClick={handleStartCheckout} disabled={isShippingFormInvalid || isProcessing}>
                             {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</> : "Continuar para Pagamento"}
                         </Button>
                     )}
@@ -449,3 +454,5 @@ export default function CheckoutContent() {
     </>
   );
 }
+
+    

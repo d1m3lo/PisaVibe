@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { Coupon } from "@/lib/types";
@@ -22,6 +22,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
 import { Loader2, Copy } from "lucide-react";
+import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 
 export default function CheckoutContent() {
   const { user, isUserLoading } = useUser();
@@ -58,6 +59,17 @@ export default function CheckoutContent() {
     city: "",
     state: "",
   });
+
+  // Inicializa o Mercado Pago
+  useEffect(() => {
+    const mpKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
+    if (mpKey) {
+        initMercadoPago(mpKey, { locale: 'pt-BR' });
+    } else {
+        console.error("Chave pública do Mercado Pago não encontrada.");
+    }
+  }, []);
+
 
   useEffect(() => {
     if (!isUserLoading && cartItems.length === 0) {
@@ -402,15 +414,21 @@ export default function CheckoutContent() {
                         </div>
 
                         <div className="mt-8">
-                          <Button
-                              size="lg"
-                              className="w-full h-12 text-lg"
-                              onClick={createMercadoPagoPreference}
-                              disabled={isProcessing || !!preferenceId}
-                          >
-                            {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                            {isProcessing ? "Processando..." : "Pagar com Cartão"}
-                          </Button>
+                          {!preferenceId ? (
+                              <Button
+                                  size="lg"
+                                  className="w-full h-12 text-lg"
+                                  onClick={createMercadoPagoPreference}
+                                  disabled={isProcessing}
+                              >
+                                {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                                {isProcessing ? "Processando..." : "Pagar com Cartão"}
+                              </Button>
+                          ) : (
+                              <div id="wallet_container">
+                                 <Wallet initialization={{ preferenceId: preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
+                              </div>
+                          )}
                           
                            <Button
                               size="lg"
@@ -457,5 +475,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
-    

@@ -18,9 +18,9 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, payer, coupon } = await req.json();
+    const { items, shippingInfo, coupon } = await req.json();
 
-    if (!items || !payer) {
+    if (!items || !shippingInfo) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
     }
     
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
       body: {
         items: items,
         payer: {
-          name: payer.name,
-          email: payer.email,
+          name: shippingInfo.name,
+          email: shippingInfo.email,
         },
         back_urls: {
             success: "https://pisavibe.shop/checkout/sucesso",
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
-            userEmail: payer.email,
+            shippingInfo: JSON.stringify(shippingInfo),
             cartItems: JSON.stringify(items.filter((i:any) => i.id !== 'discount')), // Salva o carrinho original
             couponCode: coupon?.code || undefined,
             discountAmount: coupon ? discount : undefined,

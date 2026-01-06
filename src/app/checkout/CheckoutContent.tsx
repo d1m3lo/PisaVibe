@@ -17,8 +17,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect, useRef } from "react";
-import type { Coupon, Order } from "@/lib/types";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import type { Coupon } from "@/lib/types";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
 import { fixImageUrl } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -51,12 +51,19 @@ export default function CheckoutContent() {
   
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
 
-  const contactFormRef = useRef<HTMLDivElement>(null);
+  const shippingFormRef = useRef<HTMLDivElement>(null);
   
-  const [contactInfo, setContactInfo] = useState({
+  const [shippingInfo, setShippingInfo] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    zipCode: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: ''
   });
 
   useEffect(() => {
@@ -84,15 +91,15 @@ export default function CheckoutContent() {
     if (!isUserLoading && cartItems.length === 0 && !searchParams.get('payment_id')) {
       router.push("/");
     }
-    if (user && !contactInfo.email) {
-      setContactInfo(prev => ({
+    if (user && !shippingInfo.email) {
+      setShippingInfo(prev => ({
         ...prev,
         name: user.displayName || '',
         email: user.email || '',
         phone: user.phoneNumber || ''
       }));
     }
-  }, [cartItems.length, router, isUserLoading, user, contactInfo.email, searchParams]);
+  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email, searchParams]);
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -107,8 +114,8 @@ export default function CheckoutContent() {
       return total < 0 ? 0 : total;
   }, [cartTotal, discountAmount]);
 
-  const isContactFormInvalid = !contactInfo.name || !contactInfo.email;
-  const isCheckoutDisabled = isContactFormInvalid || isProcessing || !isPaymentReady;
+  const isShippingFormInvalid = !shippingInfo.name || !shippingInfo.email || !shippingInfo.zipCode || !shippingInfo.street || !shippingInfo.number || !shippingInfo.neighborhood || !shippingInfo.city || !shippingInfo.state;
+  const isCheckoutDisabled = isShippingFormInvalid || isProcessing || !isPaymentReady;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -157,21 +164,20 @@ export default function CheckoutContent() {
 
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setContactInfo(prev => ({ ...prev, [id]: value }));
+    setShippingInfo(prev => ({ ...prev, [id]: value }));
   }
 
   const handleStartCheckout = async () => {
-    if (isContactFormInvalid || !user) {
+    if (isShippingFormInvalid || !user) {
         toast({
             variant: "destructive",
             title: "Formulário Incompleto",
-            description: "Por favor, preencha todos os dados de contato.",
+            description: "Por favor, preencha todos os dados de contato e endereço.",
         });
-        contactFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        shippingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     if (preferenceId) {
-        // Preference already created, maybe just scroll to payment form
         document.getElementById('payment-brick-container')?.scrollIntoView({ behavior: 'smooth' });
         return;
     }
@@ -199,7 +205,7 @@ export default function CheckoutContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 items: lineItems,
-                payer: { name: contactInfo.name, email: contactInfo.email },
+                shippingInfo: shippingInfo,
                 coupon: appliedCoupon,
             }),
         });
@@ -275,27 +281,61 @@ export default function CheckoutContent() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div>
             <div className="space-y-8">
-                <Card ref={contactFormRef}>
+                <Card ref={shippingFormRef}>
                 <CardHeader>
-                    <CardTitle>1. Informações de Contato</CardTitle>
+                    <CardTitle>1. Informações de Entrega</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Nome Completo</Label>
-                        <Input id="name" value={contactInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
+                        <Input id="name" value={shippingInfo.name} onChange={handleInfoChange} required disabled={!!preferenceId} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" value={contactInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                            <Input id="email" type="email" value={shippingInfo.email} onChange={handleInfoChange} required disabled={!!preferenceId}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="phone">Telefone (Opcional)</Label>
-                            <Input id="phone" value={contactInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
+                            <Input id="phone" value={shippingInfo.phone} onChange={handleInfoChange} placeholder="(00) 00000-0000" disabled={!!preferenceId}/>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="zipCode">CEP</Label>
+                            <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="street">Rua / Logradouro</Label>
+                            <Input id="street" value={shippingInfo.street} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr] gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="number">Número</Label>
+                            <Input id="number" value={shippingInfo.number} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="complement">Complemento</Label>
+                            <Input id="complement" value={shippingInfo.complement} onChange={handleInfoChange} placeholder="Apto, Bloco" disabled={!!preferenceId}/>
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="neighborhood">Bairro</Label>
+                            <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="city">Cidade</Label>
+                            <Input id="city" value={shippingInfo.city} onChange={handleInfoChange} required disabled={!!preferenceId}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="state">Estado</Label>
+                            <Input id="state" value={shippingInfo.state} onChange={handleInfoChange} required disabled={!!preferenceId} maxLength={2}/>
                         </div>
                     </div>
                      {!preferenceId && (
-                        <Button size="lg" className="w-full mt-4" onClick={handleStartCheckout} disabled={isContactFormInvalid || isProcessing}>
+                        <Button size="lg" className="w-full mt-4" onClick={handleStartCheckout} disabled={isShippingFormInvalid || isProcessing}>
                             {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</> : "Continuar para Pagamento"}
                         </Button>
                     )}
@@ -315,8 +355,6 @@ export default function CheckoutContent() {
                                     onReady={() => setIsPaymentReady(true)}
                                     onError={(error) => console.error(error)}
                                     onSubmit={async ({ formData }) => {
-                                        // A submissão é tratada pelo Brick, aqui podemos apenas logar ou mostrar um loader.
-                                        // O backend receberá a notificação via webhook.
                                         console.log("Formulário de pagamento submetido.");
                                     }}
                                 />

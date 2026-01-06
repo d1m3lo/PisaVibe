@@ -58,14 +58,15 @@ export async function POST(req: NextRequest) {
 
 async function createUnverifiedOrderFromPayment(payment: any) {
   const { metadata } = payment;
-  const { userEmail, cartItems: cartItemsJSON, couponCode, discountAmount } = metadata;
-  const { payer } = payment.additional_info;
-  const shipping = payment.card?.cardholder || payer; // Aproximação dos dados
-
-  if (!userEmail || !cartItemsJSON) {
+  const { shippingInfo: shippingInfoJSON, cartItems: cartItemsJSON, couponCode, discountAmount } = metadata;
+  
+  if (!shippingInfoJSON || !cartItemsJSON) {
     throw new Error('Metadados da preferência do Mercado Pago estão ausentes ou incompletos.');
   }
-   console.log(`Iniciando criação de pedido não verificado para o email: ${userEmail}`);
+
+  const shippingInfo = JSON.parse(shippingInfoJSON);
+  const userEmail = shippingInfo.email;
+  console.log(`Iniciando criação de pedido não verificado para o email: ${userEmail}`);
 
   const usersRef = db.collection('users');
   const userQuery = await usersRef.where('email', '==', userEmail).limit(1).get();
@@ -86,8 +87,7 @@ async function createUnverifiedOrderFromPayment(payment: any) {
       imageUrl: item.picture_url,
   }));
 
-  // Simulação do endereço, já que o brick do MP não coleta endereço de entrega.
-  const formattedAddress = 'Endereço a ser confirmado pelo admin.';
+  const formattedAddress = `${shippingInfo.street}, ${shippingInfo.number} ${shippingInfo.complement || ''} - ${shippingInfo.neighborhood}, ${shippingInfo.city} - ${shippingInfo.state}, ${shippingInfo.zipCode}`;
 
   const unverifiedOrder = {
     userId: userId,
@@ -98,8 +98,9 @@ async function createUnverifiedOrderFromPayment(payment: any) {
     status: 'Pedido recebido' as const,
     shippingAddress: formattedAddress,
     customerInfo: {
-        name: shipping.name || '',
+        name: shippingInfo.name || '',
         email: userEmail,
+        phone: shippingInfo.phone || ''
     },
     paymentMethod: payment.payment_type_id as 'card' | 'pix',
     couponCode: couponCode || undefined,

@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFirestore, useUser } from "@/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
@@ -23,18 +22,17 @@ import { Loader2, Copy } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 
 export default function CheckoutContent() {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const { cartItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [preferenceId, setPreferenceId] = useState<string | null>(null);
-
   const [pixData, setPixData] = useState<any>(null);
   const [pixPaymentId, setPixPaymentId] = useState<string | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+
+  const [preferenceId, setPreferenceId] = useState<string | null>(null);
 
   const shippingFormRef = useRef<HTMLDivElement>(null);
 
@@ -81,21 +79,11 @@ export default function CheckoutContent() {
         clearCart();
         router.push("/minha-conta/pedidos");
       }
-
-      if (data.status === "rejected") {
-        toast({
-          variant: "destructive",
-          title: "Pagamento recusado",
-        });
-      }
     });
 
     return () => unsub();
   }, [pixPaymentId, firestore, clearCart, router, toast]);
 
-  /* ===============================
-     VALIDAR FORM
-  =============================== */
   const isInvalid =
     !shippingInfo.name ||
     !shippingInfo.email ||
@@ -157,70 +145,103 @@ export default function CheckoutContent() {
       setIsGeneratingPix(false);
     }
   };
-  
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setShippingInfo(prev => ({ ...prev, [id]: value }));
-    };
 
   /* ===============================
-     UI
+     CARTÃO (MERCADO PAGO)
   =============================== */
+  const handleCardPayment = async () => {
+    if (!validateForm() || !user) return;
+
+    const res = await fetch("/api/mercadopago/preference", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: cartItems,
+        amount: cartTotal,
+        email: shippingInfo.email,
+        shippingInfo,
+      }),
+    });
+
+    const data = await res.json();
+    setPreferenceId(data.preferenceId);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setShippingInfo((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleZipCodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const zipCode = e.target.value.replace(/\D/g, '');
+    setShippingInfo(prev => ({...prev, zipCode}));
+
+    if (zipCode.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${zipCode}/json/`);
+        const data = await response.json();
+        if (!data.erro) {
+          setShippingInfo(prev => ({
+            ...prev,
+            street: data.logradouro,
+            neighborhood: data.bairro,
+            city: data.localidade,
+            state: data.uf,
+          }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      }
+    }
+  };
+
+
   return (
     <div className="container mx-auto py-10 grid lg:grid-cols-2 gap-10">
       <Card ref={shippingFormRef}>
         <CardHeader>
           <CardTitle>Informações de Entrega</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <div className="sm:col-span-6">
+        <CardContent className="grid grid-cols-6 gap-4">
+            <div className="col-span-6">
                 <Label htmlFor="name">Nome Completo</Label>
-                <Input id="name" value={shippingInfo.name} onChange={handleInputChange} required />
+                <Input id="name" value={shippingInfo.name} onChange={handleInputChange} placeholder="Seu nome completo" required/>
             </div>
-
-            <div className="sm:col-span-4">
+            <div className="col-span-6 sm:col-span-4">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInputChange} required />
+                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInputChange} placeholder="seu.email@exemplo.com" required/>
             </div>
-
-            <div className="sm:col-span-2">
+            <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" type="tel" value={shippingInfo.phone} onChange={handleInputChange} />
+                <Input id="phone" type="tel" value={shippingInfo.phone} onChange={handleInputChange} placeholder="(XX) XXXXX-XXXX"/>
             </div>
-
-             <div className="sm:col-span-2">
+            <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="zipCode">CEP</Label>
-                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInputChange} />
+                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleZipCodeChange} placeholder="00000-000" required/>
             </div>
-            
-            <div className="sm:col-span-4">
-                <Label htmlFor="street">Endereço</Label>
-                <Input id="street" value={shippingInfo.street} onChange={handleInputChange} required />
+             <div className="col-span-6 sm:col-span-4">
+                <Label htmlFor="street">Rua / Logradouro</Label>
+                <Input id="street" value={shippingInfo.street} onChange={handleInputChange} placeholder="Nome da sua rua" required/>
             </div>
-
-            <div className="sm:col-span-2">
+            <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="number">Número</Label>
-                <Input id="number" value={shippingInfo.number} onChange={handleInputChange} required />
+                <Input id="number" value={shippingInfo.number} onChange={handleInputChange} placeholder="123" required/>
             </div>
-
-            <div className="sm:col-span-4">
-                <Label htmlFor="complement">Complemento (Opcional)</Label>
-                <Input id="complement" value={shippingInfo.complement} onChange={handleInputChange} />
+             <div className="col-span-6 sm:col-span-4">
+                <Label htmlFor="complement">Complemento</Label>
+                <Input id="complement" value={shippingInfo.complement} onChange={handleInputChange} placeholder="Apto, bloco, etc. (opcional)" />
             </div>
-            
-            <div className="sm:col-span-6">
+             <div className="col-span-6">
                 <Label htmlFor="neighborhood">Bairro</Label>
-                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInputChange} />
+                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInputChange} placeholder="Seu bairro" required/>
             </div>
-
-            <div className="sm:col-span-4">
+            <div className="col-span-6 sm:col-span-4">
                 <Label htmlFor="city">Cidade</Label>
-                <Input id="city" value={shippingInfo.city} onChange={handleInputChange} required />
+                <Input id="city" value={shippingInfo.city} onChange={handleInputChange} placeholder="Sua cidade" required/>
             </div>
-
-            <div className="sm:col-span-2">
+            <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="state">Estado</Label>
-                <Input id="state" value={shippingInfo.state} onChange={handleInputChange} required />
+                <Input id="state" value={shippingInfo.state} onChange={handleInputChange} placeholder="UF" required/>
             </div>
         </CardContent>
       </Card>
@@ -246,20 +267,17 @@ export default function CheckoutContent() {
           ))}
 
           <Separator className="my-4" />
-
           <p className="font-bold mb-4">Total: R$ {cartTotal}</p>
 
-          <Button
-            className="w-full"
-            onClick={handlePixPayment}
-            disabled={isGeneratingPix || pixData}
-          >
-            {isGeneratingPix ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              "Pagar com PIX"
-            )}
+          <Button className="w-full mb-3" onClick={handlePixPayment}>
+            {isGeneratingPix ? <Loader2 className="animate-spin" /> : "Pagar com PIX"}
           </Button>
+
+          <Button className="w-full mb-3" variant="outline" onClick={handleCardPayment}>
+            Pagar com Cartão
+          </Button>
+
+          {preferenceId && <Wallet initialization={{ preferenceId }} />}
 
           {pixData && (
             <div className="mt-6 text-center">
@@ -274,9 +292,7 @@ export default function CheckoutContent() {
               <Button
                 size="sm"
                 className="mt-2"
-                onClick={() =>
-                  navigator.clipboard.writeText(pixData.qr_code)
-                }
+                onClick={() => navigator.clipboard.writeText(pixData.qr_code)}
               >
                 <Copy size={16} />
               </Button>

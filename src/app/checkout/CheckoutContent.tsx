@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -17,12 +16,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect, useRef } from "react";
-import type { Coupon } from "@/lib/types";
-import { collection, query, where, getDocs } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
 import { Loader2, Copy } from "lucide-react";
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
+import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 
 export default function CheckoutContent() {
   const { user, isUserLoading } = useUser();
@@ -31,18 +29,11 @@ export default function CheckoutContent() {
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-  const [couponMessage, setCouponMessage] = useState("");
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-
   const [isProcessing, setIsProcessing] = useState(false);
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
 
-  const [pixData, setPixData] = useState<{
-    qrCodeBase64: string;
-    payload: string;
-  } | null>(null);
+  const [pixData, setPixData] = useState<any>(null);
+  const [pixPaymentId, setPixPaymentId] = useState<string | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
 
   const shippingFormRef = useRef<HTMLDivElement>(null);
@@ -60,418 +51,239 @@ export default function CheckoutContent() {
     state: "",
   });
 
-  // Inicializa o Mercado Pago
+  /* ===============================
+     MERCADO PAGO INIT
+  =============================== */
   useEffect(() => {
-    const mpKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
-    if (mpKey) {
-        initMercadoPago(mpKey, { locale: 'pt-BR' });
-    } else {
-        console.error("Chave pública do Mercado Pago não encontrada.");
-    }
+    const key = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
+    if (key) initMercadoPago(key, { locale: "pt-BR" });
   }, []);
 
-
+  /* ===============================
+     ESCUTA STATUS DO PIX
+  =============================== */
   useEffect(() => {
-    if (!isUserLoading && cartItems.length === 0) {
-      router.push("/");
-    }
+    if (!pixPaymentId || !firestore) return;
 
-    if (user && !shippingInfo.email) {
-      setShippingInfo((prev) => ({
-        ...prev,
-        name: user.displayName || "",
-        email: user.email || "",
-        phone: user.phoneNumber || "",
-      }));
-    }
-  }, [cartItems.length, router, isUserLoading, user, shippingInfo.email]);
-  
-  const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setShippingInfo((prev) => ({ ...prev, [name]: value }));
-  };
+    const ref = doc(firestore, "orders", pixPaymentId);
 
-  const handleZipCodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const zipCode = e.target.value.replace(/\D/g, "");
-    if (zipCode.length !== 8) {
-      return;
-    }
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${zipCode}/json/`);
-      const data = await response.json();
-      if (!data.erro) {
-        setShippingInfo((prev) => ({
-          ...prev,
-          street: data.logradouro,
-          neighborhood: data.bairro,
-          city: data.localidade,
-          state: data.uf,
-        }));
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+
+      if (data.status === "approved") {
+        toast({
+          title: "Pagamento aprovado 🎉",
+          description: "Seu pedido foi confirmado.",
+        });
+
+        clearCart();
+        router.push("/minha-conta/pedidos");
       }
-    } catch (error) {
-      console.error("Erro ao buscar CEP:", error);
-    }
-  };
 
-  const discountAmount = useMemo(() => {
-    if (!appliedCoupon) return 0;
-    if (appliedCoupon.discountType === "percentage") {
-      return cartTotal * (appliedCoupon.discountValue / 100);
-    }
-    return appliedCoupon.discountValue;
-  }, [appliedCoupon, cartTotal]);
+      if (data.status === "rejected") {
+        toast({
+          variant: "destructive",
+          title: "Pagamento recusado",
+        });
+      }
+    });
 
-  const finalTotal = useMemo(() => {
-    const total = cartTotal - discountAmount;
-    return total < 0 ? 0 : total;
-  }, [cartTotal, discountAmount]);
+    return () => unsub();
+  }, [pixPaymentId, firestore, clearCart, router, toast]);
 
-  const isShippingFormInvalid =
+  /* ===============================
+     VALIDAR FORM
+  =============================== */
+  const isInvalid =
     !shippingInfo.name ||
     !shippingInfo.email ||
-    !shippingInfo.zipCode ||
     !shippingInfo.street ||
     !shippingInfo.number ||
-    !shippingInfo.neighborhood ||
     !shippingInfo.city ||
     !shippingInfo.state;
 
-  const validateShippingForm = () => {
-    if (isShippingFormInvalid) {
+  const validateForm = () => {
+    if (isInvalid) {
       toast({
         variant: "destructive",
-        title: "Formulário incompleto",
-        description: "Preencha todos os dados de entrega antes de prosseguir.",
+        title: "Preencha os dados de entrega",
       });
       shippingFormRef.current?.scrollIntoView({ behavior: "smooth" });
       return false;
     }
     return true;
   };
-  
-    const handleApplyCoupon = async () => {
-        if (!couponCode.trim()) {
-            setCouponMessage("Por favor, insira um código.");
-            return;
-        }
-        if (!firestore) return;
-        
-        setIsApplyingCoupon(true);
-        setCouponMessage("");
-        setAppliedCoupon(null);
 
-        const q = query(collection(firestore, 'coupons'), where('code', '==', couponCode.toUpperCase()));
-        
-        try {
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                setCouponMessage("Cupom inválido ou expirado.");
-                toast({ variant: 'destructive', title: 'Cupom inválido' });
-                return;
-            }
-
-            const couponDoc = querySnapshot.docs[0];
-            const couponData = couponDoc.data() as Coupon;
-
-            if (!couponData.isActive || (couponData.expiryDate && new Date(couponData.expiryDate) < new Date())) {
-                setCouponMessage("Este cupom não está mais ativo.");
-                 toast({ variant: 'destructive', title: 'Cupom expirado' });
-                return;
-            }
-            
-            setAppliedCoupon({ ...couponData, id: couponDoc.id });
-            toast({ title: "Cupom aplicado com sucesso!" });
-
-        } catch (error) {
-            console.error("Error applying coupon:", error);
-            setCouponMessage("Erro ao aplicar o cupom.");
-             toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível aplicar o cupom.' });
-        } finally {
-            setIsApplyingCoupon(false);
-        }
-    };
-
-    const createMercadoPagoPreference = async () => {
-      if (!validateShippingForm()) return;
-      setIsProcessing(true);
-
-      const itemsForMP = cartItems.map(item => ({
-        id: item.product.id,
-        title: item.displayName || item.product.name,
-        description: `${item.variant.color} / ${item.size}`,
-        picture_url: fixImageUrl(item.variant.images[0]),
-        quantity: item.quantity,
-        unit_price: item.product.price
-      }));
-
-      try {
-        const response = await fetch('/api/create-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: itemsForMP, shippingInfo, coupon: appliedCoupon })
-        });
-        
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao criar preferência de pagamento');
-        }
-
-        setPreferenceId(data.preferenceId);
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Erro no Pagamento', description: error.message });
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-    
+  /* ===============================
+     PIX
+  =============================== */
   const handlePixPayment = async () => {
-    if (!validateShippingForm()) return;
+    if (!validateForm() || !user) return;
 
     setIsGeneratingPix(true);
-    setPixData(null);
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         "https://us-central1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: Number(finalTotal.toFixed(2)),
+            amount: cartTotal,
             email: shippingInfo.email,
+            userId: user.uid,
+            items: cartItems,
+            shippingInfo,
           }),
         }
       );
 
-      const data = await response.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao gerar PIX");
-      }
+      setPixPaymentId(String(data.payment_id));
+      setPixData(data);
 
-      setPixData({
-        qrCodeBase64: data.qr_code_base64,
-        payload: data.qr_code,
-      });
-
-      toast({
-        title: "PIX gerado com sucesso",
-        description: "Escaneie o QR Code ou copie o código.",
-      });
-    } catch (error: any) {
+      toast({ title: "PIX gerado com sucesso" });
+    } catch (err: any) {
       toast({
         variant: "destructive",
-        title: "Erro no PIX",
-        description: error.message,
+        title: "Erro ao gerar PIX",
+        description: err.message,
       });
     } finally {
       setIsGeneratingPix(false);
     }
   };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Código PIX copiado!" });
-  };
   
-    if (cartItems.length === 0 && !isUserLoading) {
-        return (
-            <div className="container mx-auto px-4 py-12 text-center">
-                <h1 className="text-2xl font-bold">Seu carrinho está vazio.</h1>
-                <Button asChild className="mt-4">
-                    <Link href="/produtos">Voltar para a loja</Link>
-                </Button>
-            </div>
-        );
-    }
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setShippingInfo(prev => ({ ...prev, [id]: value }));
+    };
 
+  /* ===============================
+     UI
+  =============================== */
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="mb-8 text-4xl font-bold">Checkout</h1>
-      
-       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-            <div ref={shippingFormRef} className="space-y-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Informações de Entrega</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Nome Completo</Label>
-                            <Input name="name" value={shippingInfo.name} onChange={handleShippingChange} required />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input name="email" type="email" value={shippingInfo.email} onChange={handleShippingChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Telefone</Label>
-                                <Input name="phone" type="tel" value={shippingInfo.phone} onChange={handleShippingChange} placeholder="(XX) XXXXX-XXXX" />
-                            </div>
-                        </div>
-                         <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="zipCode">CEP</Label>
-                                <Input name="zipCode" value={shippingInfo.zipCode} onChange={handleShippingChange} onBlur={handleZipCodeBlur} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="street">Rua</Label>
-                                <Input name="street" value={shippingInfo.street} onChange={handleShippingChange} required />
-                            </div>
-                        </div>
-                         <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="number">Número</Label>
-                                <Input name="number" value={shippingInfo.number} onChange={handleShippingChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="complement">Complemento</Label>
-                                <Input name="complement" value={shippingInfo.complement} onChange={handleShippingChange} placeholder="Apto, Bloco" />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="neighborhood">Bairro</Label>
-                                <Input name="neighborhood" value={shippingInfo.neighborhood} onChange={handleShippingChange} required />
-                            </div>
-                        </div>
-                         <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="city">Cidade</Label>
-                                <Input name="city" value={shippingInfo.city} onChange={handleShippingChange} required />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="state">Estado</Label>
-                                <Input name="state" value={shippingInfo.state} onChange={handleShippingChange} required />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+    <div className="container mx-auto py-10 grid lg:grid-cols-2 gap-10">
+      <Card ref={shippingFormRef}>
+        <CardHeader>
+          <CardTitle>Informações de Entrega</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+            <div className="sm:col-span-6">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input id="name" value={shippingInfo.name} onChange={handleInputChange} required />
+            </div>
+
+            <div className="sm:col-span-4">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={shippingInfo.email} onChange={handleInputChange} required />
+            </div>
+
+            <div className="sm:col-span-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input id="phone" type="tel" value={shippingInfo.phone} onChange={handleInputChange} />
+            </div>
+
+             <div className="sm:col-span-2">
+                <Label htmlFor="zipCode">CEP</Label>
+                <Input id="zipCode" value={shippingInfo.zipCode} onChange={handleInputChange} />
             </div>
             
-            <div className="space-y-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Resumo do Pedido</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {cartItems.map((item, index) => (
-                                <div key={index} className="flex items-center gap-4">
-                                    <Image
-                                        src={fixImageUrl(item.variant.images[0])}
-                                        alt={item.product.name}
-                                        width={64}
-                                        height={64}
-                                        className="rounded-md border object-cover"
-                                    />
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{item.displayName || item.product.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {item.quantity} x R$ {item.product.price.toFixed(2).replace('.',',')}
-                                        </p>
-                                    </div>
-                                    <p className="font-semibold">
-                                        R$ {(item.product.price * item.quantity).toFixed(2).replace('.',',')}
-                                    </p>
-                                </div>
-                            ))}
-                            <Separator />
-                            <div className="space-y-2">
-                                <Label htmlFor="coupon">Cupom de Desconto</Label>
-                                <div className="flex gap-2">
-                                    <Input 
-                                        id="coupon" 
-                                        placeholder="INSIRA SEU CUPOM"
-                                        value={couponCode}
-                                        onChange={(e) => setCouponCode(e.target.value)}
-                                        disabled={isApplyingCoupon}
-                                    />
-                                    <Button onClick={handleApplyCoupon} disabled={isApplyingCoupon}>
-                                        {isApplyingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
-                                    </Button>
-                                </div>
-                                {couponMessage && <p className="text-sm text-destructive">{couponMessage}</p>}
-                            </div>
-                            <Separator />
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Subtotal</span>
-                                    <span>R$ {cartTotal.toFixed(2).replace('.',',')}</span>
-                                </div>
-                                {appliedCoupon && (
-                                     <div className="flex justify-between text-green-600">
-                                        <span className="text-muted-foreground">Desconto ({appliedCoupon.code})</span>
-                                        <span>- R$ {discountAmount.toFixed(2).replace('.',',')}</span>
-                                    </div>
-                                )}
-                                <Separator />
-                                <div className="flex justify-between font-bold text-lg">
-                                    <span>Total</span>
-                                    <span>R$ {finalTotal.toFixed(2).replace('.',',')}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-8">
-                          {!preferenceId ? (
-                              <Button
-                                  size="lg"
-                                  className="w-full h-12 text-lg"
-                                  onClick={createMercadoPagoPreference}
-                                  disabled={isProcessing}
-                              >
-                                {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                                {isProcessing ? "Processando..." : "Pagar com Cartão"}
-                              </Button>
-                          ) : (
-                              <div id="wallet_container">
-                                 <Wallet initialization={{ preferenceId: preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
-                              </div>
-                          )}
-                          
-                           <Button
-                              size="lg"
-                              variant="outline"
-                              className="w-full mt-4"
-                              onClick={handlePixPayment}
-                              disabled={isGeneratingPix || !!pixData}
-                            >
-                              {isGeneratingPix ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                              {isGeneratingPix ? "Gerando PIX..." : "Pagar com PIX"}
-                            </Button>
-
-                          {pixData && (
-                            <Card className="mt-6">
-                              <CardHeader>
-                                <CardTitle>Pague com PIX</CardTitle>
-                              </CardHeader>
-                              <CardContent className="flex flex-col items-center gap-4">
-                                <Image
-                                  src={`data:image/png;base64,${pixData.qrCodeBase64}`}
-                                  alt="PIX"
-                                  width={200}
-                                  height={200}
-                                />
-                                <div className="w-full relative">
-                                  <Input value={pixData.payload} readOnly />
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="absolute right-1 top-1/2 -translate-y-1/2"
-                                    onClick={() => copyToClipboard(pixData.payload)}
-                                  >
-                                    <Copy />
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="sm:col-span-4">
+                <Label htmlFor="street">Endereço</Label>
+                <Input id="street" value={shippingInfo.street} onChange={handleInputChange} required />
             </div>
-      </div>
+
+            <div className="sm:col-span-2">
+                <Label htmlFor="number">Número</Label>
+                <Input id="number" value={shippingInfo.number} onChange={handleInputChange} required />
+            </div>
+
+            <div className="sm:col-span-4">
+                <Label htmlFor="complement">Complemento (Opcional)</Label>
+                <Input id="complement" value={shippingInfo.complement} onChange={handleInputChange} />
+            </div>
+            
+            <div className="sm:col-span-6">
+                <Label htmlFor="neighborhood">Bairro</Label>
+                <Input id="neighborhood" value={shippingInfo.neighborhood} onChange={handleInputChange} />
+            </div>
+
+            <div className="sm:col-span-4">
+                <Label htmlFor="city">Cidade</Label>
+                <Input id="city" value={shippingInfo.city} onChange={handleInputChange} required />
+            </div>
+
+            <div className="sm:col-span-2">
+                <Label htmlFor="state">Estado</Label>
+                <Input id="state" value={shippingInfo.state} onChange={handleInputChange} required />
+            </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Resumo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cartItems.map((item, i) => (
+            <div key={i} className="flex gap-3 mb-3">
+              <Image
+                src={fixImageUrl(item.variant.images[0])}
+                alt=""
+                width={60}
+                height={60}
+              />
+              <div>
+                <p>{item.product.name}</p>
+                <p>R$ {item.product.price}</p>
+              </div>
+            </div>
+          ))}
+
+          <Separator className="my-4" />
+
+          <p className="font-bold mb-4">Total: R$ {cartTotal}</p>
+
+          <Button
+            className="w-full"
+            onClick={handlePixPayment}
+            disabled={isGeneratingPix || pixData}
+          >
+            {isGeneratingPix ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              "Pagar com PIX"
+            )}
+          </Button>
+
+          {pixData && (
+            <div className="mt-6 text-center">
+              <Image
+                src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                alt="PIX"
+                width={200}
+                height={200}
+                className="mx-auto"
+              />
+              <Input value={pixData.qr_code} readOnly className="mt-3" />
+              <Button
+                size="sm"
+                className="mt-2"
+                onClick={() =>
+                  navigator.clipboard.writeText(pixData.qr_code)
+                }
+              >
+                <Copy size={16} />
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -71,6 +71,7 @@ export const createPixPayment = onRequest(
         if (result && result.point_of_interaction) {
           const pixData = result.point_of_interaction.transaction_data;
           response.status(201).json({
+            payment_id: result.id,
             status: result.status,
             qr_code_base64: pixData.qr_code_base64,
             qr_code: pixData.qr_code,
@@ -80,9 +81,9 @@ export const createPixPayment = onRequest(
             throw new Error("Resposta inesperada do Mercado Pago.");
         }
       } catch (error: any) {
-        logger.error('Erro ao criar pagamento PIX no Mercado Pago:', error?.response?.data || error);
-        const errorMessage = error?.response?.data?.message || 'Falha ao gerar a cobrança PIX.';
-        response.status(500).json({ error: errorMessage });
+        logger.error('Erro ao criar pagamento PIX no Mercado Pago:', error?.cause || error);
+        const errorMessage = error?.cause?.message || 'Falha ao gerar a cobrança PIX.';
+        response.status(500).json({ error: errorMessage, details: error?.cause?.error });
       }
     });
   }

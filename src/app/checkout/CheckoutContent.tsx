@@ -438,7 +438,7 @@ export default function CheckoutContent() {
                                     <Copy className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <p className="text-xs text-center text-muted-foreground mt-2">O PIX expira em 1 hora. O pagamento será confirmado automaticamente.</p>
+                            <p className="text-xs text-center text-muted-foreground mt-2">O pagamento será confirmado automaticamente.</p>
                         </CardContent>
                     </Card>
                  )}

@@ -33,9 +33,11 @@ export default function ProductsContent() {
 
     if (searchQuery) {
         const normalizedSearchQuery = searchQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        return products.filter(p => 
-            p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedSearchQuery)
-        );
+        return products.filter(p => {
+            const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+            return productName.includes(normalizedSearchQuery) || productBrand.includes(normalizedSearchQuery);
+        });
     }
 
     if (category === 'importados') {

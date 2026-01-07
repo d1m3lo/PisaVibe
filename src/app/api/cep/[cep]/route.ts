@@ -14,12 +14,13 @@ export async function GET(
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     
-    if (!response.ok) {
-        throw new Error('Falha ao buscar dados do ViaCEP.');
-    }
-
+    // A API do ViaCEP pode retornar 200 OK mesmo com um erro no corpo da resposta
     const data = await response.json();
 
+    if (!response.ok && !data) {
+        throw new Error('Falha ao buscar dados do ViaCEP. A resposta não foi bem-sucedida.');
+    }
+    
     if (data.erro) {
       return NextResponse.json({ error: 'CEP não encontrado.' }, { status: 404 });
     }

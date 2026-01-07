@@ -367,7 +367,17 @@ export default function CheckoutContent() {
                         <p className="font-semibold">O pagamento já foi efetuado?</p>
                         <div className="mt-3 flex justify-center gap-4">
                             <Button onClick={handleConfirmPixVerification}>Sim</Button>
-                            <Button variant="outline" onClick={() => setShowVerificationPrompt(false)}>Não</Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                toast({
+                                  title: 'Ok, sem pressa.',
+                                  description: 'Estamos aguardando a confirmação do seu pagamento.',
+                                });
+                              }}
+                            >
+                              Não
+                            </Button>
                         </div>
                     </div>
                 )}

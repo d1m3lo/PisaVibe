@@ -76,8 +76,14 @@ function ModeToggle() {
 
 const UserMenu = () => {
   const { user, isUserLoading } = useUser();
+  const [mounted, setMounted] = useState(false);
 
-  if (isUserLoading) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+
+  if (!mounted || isUserLoading) {
     return (
       <div className="h-10 w-10 flex items-center justify-center">
         <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
@@ -255,6 +261,52 @@ const SearchBar = () => {
   );
 };
 
+const MobileSearch = () => {
+    const router = useRouter();
+    const [queryValue, setQueryValue] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (queryValue.trim()) {
+            router.push(`/produtos?q=${queryValue}`);
+            setIsOpen(false);
+            setQueryValue('');
+        }
+    };
+
+    return (
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+                 <Button variant="ghost" size="icon" className="md:hidden">
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Buscar</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="top" className="h-auto">
+                 <form onSubmit={handleSearch} className="relative mt-4">
+                    <Input
+                        type="search"
+                        placeholder="O que você procura?"
+                        className="w-full pr-10 h-12 text-base"
+                        value={queryValue}
+                        onChange={(e) => setQueryValue(e.target.value)}
+                        autoFocus
+                    />
+                    <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 text-muted-foreground"
+                    >
+                        <Search className="h-5 w-5" />
+                    </Button>
+                </form>
+            </SheetContent>
+        </Sheet>
+    );
+};
+
 const MobileSubMenu = ({
   category,
   onClose,
@@ -364,8 +416,9 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1">
           <SearchBar />
+          <MobileSearch />
           <div className="items-center flex">
              <UserMenu />
              <ModeToggle />

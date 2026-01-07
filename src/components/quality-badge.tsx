@@ -23,7 +23,7 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
         Essential: "bg-green-100 text-green-800 border-green-200",
         Select: "bg-blue-100 text-blue-800 border-blue-200",
         Elite: "bg-purple-100 text-purple-800 border-purple-200",
-        Ultra: "bg-yellow-400/80 text-yellow-900 border-yellow-500/80",
+        Ultra: "bg-amber-400 text-amber-900 border-amber-500/80",
     };
 
     const icon: Record<NonNullable<Product['quality']>, React.ReactNode> = {

@@ -9,6 +9,7 @@ import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import ConditionalHeaderFooter from "@/components/conditional-header-footer";
 import Footer from "@/components/footer";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,6 +52,24 @@ export default function RootLayout({
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
+         <Script id="access-tracker" strategy="afterInteractive">
+          {`
+            (function() {
+              const hasVisited = sessionStorage.getItem('pisa-vibe-session');
+              if (!hasVisited) {
+                sessionStorage.setItem('pisa-vibe-session', 'true');
+                try {
+                   fetch('https://us-central1-studio-4155277971-b1669.cloudfunctions.net/logAccess', {
+                      method: 'POST',
+                      mode: 'no-cors'
+                   });
+                } catch (e) {
+                   // silently fail
+                }
+              }
+            })();
+          `}
+        </Script>
       </body>
     </html>
   );

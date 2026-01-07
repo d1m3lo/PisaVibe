@@ -26,6 +26,7 @@ service cloud.firestore {
     // UNVERIFIED ORDERS (Aguardando aprovação do admin)
     match /unverified-orders/{orderId} {
         allow read, write: if isAdmin();
+        allow create: if request.auth != null;
     }
 
     // USERS
@@ -59,6 +60,12 @@ service cloud.firestore {
     // Rule for collection group query on 'orders'
     match /{path=**}/orders/{orderId} {
       allow read, list: if isAdmin();
+    }
+    
+    // ACCESS LOGS (Allow anyone to write)
+    match /access_logs/{logId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
     }
 
 

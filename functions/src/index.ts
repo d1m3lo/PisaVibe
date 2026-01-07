@@ -1,6 +1,11 @@
 
 import * as functions from "firebase-functions";
 import { MercadoPagoConfig, Payment } from "mercadopago";
+import * as admin from 'firebase-admin';
+
+admin.initializeApp();
+
+const db = admin.firestore();
 
 /* ================================
    MERCADO PAGO CLIENT
@@ -56,5 +61,34 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
   } catch (error) {
     console.error("Erro ao gerar PIX:", error);
     res.status(500).json({ error: "Erro ao gerar PIX" });
+  }
+});
+
+
+/* ================================
+   LOG DE ACESSOS
+================================ */
+export const logAccess = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  try {
+    await db.collection('access_logs').add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    res.status(200).send('Access logged');
+  } catch (error) {
+    console.error('Error logging access:', error);
+    res.status(500).send('Error logging access');
   }
 });

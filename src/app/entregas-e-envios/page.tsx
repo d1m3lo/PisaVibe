@@ -1,12 +1,40 @@
 
 
-import { Award, CheckCircle, Diamond, Package, Star, Truck } from 'lucide-react';
+import { Award, CheckCircle, Diamond, Package, Star, Truck, Gem } from 'lucide-react';
 import type { Metadata } from 'next';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
     title: 'Envios e Entregas - PISA VIBE',
     description: 'Saiba como funciona nosso sistema de envio inteligente para garantir mais agilidade, eficiência e segurança na entrega dos seus produtos.',
 };
+
+const qualityLevels = [
+    {
+        icon: <Gem className="h-10 w-10 text-amber-500" />,
+        title: "Qualidade Ultra",
+        subtitle: "A perfeição em cada detalhe.",
+        features: ["Materiais premium", "Acabamento impecável", "Fidelidade máxima", "Para os mais exigentes"],
+    },
+    {
+        icon: <Diamond className="h-10 w-10 text-purple-500" />,
+        title: "Qualidade Elite",
+        subtitle: "Nossa categoria mais alta.",
+        features: ["Acabamento superior", "Materiais de alto padrão", "Visual extremamente fiel", "Ideal para quem busca o melhor"],
+    },
+    {
+        icon: <Star className="h-10 w-10 text-blue-500" />,
+        title: "Qualidade Select",
+        subtitle: "Equilíbrio perfeito.",
+        features: ["Excelente acabamento", "Ótima durabilidade", "Visual muito próximo"],
+    },
+    {
+        icon: <CheckCircle className="h-10 w-10 text-green-500" />,
+        title: "Qualidade Essential",
+        subtitle: "Praticidade para o dia a dia.",
+        features: ["Boa qualidade e conforto", "Design funcional", "Ótimo custo-benefício"],
+    }
+];
 
 export default function ShippingAndDeliveryPage() {
     return (
@@ -49,56 +77,32 @@ export default function ShippingAndDeliveryPage() {
                     </p>
                 </section>
 
-                <section>
+                 <section>
                     <h2 className="mb-6 text-center font-headline text-2xl font-bold">
                         Entenda nossas classificações de qualidade
                     </h2>
                     <p className="mb-8 text-center text-muted-foreground">
                         Para oferecer opções que atendam diferentes estilos e necessidades, trabalhamos com quatro níveis de qualidade:
                     </p>
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-                        <div className="flex flex-col items-center text-center">
-                            <Diamond className="h-10 w-10 text-cyan-500" />
-                            <h3 className="mt-3 font-bold text-xl">Qualidade Ultra</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">A perfeição em cada detalhe.</p>
-                             <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
-                                <li>Materiais premium</li>
-                                <li>Acabamento impecável</li>
-                                <li>Fidelidade máxima</li>
-                                <li>Para os mais exigentes</li>
-                            </ul>
-                        </div>
-                        <div className="flex flex-col items-center text-center">
-                            <Award className="h-10 w-10 text-yellow-500" />
-                            <h3 className="mt-3 font-bold text-xl">Qualidade Elite</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Nossa categoria mais alta.</p>
-                             <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
-                                <li>Acabamento superior</li>
-                                <li>Materiais de alto padrão</li>
-                                <li>Visual extremamente fiel</li>
-                                <li>Ideal para quem busca o melhor</li>
-                            </ul>
-                        </div>
-                         <div className="flex flex-col items-center text-center">
-                            <Star className="h-10 w-10 text-blue-500" />
-                            <h3 className="mt-3 font-bold text-xl">Qualidade Select</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Equilíbrio perfeito.</p>
-                            <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
-                                <li>Excelente acabamento</li>
-                                <li>Ótima durabilidade</li>
-                                <li>Visual muito próximo</li>
-                            </ul>
-                        </div>
-                         <div className="flex flex-col items-center text-center">
-                            <CheckCircle className="h-10 w-10 text-green-500" />
-                            <h3 className="mt-3 font-bold text-xl">Qualidade Essential</h3>
-                             <p className="mt-1 text-sm text-muted-foreground">Praticidade para o dia a dia.</p>
-                           <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
-                                <li>Boa qualidade e conforto</li>
-                                <li>Design funcional</li>
-                                <li>Ótimo custo-benefício</li>
-                            </ul>
-                        </div>
+                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        {qualityLevels.map((level) => (
+                            <Card key={level.title} className="flex flex-col text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                                <CardHeader className="items-center">
+                                    {level.icon}
+                                    <CardTitle className="mt-4 text-xl">{level.title}</CardTitle>
+                                    <p className="text-sm text-muted-foreground">{level.subtitle}</p>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        {level.features.map((feature) => (
+                                            <li key={feature} className="flex items-start justify-center text-center">
+                                                <span>{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 </section>
 

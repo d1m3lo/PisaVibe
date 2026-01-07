@@ -29,7 +29,7 @@ export type Product = {
   reviews: number;
   status: 'ativo' | 'inativo';
   tags?: string[];
-  quality?: 'Essential' | 'Select' | 'Elite';
+  quality?: 'Essential' | 'Select' | 'Elite' | 'Ultra';
   isImported?: boolean; // Selo de produto importado
   showSizeChart?: boolean; // Exibir tabela de medidas
   origin?: string; // Campo de origem para uso do admin

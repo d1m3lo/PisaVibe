@@ -1,5 +1,5 @@
 
-import { Gem, CheckCircle, Star } from "lucide-react";
+import { Gem, CheckCircle, Star, Diamond } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -13,6 +13,7 @@ const qualityDescriptions: Record<NonNullable<Product['quality']>, string> = {
     Essential: "Qualidade essencial, pensada para o dia a dia com ótimo custo-benefício.",
     Select: "Qualidade selecionada, com materiais e acabamento de alto padrão.",
     Elite: "Qualidade elite. O melhor nível disponível, com fidelidade máxima nos detalhes.",
+    Ultra: "Qualidade Ultra. A perfeição em cada detalhe, para os mais exigentes.",
 };
 
 export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) => {
@@ -22,12 +23,14 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
         Essential: "bg-green-100 text-green-800 border-green-200",
         Select: "bg-blue-100 text-blue-800 border-blue-200",
         Elite: "bg-purple-100 text-purple-800 border-purple-200",
+        Ultra: "bg-cyan-100 text-cyan-800 border-cyan-300",
     };
 
     const icon: Record<NonNullable<Product['quality']>, React.ReactNode> = {
         Essential: <CheckCircle className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
         Select: <Star className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
         Elite: <Gem className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
+        Ultra: <Diamond className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
     };
 
     const sizeClasses = size === 'sm' 

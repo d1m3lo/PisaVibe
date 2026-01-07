@@ -363,7 +363,7 @@ export default function Header() {
             className="font-headline text-xl font-bold tracking-tight"
           >
             <Image
-              src="https://i.postimg.cc/8CLs2wVd/logo-p-preto-v-laranja.png"
+              src="https://i.postimg.cc/LX1cpvKx/Chat-GPT-Image-7-de-jan-de-2026-09-55-44-removebg-preview.png"
               alt="PISA VIBE Logo"
               width={120}
               height={40}
@@ -371,7 +371,7 @@ export default function Header() {
               priority
             />
              <Image
-              src="https://i.postimg.cc/KzQ3qY3f/logo-p-branco-v-laranja.png"
+              src="https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png"
               alt="PISA VIBE Logo"
               width={120}
               height={40}

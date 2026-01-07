@@ -1,6 +1,6 @@
 
 
-import { Award, CheckCircle, Package, Star, Truck } from 'lucide-react';
+import { Award, CheckCircle, Diamond, Package, Star, Truck } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -54,9 +54,20 @@ export default function ShippingAndDeliveryPage() {
                         Entenda nossas classificações de qualidade
                     </h2>
                     <p className="mb-8 text-center text-muted-foreground">
-                        Para oferecer opções que atendam diferentes estilos e necessidades, trabalhamos com três níveis de qualidade:
+                        Para oferecer opções que atendam diferentes estilos e necessidades, trabalhamos com quatro níveis de qualidade:
                     </p>
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+                        <div className="flex flex-col items-center text-center">
+                            <Diamond className="h-10 w-10 text-cyan-500" />
+                            <h3 className="mt-3 font-bold text-xl">Qualidade Ultra</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">A perfeição em cada detalhe.</p>
+                             <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
+                                <li>Materiais premium</li>
+                                <li>Acabamento impecável</li>
+                                <li>Fidelidade máxima</li>
+                                <li>Para os mais exigentes</li>
+                            </ul>
+                        </div>
                         <div className="flex flex-col items-center text-center">
                             <Award className="h-10 w-10 text-yellow-500" />
                             <h3 className="mt-3 font-bold text-xl">Qualidade Elite</h3>
@@ -65,23 +76,23 @@ export default function ShippingAndDeliveryPage() {
                                 <li>Acabamento superior</li>
                                 <li>Materiais de alto padrão</li>
                                 <li>Visual extremamente fiel</li>
-                                <li>Ideal para quem busca o melhor nível disponível</li>
+                                <li>Ideal para quem busca o melhor</li>
                             </ul>
                         </div>
                          <div className="flex flex-col items-center text-center">
                             <Star className="h-10 w-10 text-blue-500" />
                             <h3 className="mt-3 font-bold text-xl">Qualidade Select</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">Equilíbrio perfeito entre custo e qualidade.</p>
+                            <p className="mt-1 text-sm text-muted-foreground">Equilíbrio perfeito.</p>
                             <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
                                 <li>Excelente acabamento</li>
                                 <li>Ótima durabilidade</li>
-                                <li>Visual muito próximo ao nível premium</li>
+                                <li>Visual muito próximo</li>
                             </ul>
                         </div>
                          <div className="flex flex-col items-center text-center">
                             <CheckCircle className="h-10 w-10 text-green-500" />
                             <h3 className="mt-3 font-bold text-xl">Qualidade Essential</h3>
-                             <p className="mt-1 text-sm text-muted-foreground">Pensada para quem busca praticidade no dia a dia.</p>
+                             <p className="mt-1 text-sm text-muted-foreground">Praticidade para o dia a dia.</p>
                            <ul className="mt-3 list-inside list-disc text-sm text-muted-foreground space-y-1 text-left">
                                 <li>Boa qualidade e conforto</li>
                                 <li>Design funcional</li>

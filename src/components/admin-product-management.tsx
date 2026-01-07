@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -479,6 +480,7 @@ const ProductForm = ({
                         <SelectItem value="Essential">Essential</SelectItem>
                         <SelectItem value="Select">Select</SelectItem>
                         <SelectItem value="Elite">Elite</SelectItem>
+                        <SelectItem value="Ultra">Ultra</SelectItem>
                       </SelectContent>
                     </Select>
                 </div>

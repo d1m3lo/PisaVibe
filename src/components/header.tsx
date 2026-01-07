@@ -213,44 +213,46 @@ const SearchBar = () => {
           </Button>
         </form>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 lg:w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <ScrollArea className="max-h-[50vh]">
-            <div className="p-2">
-                {searchResults.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                    {searchResults.map((product) => (
-                    <Link
-                        key={product.id}
-                        href={`/produtos/${product.id}`}
-                        className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
-                        onClick={closePopover}
-                    >
-                        <div className="relative h-16 w-16 flex-shrink-0">
-                        <Image
-                            src={fixImageUrl(product.variants[0].images[0])}
-                            alt={product.name}
-                            fill
-                            className="rounded-md object-cover"
-                        />
-                        </div>
-                        <div>
-                        <p className="font-semibold">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                            R$ {product.price.toFixed(2).replace(".", ",")}
-                        </p>
-                        </div>
-                    </Link>
-                    ))}
-                </div>
-                ) : (
-                queryValue.trim().length > 1 && (
-                    <p className="p-4 text-center text-sm text-muted-foreground">
-                    Nenhum resultado encontrado.
+      <PopoverContent 
+        className="w-[320px] p-0 lg:w-[400px] max-h-[50vh] overflow-y-auto" 
+        align="start" 
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="p-2">
+            {searchResults.length > 0 ? (
+            <div className="flex flex-col gap-2">
+                {searchResults.map((product) => (
+                <Link
+                    key={product.id}
+                    href={`/produtos/${product.id}`}
+                    className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                    onClick={closePopover}
+                >
+                    <div className="relative h-16 w-16 flex-shrink-0">
+                    <Image
+                        src={fixImageUrl(product.variants[0].images[0])}
+                        alt={product.name}
+                        fill
+                        className="rounded-md object-cover"
+                    />
+                    </div>
+                    <div>
+                    <p className="font-semibold">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                        R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
-                )
-                )}
+                    </div>
+                </Link>
+                ))}
             </div>
-        </ScrollArea>
+            ) : (
+            queryValue.trim().length > 1 && (
+                <p className="p-4 text-center text-sm text-muted-foreground">
+                Nenhum resultado encontrado.
+                </p>
+            )
+            )}
+        </div>
       </PopoverContent>
     </Popover>
   );

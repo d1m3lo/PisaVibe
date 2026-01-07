@@ -338,6 +338,40 @@ const MobileSubMenu = ({
   </Collapsible>
 );
 
+const Logo = () => {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        // Render a placeholder with the same dimensions as the logo
+        return <div style={{ width: 120, height: 40 }} />;
+    }
+
+    return (
+        <>
+            <Image
+              src="https://i.postimg.cc/LX1cpvKx/Chat-GPT-Image-7-de-jan-de-2026-09-55-44-removebg-preview.png"
+              alt="PISA VIBE Logo"
+              width={120}
+              height={40}
+              className="block dark:hidden"
+              priority
+            />
+             <Image
+              src="https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png"
+              alt="PISA VIBE Logo"
+              width={120}
+              height={40}
+              className="hidden dark:block"
+              priority
+            />
+        </>
+    );
+};
+
+
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
@@ -362,22 +396,7 @@ export default function Header() {
             href="/"
             className="font-headline text-xl font-bold tracking-tight"
           >
-            <Image
-              src="https://i.postimg.cc/LX1cpvKx/Chat-GPT-Image-7-de-jan-de-2026-09-55-44-removebg-preview.png"
-              alt="PISA VIBE Logo"
-              width={120}
-              height={40}
-              className="block dark:hidden"
-              priority
-            />
-             <Image
-              src="https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png"
-              alt="PISA VIBE Logo"
-              width={120}
-              height={40}
-              className="hidden dark:block"
-              priority
-            />
+            <Logo />
           </Link>
           <nav className="hidden md:flex gap-1 items-center">
             {megaMenuData.map((category) => (

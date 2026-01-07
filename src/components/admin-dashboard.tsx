@@ -3,13 +3,14 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare } from 'lucide-react';
+import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare, ShieldCheck } from 'lucide-react';
 import ProductManagement from './admin-product-management';
 import CustomerManagement from './admin-customer-management';
 import AdminOrderManagement from './admin-order-management';
 import AdminMainDashboard from './admin-main-dashboard';
 import AdminCouponManagement from './admin-coupon-management';
 import AdminCentralControle from './admin-central-controle';
+import AdminPixVerification from './admin-pix-verification';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -31,6 +32,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             >
               <LayoutDashboard className="h-5 w-5" />
               Dashboard
+            </Button>
+             <Button
+              variant={activeTab === 'pix' ? 'secondary' : 'ghost'}
+              className="justify-start gap-2"
+              onClick={() => setActiveTab('pix')}
+            >
+              <ShieldCheck className="h-5 w-5" />
+              Verificar Pagamentos PIX
             </Button>
             <Button
               variant={activeTab === 'central' ? 'secondary' : 'ghost'}
@@ -81,6 +90,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       </aside>
       <main className="flex-1 p-8">
         {activeTab === 'dashboard' && <AdminMainDashboard />}
+        {activeTab === 'pix' && <AdminPixVerification />}
         {activeTab === 'central' && <AdminCentralControle />}
         {activeTab === 'products' && <ProductManagement />}
         {activeTab === 'customers' && <CustomerManagement />}

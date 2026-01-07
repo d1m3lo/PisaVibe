@@ -17,10 +17,12 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { useFirestore, useUser } from "@/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
+
+type PixStatus = 'idle' | 'generated' | 'pending_verification' | 'confirmed' | 'error';
 
 export default function CheckoutContent() {
   const { user } = useUser();
@@ -30,11 +32,11 @@ export default function CheckoutContent() {
   const firestore = useFirestore();
 
   const [pixData, setPixData] = useState<any>(null);
-  const [pixPaymentId, setPixPaymentId] = useState<string | null>(null);
+  const [pixStatus, setPixStatus] = useState<PixStatus>('idle');
+  const [showVerification, setShowVerification] = useState(false);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
 
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
-
   const shippingFormRef = useRef<HTMLDivElement>(null);
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -50,40 +52,20 @@ export default function CheckoutContent() {
     state: "",
   });
 
-  /* ===============================
-     MERCADO PAGO INIT
-  =============================== */
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
     if (key) initMercadoPago(key, { locale: "pt-BR" });
   }, []);
+  
+   useEffect(() => {
+    if (pixStatus === 'generated') {
+      const timer = setTimeout(() => {
+        setShowVerification(true);
+      }, 8000); // 8 segundos
+      return () => clearTimeout(timer);
+    }
+  }, [pixStatus]);
 
-  /* ===============================
-     ESCUTA STATUS DO PIX
-  =============================== */
-  useEffect(() => {
-    if (!pixPaymentId || !firestore) return;
-
-    const ref = doc(firestore, "orders", pixPaymentId);
-
-    const unsub = onSnapshot(ref, (snap) => {
-      if (!snap.exists()) return;
-
-      const data = snap.data();
-
-      if (data.status === "approved") {
-        toast({
-          title: "Pagamento aprovado 🎉",
-          description: "Seu pedido foi confirmado.",
-        });
-
-        clearCart();
-        router.push("/minha-conta/pedidos");
-      }
-    });
-
-    return () => unsub();
-  }, [pixPaymentId, firestore, clearCart, router, toast]);
 
   const isInvalid =
     !shippingInfo.name ||
@@ -105,13 +87,12 @@ export default function CheckoutContent() {
     return true;
   };
 
-  /* ===============================
-     PIX
-  =============================== */
   const handlePixPayment = async () => {
     if (!validateForm() || !user) return;
 
     setIsGeneratingPix(true);
+    setShowVerification(false);
+    setPixStatus('idle');
 
     try {
       const res = await fetch(
@@ -122,21 +103,19 @@ export default function CheckoutContent() {
           body: JSON.stringify({
             amount: cartTotal,
             email: shippingInfo.email,
-            userId: user.uid,
-            items: cartItems,
-            shippingInfo,
           }),
         }
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Erro desconhecido");
 
-      setPixPaymentId(String(data.payment_id));
       setPixData(data);
+      setPixStatus('generated');
 
       toast({ title: "PIX gerado com sucesso" });
     } catch (err: any) {
+      setPixStatus('error');
       toast({
         variant: "destructive",
         title: "Erro ao gerar PIX",
@@ -147,9 +126,47 @@ export default function CheckoutContent() {
     }
   };
 
-  /* ===============================
-     CARTÃO (MERCADO PAGO)
-  =============================== */
+  const handleConfirmPixVerification = async () => {
+    if (!user || !firestore) {
+      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado." });
+      return;
+    }
+
+    setPixStatus('pending_verification');
+    
+    try {
+      await addDoc(collection(firestore, 'unverified-orders'), {
+        userId: user.uid,
+        customerInfo: {
+          name: shippingInfo.name,
+          email: shippingInfo.email,
+        },
+        items: cartItems.map(item => ({
+          productId: item.product.id,
+          productName: item.displayName || item.product.name,
+          variantColor: item.variant.color,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.product.price,
+          imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
+        })),
+        totalAmount: cartTotal,
+        shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
+        paymentMethod: 'pix',
+        status: 'Pagamento em análise',
+        createdAt: new Date().toISOString(),
+        paymentId: pixData.payment_id,
+      });
+
+      clearCart();
+      
+    } catch (error) {
+       console.error("Erro ao enviar para verificação:", error);
+       setPixStatus('error');
+       toast({ variant: "destructive", title: "Erro", description: "Não foi possível enviar o pagamento para análise." });
+    }
+  };
+
   const handleCardPayment = async () => {
     if (!validateForm() || !user) return;
 
@@ -253,56 +270,88 @@ export default function CheckoutContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Resumo</CardTitle>
+          <CardTitle>Resumo e Pagamento</CardTitle>
         </CardHeader>
         <CardContent>
           {cartItems.map((item, i) => (
             <div key={i} className="flex gap-3 mb-3">
               <Image
                 src={fixImageUrl(item.variant.images[0])}
-                alt=""
+                alt={item.displayName || item.product.name}
                 width={60}
                 height={60}
               />
               <div>
-                <p>{item.product.name}</p>
-                <p>R$ {item.product.price}</p>
+                <p className="font-semibold">{item.displayName || item.product.name}</p>
+                <p className="text-sm text-muted-foreground">R$ {item.product.price.toFixed(2).replace('.',',')}</p>
               </div>
             </div>
           ))}
 
           <Separator className="my-4" />
-          <p className="font-bold mb-4">Total: R$ {cartTotal}</p>
+          <p className="font-bold mb-4 text-lg">Total: R$ {cartTotal.toFixed(2).replace('.',',')}</p>
 
-          <Button className="w-full mb-3" onClick={handlePixPayment}>
+          <Button className="w-full mb-3" onClick={handlePixPayment} disabled={isGeneratingPix || pixStatus !== 'idle'}>
             {isGeneratingPix ? <Loader2 className="animate-spin" /> : "Pagar com PIX"}
           </Button>
 
-          <Button className="w-full mb-3" variant="outline" onClick={handleCardPayment}>
+          <Button className="w-full mb-3" variant="outline" onClick={handleCardPayment} disabled={pixStatus !== 'idle'}>
             Pagar com Cartão
           </Button>
 
           {preferenceId && <Wallet initialization={{ preferenceId }} />}
 
-          {pixData && (
-            <div className="mt-6 text-center">
-              <Image
-                src={`data:image/png;base64,${pixData.qr_code_base64}`}
-                alt="PIX"
-                width={200}
-                height={200}
-                className="mx-auto"
-              />
-              <Input value={pixData.qr_code} readOnly className="mt-3" />
-              <Button
-                size="sm"
-                className="mt-2"
-                onClick={() => navigator.clipboard.writeText(pixData.qr_code)}
-              >
-                <Copy size={16} />
-              </Button>
+          {pixStatus === 'generated' && pixData && (
+            <div className="mt-6 text-center animate-in fade-in-50">
+                <h3 className="font-semibold mb-2">Pague com este QR Code</h3>
+                <Image
+                    src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                    alt="PIX QR Code"
+                    width={200}
+                    height={200}
+                    className="mx-auto rounded-md"
+                />
+                <div className="relative mt-3">
+                    <Input value={pixData.qr_code} readOnly />
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                        onClick={() => {
+                            navigator.clipboard.writeText(pixData.qr_code);
+                            toast({ title: 'Código PIX copiado!' });
+                        }}
+                    >
+                        <Copy size={16} />
+                    </Button>
+                </div>
+                {showVerification && (
+                    <div className="mt-6 p-4 bg-secondary rounded-lg animate-in fade-in-50">
+                        <p className="font-semibold">O pagamento já foi efetuado?</p>
+                        <div className="mt-3 flex justify-center gap-4">
+                            <Button onClick={handleConfirmPixVerification}>Sim</Button>
+                            <Button variant="outline" onClick={() => setShowVerification(false)}>Não</Button>
+                        </div>
+                    </div>
+                )}
             </div>
           )}
+          
+           {pixStatus === 'pending_verification' && (
+             <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+                <CheckCircle className="mx-auto h-10 w-10 mb-3" />
+                <h3 className="font-bold text-lg">Pagamento em análise</h3>
+                <p className="text-sm">Fique tranquilo, assim que confirmarmos o Pix você será notificado. Seu dinheiro está em boas mãos.</p>
+            </div>
+           )}
+
+            {pixStatus === 'error' && (
+                 <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
+                    <AlertCircle className="mx-auto h-10 w-10 mb-3" />
+                    <h3 className="font-bold text-lg">Ocorreu um erro</h3>
+                    <p className="text-sm">Não foi possível processar seu pagamento. Por favor, tente novamente.</p>
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>

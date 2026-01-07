@@ -1,9 +1,6 @@
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import { MercadoPagoConfig, Payment } from "mercadopago";
 
-admin.initializeApp();
-const db = admin.firestore();
+import * as functions from "firebase-functions";
+import { MercadoPagoConfig, Payment } from "mercadopago";
 
 /* ================================
    MERCADO PAGO CLIENT
@@ -32,9 +29,9 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const { amount, email, items, shippingInfo, userId } = req.body;
+    const { amount, email } = req.body;
 
-    if (!amount || !email || !items || !userId) {
+    if (!amount || !email) {
       res.status(400).json({ error: "Dados inválidos" });
       return;
     }
@@ -50,24 +47,6 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
 
     const pix = result.point_of_interaction?.transaction_data;
 
-    const orderRef = db
-      .collection("users")
-      .doc(userId)
-      .collection("orders")
-      .doc(String(result.id));
-
-    await orderRef.set({
-      userId,
-      email,
-      items,
-      shippingInfo,
-      paymentId: result.id,
-      paymentMethod: "pix",
-      status: "pending",
-      amount,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
     res.status(200).json({
       payment_id: result.id,
       status: result.status,
@@ -79,45 +58,3 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: "Erro ao gerar PIX" });
   }
 });
-
-/* ================================
-   WEBHOOK MERCADO PAGO
-================================ */
-export const mercadoPagoWebhook = functions.https.onRequest(
-  async (req, res) => {
-    try {
-      const paymentId = req.body?.data?.id;
-      if (!paymentId) {
-        res.status(200).send("OK");
-        return;
-      }
-
-      const mpPayment = await payment.get({ id: paymentId });
-      const status = mpPayment.status;
-      const userId = mpPayment.metadata?.user_id;
-
-      if (!userId) {
-        console.warn("Webhook sem userId");
-        res.status(200).send("OK");
-        return;
-      }
-
-      const orderRef = db
-        .collection("users")
-        .doc(userId)
-        .collection("orders")
-        .doc(String(paymentId));
-
-      await orderRef.update({
-        status,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      console.log("Pedido atualizado:", paymentId, status);
-      res.status(200).send("OK");
-    } catch (error) {
-      console.error("Erro no webhook:", error);
-      res.status(500).send("Erro");
-    }
-  }
-);

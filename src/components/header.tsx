@@ -214,7 +214,7 @@ const SearchBar = () => {
         </form>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[320px] p-0 lg:w-[400px] max-h-[50vh] overflow-y-auto" 
+        className="w-[320px] p-0 lg:w-[400px] overflow-y-auto max-h-[50vh]" 
         align="start" 
         onOpenAutoFocus={(e) => e.preventDefault()}
       >

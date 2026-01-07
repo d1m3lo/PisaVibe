@@ -149,9 +149,11 @@ const SearchBar = () => {
     const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     
     return products
-      .filter((p) => 
-        p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedQuery)
-      )
+      .filter((p) => {
+        const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+        return productName.includes(normalizedQuery) || productBrand.includes(normalizedQuery);
+      })
       .slice(0, 15);
   }, [queryValue, products]);
 
@@ -313,6 +315,15 @@ const MobileSubMenu = ({
 );
 
 const Logo = () => {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div style={{width: 120, height: 40}} />;
+    }
+
     return (
         <>
             <Image

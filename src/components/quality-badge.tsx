@@ -29,8 +29,8 @@ export const QualityBadge = ({ quality, size = 'default' }: QualityBadgeProps) =
     const icon: Record<NonNullable<Product['quality']>, React.ReactNode> = {
         Essential: <CheckCircle className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
         Select: <Star className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
-        Elite: <Gem className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
-        Ultra: <Diamond className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
+        Elite: <Diamond className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
+        Ultra: <Gem className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} />,
     };
 
     const sizeClasses = size === 'sm' 

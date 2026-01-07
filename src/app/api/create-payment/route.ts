@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
     }
     
-    // Calcula o desconto
     const totalAmount = items.reduce((acc: number, item: any) => acc + item.quantity * item.unit_price, 0);
     let discount = 0;
     if (coupon) {
@@ -34,7 +33,6 @@ export async function POST(req: NextRequest) {
         discount = coupon.discountValue;
       }
     }
-    // Aplica o desconto como um item negativo na preferência
     if (discount > 0) {
       items.push({
         id: 'discount',
@@ -54,15 +52,15 @@ export async function POST(req: NextRequest) {
           email: shippingInfo.email,
         },
         back_urls: {
-            success: "https://pisavibe.shop/checkout/sucesso",
-            failure: "https://pisavibe.shop/checkout/erro",
-            pending: "https://pisavibe.shop/checkout/pendente",
+            success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/sucesso`,
+            failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/erro`,
+            pending: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/pendente`,
         },
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
             shippingInfo: JSON.stringify(shippingInfo),
-            cartItems: JSON.stringify(items.filter((i:any) => i.id !== 'discount')), // Salva o carrinho original
+            cartItems: JSON.stringify(items.filter((i:any) => i.id !== 'discount')), 
             couponCode: coupon?.code || undefined,
             discountAmount: coupon ? discount : undefined,
         },

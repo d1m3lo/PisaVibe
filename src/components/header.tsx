@@ -46,6 +46,15 @@ import { ScrollArea } from "./ui/scroll-area";
 
 function ModeToggle() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="h-10 w-10" />;
+  }
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -354,11 +363,19 @@ export default function Header() {
             className="font-headline text-xl font-bold tracking-tight"
           >
             <Image
-              src="https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png"
+              src="https://i.postimg.cc/8CLs2wVd/logo-p-preto-v-laranja.png"
               alt="PISA VIBE Logo"
               width={120}
               height={40}
-              className="dark:invert"
+              className="block dark:hidden"
+              priority
+            />
+             <Image
+              src="https://i.postimg.cc/KzQ3qY3f/logo-p-branco-v-laranja.png"
+              alt="PISA VIBE Logo"
+              width={120}
+              height={40}
+              className="hidden dark:block"
               priority
             />
           </Link>

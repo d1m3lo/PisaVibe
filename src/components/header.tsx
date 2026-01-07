@@ -46,15 +46,6 @@ import { ScrollArea } from "./ui/scroll-area";
 
 function ModeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="h-10 w-10" />;
-  }
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -76,14 +67,8 @@ function ModeToggle() {
 
 const UserMenu = () => {
   const { user, isUserLoading } = useUser();
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-
-  if (!mounted || isUserLoading) {
+  if (isUserLoading) {
     return (
       <div className="h-10 w-10 flex items-center justify-center">
         <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
@@ -347,8 +332,10 @@ export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const [openMenu, setOpenMenu] = React.useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 0);
     };
@@ -367,7 +354,14 @@ export default function Header() {
             href="/"
             className="font-headline text-xl font-bold tracking-tight"
           >
-            PISA VIBE
+            <Image
+              src="https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png"
+              alt="PISA VIBE Logo"
+              width={120}
+              height={40}
+              className="dark:invert"
+              priority
+            />
           </Link>
           <nav className="hidden md:flex gap-1 items-center">
             {megaMenuData.map((category) => (
@@ -420,8 +414,8 @@ export default function Header() {
           <SearchBar />
           <MobileSearch />
           <div className="items-center flex">
-             <UserMenu />
-             <ModeToggle />
+             {mounted ? <UserMenu /> : <div className="h-10 w-10" />}
+             {mounted ? <ModeToggle /> : <div className="h-10 w-10" />}
           </div>
           <CartButton />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

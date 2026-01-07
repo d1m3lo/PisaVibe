@@ -74,6 +74,7 @@ export type OrderStatus =
 export type Order = {
   id: string;
   userId: string;
+  originalSessionId?: string; // ID da sessão de checkout ou do pagamento
   customerInfo: {
     name: string;
     email: string;

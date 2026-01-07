@@ -55,6 +55,7 @@ import {
 interface UnverifiedOrder {
   id: string;
   userId: string;
+  originalSessionId: string;
   customerInfo: { name: string; email: string; };
   items: OrderItem[];
   totalAmount: number;
@@ -62,7 +63,6 @@ interface UnverifiedOrder {
   paymentMethod: string;
   status: string;
   createdAt: string;
-  paymentId: string;
 }
 
 export default function AdminPixVerification() {
@@ -116,16 +116,15 @@ export default function AdminPixVerification() {
             orderDate: new Date().toISOString(),
             totalAmount: order.totalAmount,
             shippingAddress: order.shippingAddress,
-            status: 'Pedido confirmado', // Starting status for a confirmed order
+            status: 'Pedido confirmado',
             paymentMethod: order.paymentMethod,
-            paymentId: order.paymentId,
+            originalSessionId: order.originalSessionId,
         });
 
         // 2. Delete the unverified order
         const unverifiedOrderRef = doc(firestore, 'unverified-orders', order.id);
         batch.delete(unverifiedOrderRef);
         
-        // 3. Commit the batch
         await batch.commit();
 
         toast({
@@ -222,7 +221,7 @@ export default function AdminPixVerification() {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Recusar Pagamento?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                Esta ação irá remover a solicitação de verificação. O cliente não será notificado. Tem certeza?
+                                                Esta ação irá remover a solicitação de verificação. O cliente será notificado que o pagamento não foi identificado. Tem certeza?
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>

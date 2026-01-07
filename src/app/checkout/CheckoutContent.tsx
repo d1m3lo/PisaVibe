@@ -15,17 +15,18 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useFirestore, useUser } from "@/firebase";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
+import type { Order } from "@/lib/types";
 
-type PixStatus = 'idle' | 'generated' | 'pending_verification' | 'confirmed' | 'error';
+type PixStatus = 'idle' | 'generated' | 'pending_verification' | 'confirmed' | 'error' | 'rejected';
 
 export default function CheckoutContent() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const { cartItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const { toast } = useToast();
@@ -33,8 +34,9 @@ export default function CheckoutContent() {
 
   const [pixData, setPixData] = useState<any>(null);
   const [pixStatus, setPixStatus] = useState<PixStatus>('idle');
-  const [showVerification, setShowVerification] = useState(false);
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+  const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
 
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const shippingFormRef = useRef<HTMLDivElement>(null);
@@ -60,11 +62,47 @@ export default function CheckoutContent() {
    useEffect(() => {
     if (pixStatus === 'generated') {
       const timer = setTimeout(() => {
-        setShowVerification(true);
+        setShowVerificationPrompt(true);
       }, 8000); // 8 segundos
       return () => clearTimeout(timer);
     }
   }, [pixStatus]);
+
+  // Listener para o resultado da verificação do admin
+  useEffect(() => {
+    if (pixStatus !== 'pending_verification' || !lastPaymentId || !user || !firestore) {
+      return;
+    }
+
+    // Listener para o pedido ser criado (sucesso)
+    const userOrdersRef = collection(firestore, `users/${user.uid}/orders`);
+    const q = query(userOrdersRef, where("originalSessionId", "==", lastPaymentId));
+    
+    const unsubscribeOrder = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setPixStatus('confirmed');
+        clearCart();
+        unsubscribeOrder();
+        // Não precisa mais do listener do unverified
+      }
+    });
+
+    // Timeout caso o admin demore muito ou recuse
+    const rejectionTimeout = setTimeout(() => {
+        getDocs(q).then(snapshot => {
+             // Se depois do timeout o pedido ainda não foi criado, consideramos recusado
+            if (snapshot.empty) {
+                setPixStatus('rejected');
+            }
+        });
+    }, 300000); // 5 minutos de timeout
+
+    return () => {
+      unsubscribeOrder();
+      clearTimeout(rejectionTimeout);
+    };
+
+  }, [pixStatus, lastPaymentId, user, firestore, clearCart]);
 
 
   const isInvalid =
@@ -91,7 +129,7 @@ export default function CheckoutContent() {
     if (!validateForm() || !user) return;
 
     setIsGeneratingPix(true);
-    setShowVerification(false);
+    setShowVerificationPrompt(false);
     setPixStatus('idle');
 
     try {
@@ -109,8 +147,9 @@ export default function CheckoutContent() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro desconhecido");
-
+      
       setPixData(data);
+      setLastPaymentId(data.payment_id); // Salva o ID para o listener
       setPixStatus('generated');
 
       toast({ title: "PIX gerado com sucesso" });
@@ -127,8 +166,8 @@ export default function CheckoutContent() {
   };
 
   const handleConfirmPixVerification = async () => {
-    if (!user || !firestore) {
-      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado." });
+    if (!user || !firestore || !lastPaymentId) {
+      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado ou ID do pagamento ausente." });
       return;
     }
 
@@ -137,6 +176,7 @@ export default function CheckoutContent() {
     try {
       await addDoc(collection(firestore, 'unverified-orders'), {
         userId: user.uid,
+        originalSessionId: lastPaymentId,
         customerInfo: {
           name: shippingInfo.name,
           email: shippingInfo.email,
@@ -155,10 +195,7 @@ export default function CheckoutContent() {
         paymentMethod: 'pix',
         status: 'Pagamento em análise',
         createdAt: new Date().toISOString(),
-        paymentId: pixData.payment_id,
       });
-
-      clearCart();
       
     } catch (error) {
        console.error("Erro ao enviar para verificação:", error);
@@ -325,12 +362,12 @@ export default function CheckoutContent() {
                         <Copy size={16} />
                     </Button>
                 </div>
-                {showVerification && (
+                {showVerificationPrompt && (
                     <div className="mt-6 p-4 bg-secondary rounded-lg animate-in fade-in-50">
                         <p className="font-semibold">O pagamento já foi efetuado?</p>
                         <div className="mt-3 flex justify-center gap-4">
                             <Button onClick={handleConfirmPixVerification}>Sim</Button>
-                            <Button variant="outline" onClick={() => setShowVerification(false)}>Não</Button>
+                            <Button variant="outline" onClick={() => setShowVerificationPrompt(false)}>Não</Button>
                         </div>
                     </div>
                 )}
@@ -339,17 +376,38 @@ export default function CheckoutContent() {
           
            {pixStatus === 'pending_verification' && (
              <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
-                <CheckCircle className="mx-auto h-10 w-10 mb-3" />
+                <Loader2 className="mx-auto h-10 w-10 mb-3 animate-spin" />
                 <h3 className="font-bold text-lg">Pagamento em análise</h3>
                 <p className="text-sm">Fique tranquilo, assim que confirmarmos o Pix você será notificado. Seu dinheiro está em boas mãos.</p>
             </div>
            )}
+           
+           {pixStatus === 'confirmed' && (
+             <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
+                <CheckCircle className="mx-auto h-10 w-10 mb-3" />
+                <h3 className="font-bold text-lg">Pagamento confirmado com sucesso!</h3>
+                <p className="text-sm">Seu pedido já está sendo preparado. Você pode acompanhá-lo em 'Meus Pedidos'.</p>
+                 <Button asChild className="mt-4">
+                    <a href="/minha-conta">Ir para Meus Pedidos</a>
+                </Button>
+            </div>
+           )}
+           
+            {pixStatus === 'rejected' && (
+                 <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-orange-50 text-orange-800 rounded-lg border border-orange-200">
+                    <AlertCircle className="mx-auto h-10 w-10 mb-3" />
+                    <h3 className="font-bold text-lg">Pagamento não identificado</h3>
+                    <p className="text-sm">Não conseguimos confirmar seu pagamento. Por favor, tente novamente ou verifique se o pagamento foi concluído no seu banco.</p>
+                     <Button onClick={() => setPixStatus('idle')} className="mt-4">Tentar Novamente</Button>
+                </div>
+            )}
 
             {pixStatus === 'error' && (
                  <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
-                    <AlertCircle className="mx-auto h-10 w-10 mb-3" />
+                    <XCircle className="mx-auto h-10 w-10 mb-3" />
                     <h3 className="font-bold text-lg">Ocorreu um erro</h3>
                     <p className="text-sm">Não foi possível processar seu pagamento. Por favor, tente novamente.</p>
+                    <Button onClick={() => setPixStatus('idle')} className="mt-4">Tentar Novamente</Button>
                 </div>
             )}
         </CardContent>
@@ -357,3 +415,4 @@ export default function CheckoutContent() {
     </div>
   );
 }
+

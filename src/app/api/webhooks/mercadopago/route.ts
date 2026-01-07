@@ -33,13 +33,20 @@ export async function POST(req: NextRequest) {
       if (payment && payment.status === 'approved' && payment.metadata) {
         console.log(`✅ Pagamento ${paymentId} aprovado. Processando pedido...`);
         
+        // Usamos o paymentId como identificador único do pedido para evitar duplicatas
         const existingOrderQuery = await db.collectionGroup('orders')
           .where('originalSessionId', '==', paymentId)
           .limit(1)
           .get();
 
         if (existingOrderQuery.empty) {
-          await createUnverifiedOrderFromPayment(payment);
+          // A lógica de criação do pedido foi movida para o painel admin para confirmação manual do PIX.
+          // Para cartões, o fluxo continua aqui.
+          if (payment.payment_method_id !== 'pix') {
+             await createOrderFromPayment(payment);
+          } else {
+             console.log(`Pagamento PIX ${paymentId} aguardando confirmação manual do admin.`);
+          }
         } else {
           console.log(`Pedido para o pagamento ${paymentId} já existe. Ignorando.`);
         }
@@ -56,28 +63,40 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function createUnverifiedOrderFromPayment(payment: any) {
+async function createOrderFromPayment(payment: any) {
   const { metadata } = payment;
   const { shippingInfo: shippingInfoJSON, cartItems: cartItemsJSON, couponCode, discountAmount } = metadata;
   
   if (!shippingInfoJSON || !cartItemsJSON) {
-    throw new Error('Metadados da preferência do Mercado Pago estão ausentes ou incompletos.');
+    console.error(`Metadados ausentes para o pagamento ${payment.id}.`);
+    // Não lançamos um erro aqui para não fazer o webhook tentar novamente sem sucesso.
+    // Apenas registramos o log e saímos.
+    return;
   }
 
-  const shippingInfo = JSON.parse(shippingInfoJSON);
+  let shippingInfo, cartItems;
+  try {
+    shippingInfo = JSON.parse(shippingInfoJSON);
+    cartItems = JSON.parse(cartItemsJSON);
+  } catch (e) {
+    console.error(`Erro ao parsear metadados do pagamento ${payment.id}:`, e);
+    return;
+  }
+  
   const userEmail = shippingInfo.email;
-  console.log(`Iniciando criação de pedido não verificado para o email: ${userEmail}`);
+  console.log(`Iniciando criação de pedido para o email: ${userEmail}`);
 
   const usersRef = db.collection('users');
   const userQuery = await usersRef.where('email', '==', userEmail).limit(1).get();
 
   if (userQuery.empty) {
-    throw new Error(`Usuário com o e-mail ${userEmail} não encontrado.`);
+     console.error(`Usuário com o e-mail ${userEmail} não encontrado para o pagamento ${payment.id}.`);
+     return;
   }
   const userId = userQuery.docs[0].id;
   console.log(`Usuário encontrado: ${userId}`);
 
-  const cartItems: OrderItem[] = JSON.parse(cartItemsJSON).map((item: any) => ({
+  const orderItems: OrderItem[] = cartItems.map((item: any) => ({
       productId: item.id,
       productName: item.title,
       variantColor: item.description?.split(' / ')[0] || '',
@@ -89,13 +108,13 @@ async function createUnverifiedOrderFromPayment(payment: any) {
 
   const formattedAddress = `${shippingInfo.street}, ${shippingInfo.number} ${shippingInfo.complement || ''} - ${shippingInfo.neighborhood}, ${shippingInfo.city} - ${shippingInfo.state}, ${shippingInfo.zipCode}`;
 
-  const unverifiedOrder = {
+  const newOrder: Omit<Order, 'id'> = {
     userId: userId,
-    originalSessionId: payment.id,
+    originalSessionId: payment.id, // Usando o ID do pagamento para referência
     orderDate: new Date(payment.date_created).toISOString(),
-    items: cartItems,
+    items: orderItems,
     totalAmount: payment.transaction_amount,
-    status: 'Pedido recebido' as const,
+    status: 'Pedido confirmado',
     shippingAddress: formattedAddress,
     customerInfo: {
         name: shippingInfo.name || '',
@@ -107,7 +126,7 @@ async function createUnverifiedOrderFromPayment(payment: any) {
     discountAmount: discountAmount || 0,
   };
 
-  await db.collection('unverified-orders').add(unverifiedOrder);
+  await db.collection('users').doc(userId).collection('orders').add(newOrder);
 
-  console.log(`✅ Pedido não verificado criado com sucesso para o usuário ${userId}.`);
+  console.log(`✅ Pedido criado com sucesso para o usuário ${userId} a partir do pagamento ${payment.id}.`);
 }

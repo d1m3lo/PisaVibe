@@ -67,13 +67,14 @@ function ModeToggle() {
 
 const UserMenu = () => {
   const { user, isUserLoading } = useUser();
+  const [mounted, setMounted] = useState(false);
 
-  if (isUserLoading) {
-    return (
-      <div className="h-10 w-10 flex items-center justify-center">
-        <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-primary"></div>
-      </div>
-    );
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || isUserLoading) {
+    return <div className="h-10 w-10" />;
   }
 
   if (!user) {
@@ -332,10 +333,8 @@ export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const [openMenu, setOpenMenu] = React.useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 0);
     };
@@ -414,8 +413,8 @@ export default function Header() {
           <SearchBar />
           <MobileSearch />
           <div className="items-center flex">
-             {mounted ? <UserMenu /> : <div className="h-10 w-10" />}
-             {mounted ? <ModeToggle /> : <div className="h-10 w-10" />}
+             <UserMenu />
+             <ModeToggle />
           </div>
           <CartButton />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

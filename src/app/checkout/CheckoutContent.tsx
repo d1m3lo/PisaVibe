@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -178,9 +179,13 @@ export default function CheckoutContent() {
 
     if (zipCode.length === 8) {
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${zipCode}/json/`);
+        const response = await fetch(`/api/cep/${zipCode}`);
+        if (!response.ok) {
+            console.error("A resposta da API de CEP não foi OK.");
+            return;
+        }
         const data = await response.json();
-        if (!data.erro) {
+        if (!data.error) {
           setShippingInfo(prev => ({
             ...prev,
             street: data.logradouro,

@@ -9,8 +9,7 @@ const db = admin.firestore();
    MERCADO PAGO CLIENT
 ================================ */
 const client = new MercadoPagoConfig({
-  accessToken:
-    "APP_USR-4471136097030537-122919-8fbdd981af51d484d5cc90907b5574ba-481737354",
+  accessToken: "APP_USR-XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 });
 
 const payment = new Payment(client);
@@ -49,10 +48,15 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
       },
     });
 
-    const pix = result.point_of_interaction.transaction_data;
+    const pix = result.point_of_interaction?.transaction_data;
 
-    // 🔹 SALVA PEDIDO COMO PENDENTE
-    await db.collection("orders").doc(String(result.id)).set({
+    const orderRef = db
+      .collection("users")
+      .doc(userId)
+      .collection("orders")
+      .doc(String(result.id));
+
+    await orderRef.set({
       userId,
       email,
       items,
@@ -90,9 +94,21 @@ export const mercadoPagoWebhook = functions.https.onRequest(
 
       const mpPayment = await payment.get({ id: paymentId });
       const status = mpPayment.status;
+      const userId = mpPayment.metadata?.user_id;
 
-      // 🔹 ATUALIZA STATUS DO PEDIDO
-      await db.collection("orders").doc(String(paymentId)).update({
+      if (!userId) {
+        console.warn("Webhook sem userId");
+        res.status(200).send("OK");
+        return;
+      }
+
+      const orderRef = db
+        .collection("users")
+        .doc(userId)
+        .collection("orders")
+        .doc(String(paymentId));
+
+      await orderRef.update({
         status,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });

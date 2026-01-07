@@ -133,8 +133,6 @@ const CartButton = () => {
 const SearchBar = () => {
   const router = useRouter();
   const [queryValue, setQueryValue] = React.useState("");
-  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
   
   const firestore = useFirestore();
 
@@ -161,47 +159,20 @@ const SearchBar = () => {
     e.preventDefault();
     if (queryValue.trim()) {
       router.push(`/produtos?q=${queryValue}`);
-      closePopover();
+      setQueryValue("");
     }
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value;
-    setQueryValue(newQuery);
-    if (newQuery.trim().length > 1 && !isPopoverOpen) {
-      setIsPopoverOpen(true);
-    } else if (newQuery.trim().length <= 1 && isPopoverOpen) {
-      setIsPopoverOpen(false);
-    }
-  };
-
-  const handlePopoverOpenChange = (open: boolean) => {
-    setIsPopoverOpen(open);
-    if (!open) {
-      inputRef.current?.blur();
-    }
-  };
-  
-  const closePopover = () => {
-    setIsPopoverOpen(false);
-    setQueryValue("");
-    inputRef.current?.blur();
-  }
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
+    <Popover>
       <PopoverTrigger asChild>
         <form onSubmit={handleSearch} className="relative hidden md:block">
           <Input
-            ref={inputRef}
             type="search"
             placeholder="Buscar produtos..."
             className="w-48 pr-10 lg:w-64"
             value={queryValue}
-            onChange={handleInputChange}
-            onFocus={() => {
-              if (queryValue.trim().length > 1) setIsPopoverOpen(true);
-            }}
+            onChange={(e) => setQueryValue(e.target.value)}
           />
           <Button
             type="submit"
@@ -214,45 +185,46 @@ const SearchBar = () => {
         </form>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[320px] p-0 lg:w-[400px] overflow-y-auto max-h-[50vh]" 
-        align="start" 
+        className="w-[320px] p-0 lg:w-[400px]" 
+        align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="p-2">
-            {searchResults.length > 0 ? (
-            <div className="flex flex-col gap-2">
-                {searchResults.map((product) => (
-                <Link
-                    key={product.id}
-                    href={`/produtos/${product.id}`}
-                    className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
-                    onClick={closePopover}
-                >
-                    <div className="relative h-16 w-16 flex-shrink-0">
-                    <Image
-                        src={fixImageUrl(product.variants[0].images[0])}
-                        alt={product.name}
-                        fill
-                        className="rounded-md object-cover"
-                    />
-                    </div>
-                    <div>
-                    <p className="font-semibold">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                        R$ {product.price.toFixed(2).replace(".", ",")}
-                    </p>
-                    </div>
-                </Link>
-                ))}
-            </div>
-            ) : (
-            queryValue.trim().length > 1 && (
-                <p className="p-4 text-center text-sm text-muted-foreground">
-                Nenhum resultado encontrado.
-                </p>
-            )
-            )}
-        </div>
+        {searchResults.length > 0 ? (
+           <ScrollArea className="h-auto max-h-[50vh]">
+             <div className="p-2">
+                <div className="flex flex-col gap-2">
+                    {searchResults.map((product) => (
+                    <Link
+                        key={product.id}
+                        href={`/produtos/${product.id}`}
+                        className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                    >
+                        <div className="relative h-16 w-16 flex-shrink-0">
+                        <Image
+                            src={fixImageUrl(product.variants[0].images[0])}
+                            alt={product.name}
+                            fill
+                            className="rounded-md object-cover"
+                        />
+                        </div>
+                        <div>
+                        <p className="font-semibold">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                            R$ {product.price.toFixed(2).replace(".", ",")}
+                        </p>
+                        </div>
+                    </Link>
+                    ))}
+                </div>
+              </div>
+           </ScrollArea>
+        ) : (
+          queryValue.trim().length > 1 && (
+            <p className="p-4 text-center text-sm text-muted-foreground">
+              Nenhum resultado encontrado.
+            </p>
+          )
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -341,16 +313,6 @@ const MobileSubMenu = ({
 );
 
 const Logo = () => {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        // Render a placeholder with the same dimensions as the logo
-        return <div style={{ width: 120, height: 40 }} />;
-    }
-
     return (
         <>
             <Image
@@ -480,5 +442,3 @@ export default function Header() {
     </header>
   );
 }
-
-    

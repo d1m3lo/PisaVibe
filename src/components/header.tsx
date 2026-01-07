@@ -315,17 +315,12 @@ const MobileSubMenu = ({
 );
 
 const Logo = () => {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <div style={{width: 120, height: 40}} />;
-    }
-
     return (
-        <>
+        <Link
+          href="/"
+          className="font-headline text-xl font-bold tracking-tight"
+          suppressHydrationWarning
+        >
             <Image
               src="https://i.postimg.cc/LX1cpvKx/Chat-GPT-Image-7-de-jan-de-2026-09-55-44-removebg-preview.png"
               alt="PISA VIBE Logo"
@@ -342,7 +337,7 @@ const Logo = () => {
               className="hidden dark:block"
               priority
             />
-        </>
+        </Link>
     );
 };
 
@@ -367,12 +362,7 @@ export default function Header() {
     )}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="font-headline text-xl font-bold tracking-tight"
-          >
-            <Logo />
-          </Link>
+          <Logo />
           <nav className="hidden md:flex gap-1 items-center">
             {megaMenuData.map((category) => (
               <DropdownMenu 

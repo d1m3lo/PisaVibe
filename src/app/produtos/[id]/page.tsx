@@ -17,7 +17,7 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product, Variant } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, use } from "react";
 import { cn, fixImageUrl } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
@@ -239,7 +239,7 @@ const ImageZoomView = ({
 
 export default function ProductPage() {
   const params = useParams();
-  const id = params.id as string;
+  const { id } = use(params);
   const firestore = useFirestore();
   const { addToCart } = useCart();
   const { user } = useUser();
@@ -248,7 +248,7 @@ export default function ProductPage() {
 
   const productRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
-    return doc(firestore, 'products', id);
+    return doc(firestore, 'products', id as string);
   }, [firestore, id]);
 
   const { data: product, isLoading } = useDoc<Product>(productRef);

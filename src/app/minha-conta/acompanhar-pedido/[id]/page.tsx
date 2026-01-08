@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
@@ -48,7 +48,7 @@ const TrackingPageSkeleton = () => (
 
 export default function AcompanharPedidoPage() {
     const params = useParams();
-    const orderId = params.id as string;
+    const { id: orderId } = use(params);
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
@@ -75,7 +75,7 @@ export default function AcompanharPedidoPage() {
             setError(null);
             try {
                 // The order document is a subcollection of the user
-                const orderRef = doc(firestore, 'users', user.uid, 'orders', orderId);
+                const orderRef = doc(firestore, 'users', user.uid, 'orders', orderId as string);
                 const docSnap = await getDoc(orderRef);
 
                 if (docSnap.exists()) {

@@ -110,10 +110,16 @@ const ImageZoomView = ({
     const imgRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    // Track if mouse has moved between down and up
+    const dragThreshold = 5; // To differentiate between a click and a drag
+    const [mouseMoved, setMouseMoved] = useState(false);
+
     const handleMouseDown = (e: React.MouseEvent) => {
-        if (!isZoomed) return;
+        // Prevent default browser image drag
         e.preventDefault();
+        
         setIsDragging(true);
+        setMouseMoved(false); // Reset mouse move tracker
         setDragStart({
             x: e.clientX - position.x,
             y: e.clientY - position.y,
@@ -121,13 +127,19 @@ const ImageZoomView = ({
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging || !isZoomed || !imgRef.current || !containerRef.current) return;
-        e.preventDefault();
+        if (!isDragging || !imgRef.current || !containerRef.current) return;
+        
+        // Check if mouse has moved beyond the threshold
+        if (!mouseMoved && (Math.abs(e.clientX - (dragStart.x + position.x)) > dragThreshold || Math.abs(e.clientY - (dragStart.y + position.y)) > dragThreshold)) {
+            setMouseMoved(true);
+        }
+
+        // Only pan if zoomed
+        if (!isZoomed) return;
 
         let newX = e.clientX - dragStart.x;
         let newY = e.clientY - dragStart.y;
         
-        // Constrain panning within image boundaries
         const containerRect = containerRef.current.getBoundingClientRect();
         const imgRect = imgRef.current.getBoundingClientRect();
 
@@ -136,7 +148,6 @@ const ImageZoomView = ({
         const containerWidth = containerRect.width;
         const containerHeight = containerRect.height;
         
-        // Calculate max pan values
         const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
         const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
 
@@ -148,21 +159,16 @@ const ImageZoomView = ({
 
     const handleMouseUp = () => {
         setIsDragging(false);
+        // Only toggle zoom if it was a click (mouse didn't move much)
+        if (!mouseMoved) {
+            setIsZoomed(prev => !prev);
+            if (isZoomed) { // If we are zooming out, reset position
+                setPosition({ x: 0, y: 0 });
+            }
+        }
     };
 
     const handleMouseLeave = () => {
-        setIsDragging(false);
-    };
-
-    const toggleZoom = (e: React.MouseEvent) => {
-        // Prevent zoom toggle when clicking navigation buttons
-        if ((e.target as HTMLElement).closest('button')) {
-            return;
-        }
-        setIsZoomed(prev => !prev);
-        if (isZoomed) { // If we are zooming out, reset position
-            setPosition({ x: 0, y: 0 });
-        }
         setIsDragging(false);
     };
     
@@ -194,7 +200,6 @@ const ImageZoomView = ({
             <div 
                 ref={containerRef}
                 className="relative h-[90%] w-[90%] flex items-center justify-center overflow-hidden"
-                onClick={toggleZoom}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -207,10 +212,10 @@ const ImageZoomView = ({
                     fill
                     className="object-contain transition-transform duration-300 ease-out"
                     style={{ 
-                        transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                        transform: isZoomed ? 'scale(1.75)' : 'scale(0.9)',
                         top: position.y,
                         left: position.x,
-                        cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'pointer',
+                        cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
                         userSelect: 'none',
                     }}
                     onDragStart={(e) => e.preventDefault()}
@@ -631,4 +636,3 @@ export default function ProductPage() {
   );
 }
 
-    

@@ -412,6 +412,14 @@ const ProductForm = ({
       origin: formData.origin,
     };
     
+    // Remove price from top-level product data if it exists from old structure
+    if ('price' in productData) {
+      delete (productData as any).price;
+    }
+    if ('oldPrice' in productData) {
+      delete (productData as any).oldPrice;
+    }
+
     await onSave(productData);
     onClose();
   };
@@ -603,7 +611,7 @@ const ProductForm = ({
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`oldPrice-${variant.id}`}>Preço Antigo (Opcional)</Label>
-                                <Input id={`oldPrice-${variant.id}`} type="number" value={variant.oldPrice} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
+                                <Input id={`oldPrice-${variant.id}`} type="number" value={variant.oldPrice ?? ''} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
                             </div>
                         </div>
 

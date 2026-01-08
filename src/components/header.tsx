@@ -218,6 +218,13 @@ const SearchBar = () => {
                     </Link>
                     ))}
                 </div>
+                {queryValue.trim().length > 1 && searchResults.length > 0 && (
+                    <div className="mt-2 p-2">
+                         <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
+                            <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>
+                         </Button>
+                    </div>
+                )}
               </div>
            </ScrollArea>
         ) : (

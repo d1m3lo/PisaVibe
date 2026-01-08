@@ -105,29 +105,65 @@ const ImageZoomView = ({
     const [currentIndex, setCurrentIndex] = useState(startIndex);
     const [isZoomed, setIsZoomed] = useState(false);
     const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const imgRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isZoomed || !imgRef.current || !containerRef.current) return;
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!isZoomed) return;
+        e.preventDefault();
+        setIsDragging(true);
+        setDragStart({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+        });
+    };
 
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !isZoomed || !imgRef.current || !containerRef.current) return;
+        e.preventDefault();
+
+        let newX = e.clientX - dragStart.x;
+        let newY = e.clientY - dragStart.y;
+        
+        // Constrain panning within image boundaries
         const containerRect = containerRef.current.getBoundingClientRect();
         const imgRect = imgRef.current.getBoundingClientRect();
 
-        const x = (e.clientX - containerRect.left) / containerRect.width;
-        const y = (e.clientY - containerRect.top) / containerRect.height;
+        const imgWidth = imgRect.width;
+        const imgHeight = imgRect.height;
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
         
-        const panX = -(imgRect.width - containerRect.width) * x;
-        const panY = -(imgRect.height - containerRect.height) * y;
+        // Calculate max pan values
+        const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
+        const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
 
-        setPosition({ x: panX, y: panY });
+        newX = Math.max(Math.min(newX, maxX), -maxX);
+        newY = Math.max(Math.min(newY, maxY), -maxY);
+        
+        setPosition({ x: newX, y: newY });
     };
 
-    const toggleZoom = () => {
-        setIsZoomed(!isZoomed);
-        if (isZoomed) {
-             setPosition({ x: 0, y: 0 });
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleMouseLeave = () => {
+        setIsDragging(false);
+    };
+
+    const toggleZoom = (e: React.MouseEvent) => {
+        // Prevent zoom toggle when clicking navigation buttons
+        if ((e.target as HTMLElement).closest('button')) {
+            return;
         }
+        setIsZoomed(prev => !prev);
+        if (isZoomed) { // If we are zooming out, reset position
+            setPosition({ x: 0, y: 0 });
+        }
+        setIsDragging(false);
     };
     
     const nextImage = () => {
@@ -158,8 +194,11 @@ const ImageZoomView = ({
             <div 
                 ref={containerRef}
                 className="relative h-[90%] w-[90%] flex items-center justify-center overflow-hidden"
-                onMouseMove={handleMouseMove}
                 onClick={toggleZoom}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
             >
                 <Image
                     ref={imgRef}
@@ -169,11 +208,12 @@ const ImageZoomView = ({
                     className="object-contain transition-transform duration-300 ease-out"
                     style={{ 
                         transform: isZoomed ? 'scale(2)' : 'scale(1)',
-                        transformOrigin: 'center center',
-                        top: isZoomed ? `${position.y}px` : '0px',
-                        left: isZoomed ? `${position.x}px` : '0px',
-                        cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                        top: position.y,
+                        left: position.x,
+                        cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                        userSelect: 'none',
                     }}
+                    onDragStart={(e) => e.preventDefault()}
                 />
             </div>
              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
@@ -365,7 +405,7 @@ export default function ProductPage() {
   }
 
   const discountPercentage = selectedVariant.oldPrice && selectedVariant.oldPrice > selectedVariant.price 
-    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.oldPrice) * 100)
+    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.price) * 100)
     : 0;
 
   return (

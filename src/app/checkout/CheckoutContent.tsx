@@ -190,6 +190,7 @@ export default function CheckoutContent() {
           price: item.variant.price,
           imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
         })),
+        
         totalAmount: cartTotal,
         shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
         paymentMethod: 'pix',

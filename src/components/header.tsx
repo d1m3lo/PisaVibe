@@ -212,7 +212,7 @@ const SearchBar = () => {
                         <div>
                         <p className="font-semibold">{product.name}</p>
                         <p className="text-sm text-muted-foreground">
-                            R$ {product.price.toFixed(2).replace(".", ",")}
+                            R$ {product.variants[0].price.toFixed(2).replace(".", ",")}
                         </p>
                         </div>
                     </Link>

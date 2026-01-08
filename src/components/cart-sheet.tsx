@@ -78,7 +78,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
                       {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
                     </div>
                   <p className="mt-1 font-bold text-sm">
-                    R$ {item.product.price.toFixed(2).replace(".", ",")}
+                  R$ {item.variant.price.toFixed(2).replace(".", ",")}
                   </p>
                    <div className="mt-3 flex items-center gap-2">
                     <Button

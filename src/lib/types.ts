@@ -63,13 +63,11 @@ export type OrderItem = {
 }
 
 export type OrderStatus =
-  | 'Pedido recebido' // Apenas para a Central de Controle
   | 'Pedido confirmado'
   | 'Pedido em separação'
   | 'Pedido em transporte'
   | 'Saiu para entrega'
-  | 'Pedido entregue'
-  | 'Finalizado'; // Status final da Central de Controle
+  | 'Pedido entregue';
 
 export type Order = {
   id: string;
@@ -78,6 +76,7 @@ export type Order = {
   customerInfo: {
     name: string;
     email: string;
+    phone?: string;
   },
   items: OrderItem[];
   orderDate: string; // ISO String
@@ -86,7 +85,7 @@ export type Order = {
   status: OrderStatus;
   couponCode?: string;
   discountAmount?: number;
-  paymentMethod: 'card' | 'pix';
+  paymentMethod: 'credit_card' | 'debit_card' | 'ticket' | 'account_money' | 'pix';
 }
 
 export type Coupon = {

@@ -11,17 +11,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useFirestore, useUser } from "@/firebase";
-import { addDoc, collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
+import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
-import type { Order } from "@/lib/types";
+import type { Order, Coupon } from "@/lib/types";
 
 type PixStatus = 'idle' | 'generated' | 'pending_verification' | 'confirmed' | 'error' | 'rejected';
 
@@ -54,6 +55,15 @@ export default function CheckoutContent() {
     state: "",
   });
 
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [discount, setDiscount] = useState(0);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
+  const finalTotal = cartTotal - discount;
+
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
     if (key) initMercadoPago(key, { locale: "pt-BR" });
@@ -67,6 +77,15 @@ export default function CheckoutContent() {
       return () => clearTimeout(timer);
     }
   }, [pixStatus]);
+
+  useEffect(() => {
+    if (!user) return;
+    setShippingInfo(prev => ({
+      ...prev,
+      name: user.displayName || prev.name,
+      email: user.email || prev.email,
+    }));
+  }, [user]);
 
   // Listener para o resultado da verificação do admin
   useEffect(() => {
@@ -125,6 +144,75 @@ export default function CheckoutContent() {
     return true;
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    if (!firestore) {
+      setCouponError('Serviço indisponível. Tente novamente.');
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      const couponsRef = collection(firestore, 'coupons');
+      const q = query(couponsRef, where('code', '==', couponCode.toUpperCase()), limit(1));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setCouponError('Cupom inválido.');
+        setAppliedCoupon(null);
+        setDiscount(0);
+        return;
+      }
+      
+      const couponDoc = querySnapshot.docs[0];
+      const couponData = { ...couponDoc.data(), id: couponDoc.id } as Coupon;
+
+      if (!couponData.isActive) {
+        setCouponError('Este cupom não está mais ativo.');
+        setAppliedCoupon(null);
+        setDiscount(0);
+        return;
+      }
+
+      if (couponData.expiryDate && new Date(couponData.expiryDate) < new Date()) {
+        setCouponError('Este cupom expirou.');
+        setAppliedCoupon(null);
+        setDiscount(0);
+        return;
+      }
+
+      setAppliedCoupon(couponData);
+      let calculatedDiscount = 0;
+      if (couponData.discountType === 'percentage') {
+        calculatedDiscount = cartTotal * (couponData.discountValue / 100);
+      } else {
+        calculatedDiscount = couponData.discountValue;
+      }
+      setDiscount(calculatedDiscount);
+      setCouponSuccess(`Cupom "${couponData.code}" aplicado!`);
+
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      setCouponError('Erro ao aplicar o cupom. Tente novamente.');
+      setAppliedCoupon(null);
+      setDiscount(0);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setDiscount(0);
+    setCouponError(null);
+    setCouponSuccess(null);
+    toast({ title: 'Cupom removido.' });
+  }
+
   const handlePixPayment = async () => {
     if (!validateForm() || !user) return;
 
@@ -139,7 +227,7 @@ export default function CheckoutContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: cartTotal,
+            amount: finalTotal, // Usar o total com desconto
             email: shippingInfo.email,
           }),
         }
@@ -190,12 +278,13 @@ export default function CheckoutContent() {
           price: item.variant.price,
           imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
         })),
-        
-        totalAmount: cartTotal,
+        totalAmount: finalTotal,
         shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
         paymentMethod: 'pix',
         status: 'Pagamento em análise',
         createdAt: new Date().toISOString(),
+        couponCode: appliedCoupon?.code,
+        discountAmount: discount,
       });
       
     } catch (error) {
@@ -207,20 +296,43 @@ export default function CheckoutContent() {
 
   const handleCardPayment = async () => {
     if (!validateForm() || !user) return;
-
-    const res = await fetch("/api/mercadopago/preference", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: cartItems,
-        amount: cartTotal,
-        email: shippingInfo.email,
-        shippingInfo,
-      }),
-    });
-
-    const data = await res.json();
-    setPreferenceId(data.preferenceId);
+  
+    const formattedItems = cartItems.map((item) => ({
+      id: item.product.id,
+      title: item.displayName || item.product.name,
+      quantity: item.quantity,
+      unit_price: item.variant.price,
+      description: `${item.variant.color} / ${item.size}`,
+      picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
+    }));
+  
+    try {
+      const res = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: formattedItems,
+          shippingInfo,
+          coupon: appliedCoupon,
+        }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Falha ao criar preferência de pagamento.');
+      }
+  
+      const data = await res.json();
+      setPreferenceId(data.preferenceId);
+  
+    } catch (error: any) {
+      console.error("Erro ao iniciar pagamento com cartão:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro no Pagamento",
+        description: error.message || "Não foi possível iniciar o pagamento com cartão. Tente novamente.",
+      });
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,33 +423,85 @@ export default function CheckoutContent() {
           <CardTitle>Resumo e Pagamento</CardTitle>
         </CardHeader>
         <CardContent>
-          {cartItems.map((item, i) => (
-            <div key={i} className="flex gap-3 mb-3">
-              <Image
-                src={fixImageUrl(item.variant.images[0])}
-                alt={item.displayName || item.product.name}
-                width={60}
-                height={60}
-              />
-              <div>
-                <p className="font-semibold">{item.displayName || item.product.name}</p>
-                <p className="text-sm text-muted-foreground">R$ {item.variant.price.toFixed(2).replace('.',',')}</p>
-              </div>
-            </div>
-          ))}
+          <ScrollArea className="h-auto max-h-48 pr-4">
+            {cartItems.map((item, i) => (
+                <div key={i} className="flex gap-3 mb-4">
+                <Image
+                    src={fixImageUrl(item.selectedImage || item.variant.images[0])}
+                    alt={item.displayName || item.product.name}
+                    width={60}
+                    height={60}
+                    className="rounded-md border object-cover"
+                />
+                <div>
+                    <p className="font-semibold">{item.displayName || item.product.name}</p>
+                    <p className="text-sm text-muted-foreground">R$ {item.variant.price.toFixed(2).replace('.',',')}</p>
+                </div>
+                </div>
+            ))}
+          </ScrollArea>
 
           <Separator className="my-4" />
-          <p className="font-bold mb-4 text-lg">Total: R$ {cartTotal.toFixed(2).replace('.',',')}</p>
+          
+          <div className="space-y-4">
+            <div className="flex gap-2">
+                <Input 
+                    placeholder="Código do cupom" 
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    disabled={!!appliedCoupon}
+                    className="flex-grow"
+                />
+                {appliedCoupon ? (
+                    <Button variant="outline" size="icon" onClick={removeCoupon} className="text-destructive hover:text-destructive">
+                        <X className="h-4 w-4" />
+                    </Button>
+                ) : (
+                    <Button onClick={handleApplyCoupon} disabled={isApplyingCoupon}>
+                        {isApplyingCoupon ? <Loader2 className="animate-spin h-4 w-4" /> : 'Aplicar'}
+                    </Button>
+                )}
+            </div>
+             {couponError && <p className="text-sm text-destructive flex items-center gap-1"><XCircle size={14}/> {couponError}</p>}
+             {couponSuccess && <p className="text-sm text-green-600 flex items-center gap-1"><Check size={14}/> {couponSuccess}</p>}
+          </div>
 
-          <Button className="w-full mb-3" onClick={handlePixPayment} disabled={isGeneratingPix || pixStatus !== 'idle'}>
-            {isGeneratingPix ? <Loader2 className="animate-spin" /> : "Pagar com PIX"}
-          </Button>
+          <Separator className="my-4" />
 
-          <Button className="w-full mb-3" variant="outline" onClick={handleCardPayment} disabled={pixStatus !== 'idle'}>
-            Pagar com Cartão
-          </Button>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>R$ {cartTotal.toFixed(2).replace('.',',')}</span>
+            </div>
+            {discount > 0 && (
+                 <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1"><TicketPercent size={14}/> Desconto ({appliedCoupon?.code})</span>
+                    <span>- R$ {discount.toFixed(2).replace('.',',')}</span>
+                </div>
+            )}
+            <Separator />
+             <div className="flex justify-between font-bold text-base">
+                <span>Total</span>
+                <span>R$ {finalTotal.toFixed(2).replace('.',',')}</span>
+            </div>
+          </div>
+          
 
-          {preferenceId && <Wallet initialization={{ preferenceId }} />}
+          <div className="mt-6 space-y-3">
+              <Button className="w-full" onClick={handlePixPayment} disabled={isGeneratingPix || pixStatus !== 'idle'}>
+                {isGeneratingPix ? <Loader2 className="animate-spin" /> : "Pagar com PIX"}
+              </Button>
+
+              <Button className="w-full" variant="outline" onClick={handleCardPayment} disabled={pixStatus !== 'idle' || !!preferenceId}>
+                Pagar com Cartão
+              </Button>
+          </div>
+
+          {preferenceId && (
+            <div className="mt-4">
+                <Wallet initialization={{ preferenceId }} customization={{ texts: { valueProp: 'smart_option'}}} />
+            </div>
+           )}
 
           {pixStatus === 'generated' && pixData && (
             <div className="mt-6 text-center animate-in fade-in-50">

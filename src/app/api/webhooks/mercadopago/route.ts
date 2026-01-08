@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
         if (existingOrderQuery.empty) {
           // A lógica de criação do pedido foi movida para o painel admin para confirmação manual do PIX.
           // Para cartões, o fluxo continua aqui.
-          if (payment.payment_method_id !== 'pix') {
+          // A criação para PIX será feita pelo painel admin em `AdminPixVerification`.
+          if (payment.payment_method_id !== 'pix' || payment.payment_type_id !== 'account_money') {
              await createOrderFromPayment(payment);
           } else {
              console.log(`Pagamento PIX ${paymentId} aguardando confirmação manual do admin.`);
@@ -121,9 +122,9 @@ async function createOrderFromPayment(payment: any) {
         email: userEmail,
         phone: shippingInfo.phone || ''
     },
-    paymentMethod: payment.payment_type_id as 'card' | 'pix',
+    paymentMethod: payment.payment_type_id as 'credit_card' | 'debit_card' | 'ticket' | 'account_money',
     couponCode: couponCode || undefined,
-    discountAmount: discountAmount || 0,
+    discountAmount: parseFloat(discountAmount) || 0,
   };
 
   await db.collection('users').doc(userId).collection('orders').add(newOrder);

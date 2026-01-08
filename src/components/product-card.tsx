@@ -46,6 +46,9 @@ export function ProductCard({ product }: ProductCardProps) {
   
   const hasMultipleVariants = !!secondVariant && !!secondImage && firstImage !== secondImage;
 
+  const price = firstVariant?.price ?? 0;
+  const oldPrice = firstVariant?.oldPrice;
+
   return (
     <Card 
       className="flex h-full transform flex-col rounded-lg border-0 shadow-sm transition-transform duration-300 hover:shadow-lg hover:-translate-y-2 group"
@@ -107,13 +110,13 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
       <CardFooter className="flex items-end justify-between p-4 pt-0">
         <div className="flex flex-col items-start">
-            {product.oldPrice && (
+            {oldPrice && (
                 <span className="text-xs text-muted-foreground line-through">
-                R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                R$ {oldPrice.toFixed(2).replace(".", ",")}
                 </span>
             )}
             <span className="text-lg font-bold">
-                R$ {product.price.toFixed(2).replace(".", ",")}
+                R$ {price.toFixed(2).replace(".", ",")}
             </span>
         </div>
         <AddToCartButton product={product} size="icon" />

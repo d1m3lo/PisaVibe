@@ -124,13 +124,11 @@ const ProductForm = ({
   const [formData, setFormData] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
-    price: product?.price || '',
-    oldPrice: product?.oldPrice || '',
     longDescription: product?.longDescription || '',
     gender: product?.gender || 'masculino',
     category: product?.category || 'calcados',
     subCategory: product?.subCategory || '',
-    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], imageNames: [], sizes: [] }],
+    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], imageNames: [], sizes: [] }],
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
@@ -315,7 +313,7 @@ const ProductForm = ({
       ...prev,
       variants: [
         ...prev.variants,
-        { id: Date.now().toString(), color: '', colorHex: '#000000', images: [''], imageNames: [], sizes: [] },
+        { id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], imageNames: [], sizes: [] },
       ],
     }));
   };
@@ -360,6 +358,7 @@ const ProductForm = ({
       const variant: Partial<Variant> = {
         ...v,
         images: v.images.filter(Boolean),
+        price: parseFloat(String(v.price)) || 0,
         sizes: availableSizes
           .map(size => {
             const foundSize = v.sizes.find(s => s.size === size);
@@ -367,6 +366,12 @@ const ProductForm = ({
           })
           .filter(s => s.stock >= 0)
       };
+      
+      const oldPriceValue = parseFloat(String(v.oldPrice));
+        if (!isNaN(oldPriceValue) && oldPriceValue > 0) {
+        variant.oldPrice = oldPriceValue;
+      }
+
 
       if (formData.category === 'perfumes' || formData.subCategory === 'mochilas' || formData.category === 'acessorios') {
           const singleSize = variant.sizes?.find(s => s.size === 'U');
@@ -391,7 +396,6 @@ const ProductForm = ({
       id: product?.id || new Date().getTime().toString(),
       name: formData.name,
       brand: formData.brand,
-      price: parseFloat(String(formData.price)) || 0,
       description: formData.longDescription.substring(0, 100),
       longDescription: formData.longDescription,
       gender: formData.gender as Product['gender'],
@@ -408,12 +412,6 @@ const ProductForm = ({
       origin: formData.origin,
     };
     
-    const oldPriceValue = parseFloat(String(formData.oldPrice));
-    if (!isNaN(oldPriceValue) && oldPriceValue > 0) {
-      productData.oldPrice = oldPriceValue;
-    }
-
-
     await onSave(productData);
     onClose();
   };
@@ -434,16 +432,6 @@ const ProductForm = ({
           <div className="space-y-2">
             <Label htmlFor="brand">Marca</Label>
             <Input id="brand" value={formData.brand} onChange={handleChange} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label htmlFor="price">Preço</Label>
-                <Input id="price" type="number" value={formData.price} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="oldPrice">Preço Antigo (Opcional)</Label>
-                <Input id="oldPrice" type="number" value={formData.oldPrice} onChange={handleChange} />
-            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="longDescription">Descrição</Label>
@@ -607,6 +595,17 @@ const ProductForm = ({
                               </div>
                           </div>
                         )}
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor={`price-${variant.id}`}>Preço</Label>
+                                <Input id={`price-${variant.id}`} type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor={`oldPrice-${variant.id}`}>Preço Antigo (Opcional)</Label>
+                                <Input id={`oldPrice-${variant.id}`} type="number" value={variant.oldPrice} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
+                            </div>
+                        </div>
 
                         <div className="space-y-3">
                           <Label>{isBackpack ? 'Imagens da Variação' : 'Links das Imagens'}</Label>
@@ -777,9 +776,6 @@ export default function ProductManagement() {
     if (!firestore) return;
     
     const cleanProductData = { ...productData };
-    if (!cleanProductData.oldPrice) {
-      delete cleanProductData.oldPrice;
-    }
 
     try {
       if (editingProduct) {
@@ -892,7 +888,9 @@ export default function ProductManagement() {
           </TableHeader>
           <TableBody>
             {filteredProducts.map((product) => {
-              const imageUrl = fixImageUrl(product.variants?.[0]?.images?.[0]);
+              const firstVariant = product.variants?.[0];
+              const imageUrl = fixImageUrl(firstVariant?.images?.[0]);
+              const price = firstVariant?.price ?? 0;
               
               return (
               <TableRow key={product.firestoreId}>
@@ -910,7 +908,7 @@ export default function ProductManagement() {
                    {product.origin || 'N/A'}
                 </TableCell>
                 <TableCell>
-                  R$ {product.price.toFixed(2).replace('.', ',')}
+                  R$ {price.toFixed(2).replace('.', ',')}
                 </TableCell>
                 <TableCell>
                   <QualityBadge quality={product.quality} size="sm" />

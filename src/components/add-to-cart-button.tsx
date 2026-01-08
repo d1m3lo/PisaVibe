@@ -59,5 +59,3 @@ export default function AddToCartButton({ product, ...props }: { product: Produc
     </Button>
   );
 }
-
-    

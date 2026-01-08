@@ -69,7 +69,7 @@ export default function CartPage() {
                           {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
                         </div>
                       <p className="mt-1 font-bold text-base">
-                        R$ {item.product.price.toFixed(2).replace(".", ",")}
+                        R$ {item.variant.price.toFixed(2).replace(".", ",")}
                       </p>
                       <div className="mt-4 flex items-center gap-2">
                         <Button
@@ -136,4 +136,3 @@ export default function CartPage() {
     </div>
   );
 }
-    

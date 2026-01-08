@@ -187,7 +187,7 @@ export default function CheckoutContent() {
           variantColor: item.variant.color,
           size: item.size,
           quantity: item.quantity,
-          price: item.product.price,
+          price: item.variant.price,
           imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
         })),
         totalAmount: cartTotal,
@@ -320,7 +320,7 @@ export default function CheckoutContent() {
               />
               <div>
                 <p className="font-semibold">{item.displayName || item.product.name}</p>
-                <p className="text-sm text-muted-foreground">R$ {item.product.price.toFixed(2).replace('.',',')}</p>
+                <p className="text-sm text-muted-foreground">R$ {item.variant.price.toFixed(2).replace('.',',')}</p>
               </div>
             </div>
           ))}
@@ -425,4 +425,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-

@@ -261,7 +261,7 @@ export default function ProductPage() {
     return <ProductPageSkeleton />;
   }
 
-  if (!product) {
+  if (!product || !selectedVariant) {
     return (
         <div className="container mx-auto px-4 py-12 text-center h-96 flex flex-col items-center justify-center">
             <h1 className="text-2xl font-bold">Produto não encontrado</h1>
@@ -273,8 +273,8 @@ export default function ProductPage() {
     )
   }
 
-  const discountPercentage = product.oldPrice && product.oldPrice > product.price 
-    ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
+  const discountPercentage = selectedVariant.oldPrice && selectedVariant.oldPrice > selectedVariant.price 
+    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.oldPrice) * 100)
     : 0;
 
   return (
@@ -363,9 +363,9 @@ export default function ProductPage() {
             <div className="mt-8 flex flex-col space-y-6">
                 <div className="space-y-3 rounded-lg border bg-card p-4">
                     <div className="flex items-baseline gap-3">
-                         {product.oldPrice && (
+                         {selectedVariant.oldPrice && (
                             <p className="text-xl text-muted-foreground line-through">
-                              R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                              R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
                             </p>
                         )}
                         {discountPercentage > 0 && (
@@ -373,7 +373,7 @@ export default function ProductPage() {
                         )}
                     </div>
                     <p className="text-4xl font-bold">
-                        R$ {product.price.toFixed(2).replace(".", ",")}
+                        R$ {selectedVariant.price.toFixed(2).replace(".", ",")}
                     </p>
                     {stockForSelectedSize > 0 && (
                          <div className="flex items-center gap-2">
@@ -400,12 +400,15 @@ export default function ProductPage() {
             <>
                 <div className="mt-4 flex items-baseline gap-3">
                     <p className="text-3xl font-bold">
-                    R$ {product.price.toFixed(2).replace(".", ",")}
+                    R$ {selectedVariant.price.toFixed(2).replace(".", ",")}
                     </p>
-                    {product.oldPrice && (
+                    {selectedVariant.oldPrice && (
                         <p className="text-xl text-muted-foreground line-through">
-                        R$ {product.oldPrice.toFixed(2).replace(".", ",")}
+                        R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
                         </p>
+                    )}
+                     {discountPercentage > 0 && (
+                        <Badge variant="destructive">-{discountPercentage}%</Badge>
                     )}
                 </div>
 

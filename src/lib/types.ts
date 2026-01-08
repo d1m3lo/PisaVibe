@@ -8,6 +8,8 @@ export type Variant = {
   id: string;
   color: string;
   colorHex: string;
+  price: number;
+  oldPrice?: number;
   images: string[];
   imageNames?: string[]; // Nome correspondente a cada imagem (para mochilas)
   sizes: SizeInfo[];
@@ -16,8 +18,6 @@ export type Variant = {
 export type Product = {
   id: string;
   name: string;
-  price: number;
-  oldPrice?: number;
   brand?: string;
   description: string; // Short description for cards
   longDescription: string;

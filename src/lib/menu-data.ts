@@ -23,7 +23,7 @@ export const megaMenuData: MenuCategory[] = [
         links: [
           { title: "Casual", href: "/produtos?genero=masculino&categoria=calcados&tipo=casual" },
           { title: "Chinelo", href: "/produtos?genero=masculino&categoria=calcados&tipo=chinelo" },
-          { title: "StreetWear", href: "/produtos?genero=masculino&categoria=calcados&tipo=streetwear" },
+          { title: "Streetwear", href: "/produtos?genero=masculino&categoria=calcados&tipo=streetwear" },
           { title: "Sneakers", href: "/produtos?genero=masculino&categoria=calcados&tipo=sneakers" },
         ],
       },
@@ -64,7 +64,7 @@ export const megaMenuData: MenuCategory[] = [
           { title: "Casual", href: "/produtos?genero=feminino&categoria=calcados&tipo=casual" },
           { title: "Sandálias", href: "/produtos?genero=feminino&categoria=calcados&tipo=sandalias" },
           { title: "Chinelo", href: "/produtos?genero=feminino&categoria=calcados&tipo=chinelo" },
-          { title: "StreetWear", href: "/produtos?genero=feminino&categoria=calcados&tipo=streetwear" },
+          { title: "Streetwear", href: "/produtos?genero=feminino&categoria=calcados&tipo=streetwear" },
           { title: "Sneakers", href: "/produtos?genero=feminino&categoria=calcados&tipo=sneakers" },
         ],
       },

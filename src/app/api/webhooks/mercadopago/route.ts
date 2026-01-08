@@ -33,20 +33,18 @@ export async function POST(req: NextRequest) {
       if (payment && payment.status === 'approved' && payment.metadata) {
         console.log(`✅ Pagamento ${paymentId} aprovado. Processando pedido...`);
         
-        // Usamos o paymentId como identificador único do pedido para evitar duplicatas
         const existingOrderQuery = await db.collectionGroup('orders')
           .where('originalSessionId', '==', paymentId)
           .limit(1)
           .get();
 
         if (existingOrderQuery.empty) {
-          // A lógica de criação do pedido foi movida para o painel admin para confirmação manual do PIX.
-          // Para cartões, o fluxo continua aqui.
-          // A criação para PIX será feita pelo painel admin em `AdminPixVerification`.
-          if (payment.payment_method_id !== 'pix' || payment.payment_type_id !== 'account_money') {
+          // A lógica para pagamentos com cartão é processada aqui automaticamente.
+          // Pagamentos PIX aguardam confirmação manual e são tratados no painel admin, não aqui.
+          if (payment.payment_method_id !== 'pix' && payment.payment_type_id !== 'account_money') {
              await createOrderFromPayment(payment);
           } else {
-             console.log(`Pagamento PIX ${paymentId} aguardando confirmação manual do admin.`);
+             console.log(`Pagamento PIX ${paymentId} recebido, aguardando confirmação manual do admin.`);
           }
         } else {
           console.log(`Pedido para o pagamento ${paymentId} já existe. Ignorando.`);
@@ -70,8 +68,6 @@ async function createOrderFromPayment(payment: any) {
   
   if (!shippingInfoJSON || !cartItemsJSON) {
     console.error(`Metadados ausentes para o pagamento ${payment.id}.`);
-    // Não lançamos um erro aqui para não fazer o webhook tentar novamente sem sucesso.
-    // Apenas registramos o log e saímos.
     return;
   }
 
@@ -97,21 +93,28 @@ async function createOrderFromPayment(payment: any) {
   const userId = userQuery.docs[0].id;
   console.log(`Usuário encontrado: ${userId}`);
 
-  const orderItems: OrderItem[] = cartItems.map((item: any) => ({
-      productId: item.id,
-      productName: item.title,
-      variantColor: item.description?.split(' / ')[0] || '',
-      size: item.description?.split(' / ')[1] || 'U',
-      quantity: item.quantity,
-      price: item.unit_price,
-      imageUrl: item.picture_url,
-  }));
+  const orderItems: OrderItem[] = cartItems.map((item: any) => {
+      // O campo 'description' contém a cor e o tamanho, Ex: "Preto / 42"
+      const descriptionParts = item.description?.split(' / ') || [];
+      const color = descriptionParts[0] || '';
+      const size = descriptionParts[1] || 'U';
 
-  const formattedAddress = `${shippingInfo.street}, ${shippingInfo.number} ${shippingInfo.complement || ''} - ${shippingInfo.neighborhood}, ${shippingInfo.city} - ${shippingInfo.state}, ${shippingInfo.zipCode}`;
+      return {
+          productId: item.id,
+          productName: item.title,
+          variantColor: color,
+          size: size,
+          quantity: item.quantity,
+          price: item.unit_price,
+          imageUrl: item.picture_url,
+      };
+  });
+
+  const formattedAddress = `${shippingInfo.street}, ${shippingInfo.number}${shippingInfo.complement ? `, ${shippingInfo.complement}` : ''} - ${shippingInfo.neighborhood}, ${shippingInfo.city} - ${shippingInfo.state}, ${shippingInfo.zipCode}`;
 
   const newOrder: Omit<Order, 'id'> = {
     userId: userId,
-    originalSessionId: payment.id, // Usando o ID do pagamento para referência
+    originalSessionId: payment.id,
     orderDate: new Date(payment.date_created).toISOString(),
     items: orderItems,
     totalAmount: payment.transaction_amount,

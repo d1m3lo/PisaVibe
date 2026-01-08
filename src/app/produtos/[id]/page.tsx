@@ -25,7 +25,7 @@ import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Globe, Info, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
+import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { SizeChart } from "@/components/size-chart";
@@ -93,94 +93,91 @@ const ImportedProductBadge = () => (
     </TooltipProvider>
 );
 
-const ImageZoomView = ({ imageSrc, alt }: { imageSrc: string; alt: string; }) => {
-    const [scale, setScale] = useState(1);
+const ImageZoomView = ({ 
+    images,
+    startIndex,
+    alt,
+}: { 
+    images: string[];
+    startIndex: number;
+    alt: string; 
+}) => {
+    const [currentIndex, setCurrentIndex] = useState(startIndex);
+    const [isZoomed, setIsZoomed] = useState(false);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const imgRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const isDragging = useRef(false);
-    const startPos = useRef({ x: 0, y: 0 });
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (scale > 1) {
-            isDragging.current = true;
-            startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-            if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
-        }
-    };
-
-    const handleMouseUp = () => {
-        isDragging.current = false;
-         if (imgRef.current) imgRef.current.style.cursor = 'grab';
-    };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging.current) {
-            const newX = e.clientX - startPos.current.x;
-            const newY = e.clientY - startPos.current.y;
-            
-            // Limit panning within bounds
-            if (imgRef.current && containerRef.current) {
-                const { width, height } = imgRef.current.getBoundingClientRect();
-                const containerWidth = containerRef.current.clientWidth;
-                const containerHeight = containerRef.current.clientHeight;
+        if (!isZoomed || !imgRef.current || !containerRef.current) return;
 
-                const maxPanX = Math.max(0, (width - containerWidth) / 2);
-                const maxPanY = Math.max(0, (height - containerHeight) / 2);
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const imgRect = imgRef.current.getBoundingClientRect();
 
-                const constrainedX = Math.max(-maxPanX, Math.min(maxPanX, newX));
-                const constrainedY = Math.max(-maxPanY, Math.min(maxPanY, newY));
-                
-                setPosition({ x: constrainedX, y: constrainedY });
-            }
+        const x = (e.clientX - containerRect.left) / containerRect.width;
+        const y = (e.clientY - containerRect.top) / containerRect.height;
+        
+        const panX = -(imgRect.width - containerRect.width) * x;
+        const panY = -(imgRect.height - containerRect.height) * y;
+
+        setPosition({ x: panX, y: panY });
+    };
+
+    const toggleZoom = () => {
+        setIsZoomed(!isZoomed);
+        if (isZoomed) {
+             setPosition({ x: 0, y: 0 });
         }
     };
-
-    const handleWheel = (e: React.WheelEvent) => {
-        e.preventDefault();
-        const newScale = e.deltaY > 0 ? scale / 1.2 : scale * 1.2;
-        handleZoom(newScale);
-    };
-
-    const handleZoom = (newScale: number) => {
-        const clampedScale = Math.max(1, Math.min(newScale, 5));
-        setScale(clampedScale);
-        if (clampedScale <= 1) {
-            setPosition({ x: 0, y: 0 });
-        }
-    };
-
-    const resetZoom = () => {
-        setScale(1);
+    
+    const nextImage = () => {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+        setIsZoomed(false);
         setPosition({ x: 0, y: 0 });
-    };
+    }
+
+    const prevImage = () => {
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+        setIsZoomed(false);
+        setPosition({ x: 0, y: 0 });
+    }
 
     return (
-        <div 
-            ref={containerRef}
-            className="relative h-full w-full flex items-center justify-center overflow-hidden"
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
-        >
-            <Image
-                ref={imgRef}
-                src={imageSrc}
-                alt={alt}
-                fill
-                className="object-contain"
-                style={{ 
-                    transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
-                    cursor: scale > 1 ? 'grab' : 'default',
-                    transition: 'transform 0.2s ease-out'
-                }}
-                onMouseDown={handleMouseDown}
-            />
-            <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-full bg-background/50 p-1 backdrop-blur-sm">
-                <Button variant="ghost" size="icon" onClick={() => handleZoom(scale * 1.2)}><ZoomIn className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => handleZoom(scale / 1.2)}><ZoomOut className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon" onClick={resetZoom}><RotateCw className="h-5 w-5" /></Button>
+        <div className="relative h-full w-full flex items-center justify-center">
+            {images.length > 1 && (
+                 <>
+                    <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={prevImage}>
+                        <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={nextImage}>
+                        <ChevronRight className="h-6 w-6" />
+                    </Button>
+                </>
+            )}
+
+            <div 
+                ref={containerRef}
+                className="relative h-[90%] w-[90%] flex items-center justify-center overflow-hidden"
+                onMouseMove={handleMouseMove}
+                onClick={toggleZoom}
+            >
+                <Image
+                    ref={imgRef}
+                    src={images[currentIndex]}
+                    alt={alt}
+                    fill
+                    className="object-contain transition-transform duration-300 ease-out"
+                    style={{ 
+                        transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                        transformOrigin: 'center center',
+                        top: isZoomed ? `${position.y}px` : '0px',
+                        left: isZoomed ? `${position.x}px` : '0px',
+                        cursor: isZoomed ? 'zoom-out' : 'zoom-in',
+                    }}
+                />
+            </div>
+             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
+                {currentIndex + 1} / {images.length}
             </div>
         </div>
     );
@@ -419,9 +416,13 @@ export default function ProductPage() {
                           </>
                         )}
                     </Carousel>
-                    {selectedImage && (
+                    {allImages.length > 0 && selectedImage && (
                         <DialogContent className="max-w-none w-screen h-screen p-0 border-0 bg-black/80 backdrop-blur-sm">
-                            <ImageZoomView imageSrc={selectedImage} alt={displayName} />
+                            <ImageZoomView 
+                                images={allImages}
+                                startIndex={allImages.indexOf(selectedImage)}
+                                alt={displayName} 
+                            />
                         </DialogContent>
                     )}
                 </Dialog>

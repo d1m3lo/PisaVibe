@@ -93,153 +93,140 @@ const ImportedProductBadge = () => (
     </TooltipProvider>
 );
 
-const ImageZoomView = ({ 
-    images,
-    startIndex,
-    alt,
-    onClose
-}: { 
-    images: string[];
-    startIndex: number;
-    alt: string; 
-    onClose: () => void;
+const ImageZoomView = ({
+  images,
+  startIndex,
+  alt,
+}: {
+  images: string[];
+  startIndex: number;
+  alt: string;
 }) => {
-    const [currentIndex, setCurrentIndex] = useState(startIndex);
-    const [isZoomed, setIsZoomed] = useState(false);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const imgRef = useRef<HTMLImageElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const dragThreshold = 5;
-    const [mouseMoved, setMouseMoved] = useState(false);
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-        setMouseMoved(false);
-        setDragStart({
-            x: e.clientX - position.x,
-            y: e.clientY - position.y,
-        });
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging || !isZoomed) return;
-
-        if (!mouseMoved && (Math.abs(e.clientX - (dragStart.x + position.x)) > dragThreshold || Math.abs(e.clientY - (dragStart.y + position.y)) > dragThreshold)) {
-            setMouseMoved(true);
-        }
-
-        if (isZoomed && imgRef.current && containerRef.current) {
-            let newX = e.clientX - dragStart.x;
-            let newY = e.clientY - dragStart.y;
-            
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const imgRect = imgRef.current.getBoundingClientRect();
-
-            const imgWidth = imgRect.width;
-            const imgHeight = imgRect.height;
-            const containerWidth = containerRect.width;
-            const containerHeight = containerRect.height;
-            
-            const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
-            const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
-
-            newX = Math.max(Math.min(newX, maxX), -maxX);
-            newY = Math.max(Math.min(newY, maxY), -maxY);
-            
-            setPosition({ x: newX, y: newY });
-        }
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-        if (!mouseMoved) {
-            setIsZoomed(prev => !prev);
-            if (isZoomed) {
-                setPosition({ x: 0, y: 0 });
-            }
-        }
-    };
-
-    const handleMouseLeave = () => {
-        setIsDragging(false);
-    };
-    
-    const nextImage = () => {
-        setCurrentIndex((prev) => (prev + 1) % images.length);
-        setIsZoomed(false);
-        setPosition({ x: 0, y: 0 });
+  const [currentIndex, setCurrentIndex] = useState(startIndex);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasDragged, setHasDragged] = useState(false);
+  
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setHasDragged(false);
+    if (isZoomed) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      });
     }
-
-    const prevImage = () => {
-        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-        setIsZoomed(false);
-        setPosition({ x: 0, y: 0 });
+  };
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !isZoomed) return;
+    setHasDragged(true);
+  
+    if (imgRef.current && containerRef.current) {
+      let newX = e.clientX - dragStart.x;
+      let newY = e.clientY - dragStart.y;
+  
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const imgRect = imgRef.current.getBoundingClientRect();
+  
+      const imgWidth = imgRect.width / 1.75 * 1.75;
+      const imgHeight = imgRect.height / 1.75 * 1.75;
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+  
+      const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
+      const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
+  
+      newX = Math.max(Math.min(newX, maxX), -maxX);
+      newY = Math.max(Math.min(newY, maxY), -maxY);
+  
+      setPosition({ x: newX, y: newY });
     }
+  };
+  
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (!hasDragged) {
+      setIsZoomed(prev => !prev);
+      if (isZoomed) {
+        setPosition({ x: 0, y: 0 });
+      }
+    }
+  };
 
-    const getCursorStyle = () => {
-        if (isZoomed) {
-            return isDragging ? 'grabbing' : 'grab';
-        }
-        return 'zoom-in';
-    };
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setIsZoomed(false);
+    setPosition({ x: 0, y: 0 });
+  };
+  
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setIsZoomed(false);
+    setPosition({ x: 0, y: 0 });
+  };
 
-    return (
-        <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={onClose}>
-                    <X className="h-6 w-6" />
+  const getCursorStyle = () => {
+    if (isZoomed) return isDragging ? 'grabbing' : 'grab';
+    return 'zoom-in';
+  };
+  
+  return (
+      <DialogContent className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0">
+          <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
+          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <Image
+                ref={imgRef}
+                src={images[currentIndex]}
+                alt={alt}
+                fill
+                className="object-contain transition-transform duration-300 ease-out"
+                style={{
+                    transform: isZoomed ? 'scale(1.75)' : 'scale(0.9)',
+                    cursor: getCursorStyle(),
+                    userSelect: 'none',
+                    transformOrigin: 'center center',
+                    left: isZoomed ? position.x : 0,
+                    top: isZoomed ? position.y : 0,
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onDragStart={(e) => e.preventDefault()}
+              />
+          </div>
+          
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white">
+              <X className="h-6 w-6" />
+            </Button>
+          </DialogClose>
+          
+          {images.length > 1 && (
+             <>
+                <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={prevImage}>
+                    <ChevronLeft className="h-6 w-6" />
                 </Button>
-            </DialogClose>
-            
-            {images.length > 1 && (
-                 <>
-                    <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
-                        <ChevronLeft className="h-6 w-6" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
-                        <ChevronRight className="h-6 w-6" />
-                    </Button>
-                </>
-            )}
-
-            <div 
-                ref={containerRef}
-                className="relative h-[90%] w-[90%] flex items-center justify-center overflow-hidden"
-                onClick={(e) => e.stopPropagation()} // Prevent closing dialog when clicking on the image container
-            >
-                <Image
-                    ref={imgRef}
-                    src={images[currentIndex]}
-                    alt={alt}
-                    fill
-                    className="object-contain transition-transform duration-300 ease-out"
-                    style={{ 
-                        transform: isZoomed ? 'scale(1.75)' : 'scale(0.9)',
-                        cursor: getCursorStyle(),
-                        userSelect: 'none',
-                        top: isZoomed ? position.y : 0,
-                        left: isZoomed ? position.x : 0,
-                    }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseLeave}
-                    onDragStart={(e) => e.preventDefault()}
-                />
-            </div>
-             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
-                {currentIndex + 1} / {images.length}
-            </div>
-        </div>
-    );
+                <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={nextImage}>
+                    <ChevronRight className="h-6 w-6" />
+                </Button>
+            </>
+          )}
+          
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
+            {currentIndex + 1} / {images.length}
+          </div>
+      </DialogContent>
+  );
 };
+
 
 export default function ProductPage() {
   const params = useParams();
@@ -439,70 +426,81 @@ export default function ProductPage() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           
           {/* Image Gallery */}
-          <div className="grid grid-cols-1 gap-4">
+          <Dialog open={isZoomViewOpen} onOpenChange={setIsZoomViewOpen}>
+            <div className="grid grid-cols-1 gap-4">
               <div className="relative w-full max-w-[80%] mx-auto">
-                   {product.isImported && <ImportedProductBadge />}
-                  <Carousel 
-                    setApi={setCarouselApi} 
-                    className="w-full"
-                    opts={{
-                      loop: allImages.length > 1,
-                    }}
-                  >
-                    <CarouselContent>
-                      {allImages.length > 0 ? (
-                        allImages.map((img, index) => (
-                          <CarouselItem key={index}>
-                              <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
-                                <Image
-                                  src={img}
-                                  alt={`${displayName} - Imagem ${index + 1}`}
-                                  fill
-                                  className="object-contain mx-auto"
-                                  priority={index === 0}
-                                />
-                              </div>
-                          </CarouselItem>
-                        ))
-                      ) : (
-                        <CarouselItem>
-                          <div className="flex h-full aspect-square w-full items-center justify-center rounded-lg bg-secondary">
-                              <span className="text-muted-foreground">Sem imagem</span>
-                          </div>
+                {product.isImported && <ImportedProductBadge />}
+                <Carousel
+                  setApi={setCarouselApi}
+                  className="w-full"
+                  opts={{
+                    loop: allImages.length > 1,
+                  }}
+                >
+                  <CarouselContent>
+                    {allImages.length > 0 ? (
+                      allImages.map((img, index) => (
+                        <CarouselItem key={index}>
+                          <DialogTrigger asChild>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
+                              <Image
+                                src={img}
+                                alt={`${displayName} - Imagem ${index + 1}`}
+                                fill
+                                className="object-contain mx-auto"
+                                priority={index === 0}
+                              />
+                            </div>
+                          </DialogTrigger>
                         </CarouselItem>
-                      )}
-                    </CarouselContent>
-                     {allImages.length > 1 && (
-                        <>
-                          <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
-                          <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
-                        </>
-                      )}
-                  </Carousel>
+                      ))
+                    ) : (
+                      <CarouselItem>
+                        <div className="flex h-full aspect-square w-full items-center justify-center rounded-lg bg-secondary">
+                          <span className="text-muted-foreground">Sem imagem</span>
+                        </div>
+                      </CarouselItem>
+                    )}
+                  </CarouselContent>
+                  {allImages.length > 1 && (
+                    <>
+                      <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                    </>
+                  )}
+                </Carousel>
               </div>
 
               {allImages.length > 1 && (
-                   <div className="grid grid-cols-5 gap-2">
-                      {allImages.map((img, index) => (
-                          <button
-                              key={index}
-                              className={cn(
-                                  "relative aspect-square w-full overflow-hidden rounded-md transition-all",
-                                  selectedImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
-                              )}
-                              onClick={() => handleImageSelect(img)}
-                          >
-                              <Image
-                                  src={img}
-                                  alt={`${selectedVariant?.imageNames?.[index] || product.name} - Miniatura ${index + 1}`}
-                                  fill
-                                  className="object-cover"
-                              />
-                          </button>
-                      ))}
-                  </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {allImages.map((img, index) => (
+                    <button
+                      key={index}
+                      className={cn(
+                        "relative aspect-square w-full overflow-hidden rounded-md transition-all",
+                        selectedImage === img ? "ring-2 ring-primary ring-offset-2" : "opacity-70 hover:opacity-100"
+                      )}
+                      onClick={() => handleImageSelect(img)}
+                    >
+                      <Image
+                        src={img}
+                        alt={`${selectedVariant?.imageNames?.[index] || product.name} - Miniatura ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
-          </div>
+            </div>
+             {isZoomViewOpen && (
+              <ImageZoomView
+                images={allImages}
+                startIndex={zoomStartIndex}
+                alt={displayName}
+              />
+            )}
+          </Dialog>
 
           {/* Product Info */}
           <div className="flex flex-col">
@@ -640,15 +638,6 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
-       {isZoomViewOpen && (
-          <ImageZoomView 
-              images={allImages}
-              startIndex={zoomStartIndex}
-              alt={displayName} 
-              onClose={() => setIsZoomViewOpen(false)}
-          />
-      )}
     </>
   );
 }
-

@@ -157,11 +157,11 @@ export default function CheckoutContent() {
 
     try {
       const couponsRef = collection(firestore, 'coupons');
-      const q = query(couponsRef, where('code', '==', couponCode.toUpperCase()), limit(1));
+      const q = query(couponsRef, where('code', '==', couponCode.toUpperCase()), where('isActive', '==', true));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        setCouponError('Cupom inválido.');
+        setCouponError('Cupom inválido ou inativo.');
         setAppliedCoupon(null);
         setDiscount(0);
         return;
@@ -169,13 +169,6 @@ export default function CheckoutContent() {
       
       const couponDoc = querySnapshot.docs[0];
       const couponData = { ...couponDoc.data(), id: couponDoc.id } as Coupon;
-
-      if (!couponData.isActive) {
-        setCouponError('Este cupom não está mais ativo.');
-        setAppliedCoupon(null);
-        setDiscount(0);
-        return;
-      }
 
       if (couponData.expiryDate && new Date(couponData.expiryDate) < new Date()) {
         setCouponError('Este cupom expirou.');
@@ -260,32 +253,37 @@ export default function CheckoutContent() {
     }
 
     setPixStatus('pending_verification');
+
+    const unverifiedOrderData: any = {
+      userId: user.uid,
+      originalSessionId: lastPaymentId,
+      customerInfo: {
+        name: shippingInfo.name,
+        email: shippingInfo.email,
+      },
+      items: cartItems.map(item => ({
+        productId: item.product.id,
+        productName: item.displayName || item.product.name,
+        variantColor: item.variant.color,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.variant.price,
+        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
+      })),
+      totalAmount: finalTotal,
+      shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
+      paymentMethod: 'pix',
+      status: 'Pagamento em análise',
+      createdAt: new Date().toISOString(),
+      discountAmount: discount,
+    };
+
+    if (appliedCoupon) {
+      unverifiedOrderData.couponCode = appliedCoupon.code;
+    }
     
     try {
-      await addDoc(collection(firestore, 'unverified-orders'), {
-        userId: user.uid,
-        originalSessionId: lastPaymentId,
-        customerInfo: {
-          name: shippingInfo.name,
-          email: shippingInfo.email,
-        },
-        items: cartItems.map(item => ({
-          productId: item.product.id,
-          productName: item.displayName || item.product.name,
-          variantColor: item.variant.color,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.variant.price,
-          imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
-        })),
-        totalAmount: finalTotal,
-        shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
-        paymentMethod: 'pix',
-        status: 'Pagamento em análise',
-        createdAt: new Date().toISOString(),
-        couponCode: appliedCoupon?.code,
-        discountAmount: discount,
-      });
+      await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
       
     } catch (error) {
        console.error("Erro ao enviar para verificação:", error);
@@ -590,3 +588,5 @@ export default function CheckoutContent() {
     </div>
   );
 }
+
+    

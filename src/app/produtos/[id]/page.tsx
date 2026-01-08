@@ -25,7 +25,7 @@ import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight, X, Share2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { SizeChart } from "@/components/size-chart";
@@ -184,9 +184,7 @@ const ImageZoomView = ({
       <DialogContent 
         className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
         onInteractOutside={(e) => {
-          if (e.target instanceof Element && e.target.closest('[data-radix-dialog-content]')) {
-             onClose();
-          }
+            onClose();
         }}
       >
           <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
@@ -409,6 +407,29 @@ export default function ProductPage() {
     ? stockForSelectedSize === 0
     : !selectedSize || stockForSelectedSize === 0;
 
+  const handleShare = async () => {
+    const shareData = {
+      title: product?.name,
+      text: `Confira este produto na PISA VIBE: ${product?.name}`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Web Share API not supported');
+      }
+    } catch (err) {
+      // Fallback: copy link to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copiado!",
+        description: "O link do produto foi copiado para a área de transferência.",
+      });
+    }
+  };
+
+
   if (isLoading || !id) {
     return <ProductPageSkeleton />;
   }
@@ -521,7 +542,21 @@ export default function ProductPage() {
                       {displayName}
                   </h1>
                </div>
-              <QualityBadge quality={product.quality} />
+               <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={handleShare}>
+                                    <Share2 className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Compartilhar</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <QualityBadge quality={product.quality} />
+                </div>
             </div>
             
             {isPerfume ? (

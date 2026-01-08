@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SizeChart } from "@/components/size-chart";
 import { useToast } from "@/hooks/use-toast";
 
@@ -210,7 +210,7 @@ const ImageZoomView = ({
                         transform: isZoomed ? 'scale(2)' : 'scale(1)',
                         top: position.y,
                         left: position.x,
-                        cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                        cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'pointer',
                         userSelect: 'none',
                     }}
                     onDragStart={(e) => e.preventDefault()}
@@ -458,6 +458,7 @@ export default function ProductPage() {
                     </Carousel>
                     {allImages.length > 0 && selectedImage && (
                         <DialogContent className="max-w-none w-screen h-screen p-0 border-0 bg-black/80 backdrop-blur-sm">
+                           <DialogTitle className="sr-only">Visualização da imagem do produto: {displayName}</DialogTitle>
                             <ImageZoomView 
                                 images={allImages}
                                 startIndex={allImages.indexOf(selectedImage)}
@@ -629,3 +630,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    

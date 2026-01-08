@@ -1,12 +1,11 @@
 
 import { NextResponse } from 'next/server';
-import { use } from 'react';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ cep: string }> }
+  { params }: { params: { cep: string } }
 ) {
-  const { cep } = use(params);
+  const { cep } = params;
 
   if (!cep || !/^\d{8}$/.test(cep)) {
     return NextResponse.json({ error: 'CEP inválido.' }, { status: 400 });

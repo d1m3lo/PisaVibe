@@ -17,7 +17,7 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Product, Variant } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo, useEffect, useRef, use } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { cn, fixImageUrl } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { QualityBadge } from "@/components/quality-badge";
@@ -239,7 +239,7 @@ const ImageZoomView = ({
 
 export default function ProductPage() {
   const params = useParams();
-  const { id } = use(params);
+  const { id } = params;
   const firestore = useFirestore();
   const { addToCart } = useCart();
   const { user } = useUser();
@@ -451,7 +451,7 @@ export default function ProductPage() {
                       allImages.map((img, index) => (
                         <CarouselItem key={index}>
                           <DialogTrigger asChild>
-                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-zoom-in" onClick={() => handleOpenZoom(index)}>
                               <Image
                                 src={img}
                                 alt={`${displayName} - Imagem ${index + 1}`}

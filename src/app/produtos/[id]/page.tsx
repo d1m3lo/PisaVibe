@@ -451,7 +451,7 @@ export default function ProductPage() {
                       allImages.map((img, index) => (
                         <CarouselItem key={index}>
                           <DialogTrigger asChild>
-                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-zoom-in" onClick={() => handleOpenZoom(index)}>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
                               <Image
                                 src={img}
                                 alt={`${displayName} - Imagem ${index + 1}`}

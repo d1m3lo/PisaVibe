@@ -738,9 +738,11 @@ export default function ProductManagement() {
         return products;
     }
     const normalizedSearchTerm = searchTerm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return products.filter(p =>
-        p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedSearchTerm)
-    );
+    return products.filter(p => {
+        const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+        return productName.includes(normalizedSearchTerm) || productBrand.includes(normalizedSearchTerm);
+    });
   }, [products, searchTerm]);
 
   const handleSave = async (productData: Omit<ProductWithId, 'firestoreId'>) => {

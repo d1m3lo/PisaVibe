@@ -97,10 +97,12 @@ const ImageZoomView = ({
   images,
   startIndex,
   alt,
+  onClose,
 }: {
   images: string[];
   startIndex: number;
   alt: string;
+  onClose: () => void;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -149,9 +151,9 @@ const ImageZoomView = ({
     }
   };
   
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
     setIsDragging(false);
-    if (!hasDragged) {
+    if (!hasDragged && e.target === imgRef.current) {
       setIsZoomed(prev => !prev);
       if (isZoomed) {
         setPosition({ x: 0, y: 0 });
@@ -179,9 +181,16 @@ const ImageZoomView = ({
   };
   
   return (
-      <DialogContent className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0">
+      <DialogContent 
+        className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
+        onInteractOutside={(e) => {
+          if (e.target instanceof Element && e.target.closest('[data-radix-dialog-content]')) {
+             onClose();
+          }
+        }}
+      >
           <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
-          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center">
               <Image
                 ref={imgRef}
                 src={images[currentIndex]}
@@ -204,7 +213,7 @@ const ImageZoomView = ({
           </div>
           
           <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white">
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={onClose}>
               <X className="h-6 w-6" />
             </Button>
           </DialogClose>
@@ -442,7 +451,7 @@ export default function ProductPage() {
                       allImages.map((img, index) => (
                         <CarouselItem key={index}>
                           <DialogTrigger asChild>
-                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-zoom-in" onClick={() => handleOpenZoom(index)}>
                               <Image
                                 src={img}
                                 alt={`${displayName} - Imagem ${index + 1}`}
@@ -493,11 +502,12 @@ export default function ProductPage() {
                 </div>
               )}
             </div>
-             {isZoomViewOpen && (
+            {isZoomViewOpen && (
               <ImageZoomView
                 images={allImages}
                 startIndex={zoomStartIndex}
                 alt={displayName}
+                onClose={() => setIsZoomViewOpen(false)}
               />
             )}
           </Dialog>

@@ -47,10 +47,6 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // O Mercado Pago não aceita um item com valor negativo diretamente.
-    // O desconto precisa ser aplicado no nível da preferência.
-    // No entanto, para simplicidade e compatibilidade com o que já foi feito,
-    // vamos adicionar um item de desconto se o valor for maior que zero.
     const finalItems = [...items];
     if (discount > 0) {
       finalItems.push({
@@ -65,7 +61,11 @@ export async function POST(req: NextRequest) {
     const preference = new Preference(client);
     const result = await preference.create({
       body: {
-        items: finalItems,
+        items: finalItems.map(item => ({
+            ...item,
+            // A descrição é adicionada aqui para ser exibida no Mercado Pago
+            description: item.description || item.title
+        })),
         payer: {
           name: shippingInfo.name,
           email: shippingInfo.email,

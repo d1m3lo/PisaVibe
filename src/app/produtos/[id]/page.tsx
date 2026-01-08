@@ -118,20 +118,33 @@ export default function ProductPage() {
   const sortedSizes = useMemo(() => {
     if (!selectedVariant?.sizes) return [];
     
-    const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
-    
+    // Custom sort function
     return [...selectedVariant.sizes].sort((a, b) => {
-        const aIsNumeric = !isNaN(parseFloat(a.size));
-        const bIsNumeric = !isNaN(parseFloat(b.size));
-
-        if (aIsNumeric && bIsNumeric) {
-            return parseFloat(a.size) - parseFloat(b.size);
-        }
-        if (!aIsNumeric && !bIsNumeric) {
-            return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
-        }
-        // Keep numeric and non-numeric sizes grouped
-        return aIsNumeric ? -1 : 1;
+      // Handle "U" size to always be at the end
+      if (a.size === 'U') return 1;
+      if (b.size === 'U') return -1;
+  
+      // Handle letter sizes
+      const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
+      const aIsLetter = isNaN(parseFloat(a.size)) && sizeOrder[a.size.toUpperCase()];
+      const bIsLetter = isNaN(parseFloat(b.size)) && sizeOrder[b.size.toUpperCase()];
+      if (aIsLetter && bIsLetter) {
+        return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
+      }
+      if (aIsLetter) return 1; // Letters after numbers
+      if (bIsLetter) return -1; // Numbers before letters
+      
+      // Handle numeric and combined numeric sizes (e.g., "34", "33/34")
+      const getFirstNumber = (s: string) => parseFloat(s.split('/')[0]);
+      const numA = getFirstNumber(a.size);
+      const numB = getFirstNumber(b.size);
+  
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      
+      // Fallback for any other cases
+      return a.size.localeCompare(b.size);
     });
   }, [selectedVariant?.sizes]);
 
@@ -436,7 +449,7 @@ export default function ProductPage() {
                                 onClick={() => setSelectedSize(size)}
                                 disabled={stock === 0}
                                 className={cn(
-                                    "w-16",
+                                    "w-auto px-4", // Adjusted width
                                     stock === 0 && "cursor-not-allowed bg-secondary text-muted-foreground line-through"
                                 )}
                                 >
@@ -469,5 +482,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    

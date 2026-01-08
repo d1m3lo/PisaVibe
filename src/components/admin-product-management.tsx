@@ -143,6 +143,36 @@ const ProductForm = ({
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [sizeRange, setSizeRange] = useState('');
 
+  const sortSizes = (sizes: string[]) => {
+    return sizes.sort((a, b) => {
+        // Handle "U" size to always be at the end
+        if (a === 'U') return 1;
+        if (b === 'U') return -1;
+
+        // Handle letter sizes
+        const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
+        const aIsLetter = isNaN(parseFloat(a)) && sizeOrder[a.toUpperCase()];
+        const bIsLetter = isNaN(parseFloat(b)) && sizeOrder[b.toUpperCase()];
+        if (aIsLetter && bIsLetter) {
+            return (sizeOrder[a.toUpperCase()] || 99) - (sizeOrder[b.toUpperCase()] || 99);
+        }
+        if (aIsLetter) return 1;
+        if (bIsLetter) return -1;
+        
+        // Handle numeric and combined numeric sizes (e.g., "34", "33/34")
+        const getFirstNumber = (s: string) => parseFloat(s.split('/')[0]);
+        const numA = getFirstNumber(a);
+        const numB = getFirstNumber(b);
+
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+        }
+        
+        // Fallback for any other cases
+        return a.localeCompare(b);
+    });
+  };
+
 
   useEffect(() => {
     const gender = formData.gender as keyof typeof categoryMappings;
@@ -167,17 +197,10 @@ const ProductForm = ({
     }
 
     const allVariantSizes = formData.variants.flatMap(v => v.sizes.map(s => s.size));
-    const uniqueExistingSizes = [...new Set(allVariantSizes)].sort((a, b) => {
-        const aIsNum = !isNaN(Number(a));
-        const bIsNum = !isNaN(Number(b));
-        if (aIsNum && bIsNum) return Number(a) - Number(b);
-        if (aIsNum) return -1;
-        if (bIsNum) return 1;
-        return a.localeCompare(b);
-    });
+    const uniqueExistingSizes = [...new Set(allVariantSizes)];
 
     const combinedSizes = [...new Set([...initialSizes, ...uniqueExistingSizes])];
-    setAvailableSizes(combinedSizes);
+    setAvailableSizes(sortSizes(combinedSizes));
 
 
   }, [formData.gender, formData.category, product]);
@@ -185,25 +208,29 @@ const ProductForm = ({
   const handleGenerateSizes = () => {
     if (!sizeRange) return;
     let newGeneratedSizes: string[] = [];
-    if (sizeRange.includes('-')) {
+    
+    if (sizeRange.includes(',') || sizeRange.includes('/')) {
+        // Handle comma-separated or combined sizes (e.g., "33/34, 35/36")
+        newGeneratedSizes = sizeRange.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (sizeRange.includes('-')) {
         const [start, end] = sizeRange.split('-').map(Number);
         if (!isNaN(start) && !isNaN(end) && start <= end) {
             for (let i = start; i <= end; i++) {
                 newGeneratedSizes.push(String(i));
             }
         } else {
-            alert("Formato de intervalo inválido. Use algo como '34-45'.");
+            alert("Formato de intervalo inválido. Use '34-45'. Para tamanhos combinados, use vírgula: '33/34, 35/36'.");
         }
+    } else if (!isNaN(Number(sizeRange))) {
+        // Handle single number input
+        newGeneratedSizes.push(sizeRange);
     } else {
-        newGeneratedSizes = sizeRange.split(',').map(s => s.trim()).filter(Boolean);
+         // Handle single letter size input
+        newGeneratedSizes.push(sizeRange);
     }
     
-    setAvailableSizes(prev => [...new Set([...prev, ...newGeneratedSizes])].sort((a, b) => {
-        const aIsNum = !isNaN(Number(a));
-        const bIsNum = !isNaN(Number(b));
-        if (aIsNum && bIsNum) return Number(a) - Number(b);
-        return a.localeCompare(b);
-    }));
+    setAvailableSizes(prev => sortSizes([...new Set([...prev, ...newGeneratedSizes])]));
+    setSizeRange('');
   };
 
 
@@ -631,12 +658,13 @@ const ProductForm = ({
                                 {isSizeGeneratorVisible && (
                                     <div className="flex items-end gap-2 rounded-md border p-3">
                                         <div className="flex-grow space-y-1">
-                                            <Label htmlFor="size-range" className="text-xs">Gerar Tamanhos</Label>
+                                            <Label htmlFor="size-range" className="text-xs">Gerador de Tamanhos</Label>
                                             <Input 
                                                 id="size-range"
-                                                placeholder="Ex: 34-45 ou P,M,G"
+                                                placeholder="Ex: 34-45 ou P,M,G ou 33/34,35/36"
                                                 value={sizeRange}
                                                 onChange={(e) => setSizeRange(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleGenerateSizes(); } }}
                                             />
                                         </div>
                                         <Button type="button" onClick={handleGenerateSizes}>Gerar</Button>
@@ -820,7 +848,7 @@ export default function ProductManagement() {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder="Buscar produto..."
+                        placeholder="Buscar produto ou marca..."
                         className="pl-8 sm:w-auto"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

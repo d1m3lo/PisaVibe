@@ -607,7 +607,7 @@ const ProductForm = ({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`price-${variant.id}`}>Preço</Label>
-                                <Input id={`price-${variant.id}`} type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
+                                <Input id={`price-${variant.id}`} type="number" value={variant.price ?? ''} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`oldPrice-${variant.id}`}>Preço Antigo (Opcional)</Label>
@@ -966,3 +966,5 @@ export default function ProductManagement() {
     </Card>
   );
 }
+
+    

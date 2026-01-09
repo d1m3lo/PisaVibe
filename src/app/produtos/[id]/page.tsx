@@ -183,12 +183,9 @@ const ImageZoomView = ({
   return (
       <DialogContent 
         className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
-        onInteractOutside={(e) => {
-            onClose();
-        }}
       >
           <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
-          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center">
+          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center" onClick={onClose}>
               <Image
                 ref={imgRef}
                 src={images[currentIndex]}
@@ -207,6 +204,7 @@ const ImageZoomView = ({
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onDragStart={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
               />
           </div>
           
@@ -472,7 +470,7 @@ export default function ProductPage() {
                       allImages.map((img, index) => (
                         <CarouselItem key={index}>
                           <DialogTrigger asChild>
-                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-zoom-in" onClick={() => handleOpenZoom(index)}>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer" onClick={() => handleOpenZoom(index)}>
                               <Image
                                 src={img}
                                 alt={`${displayName} - Imagem ${index + 1}`}

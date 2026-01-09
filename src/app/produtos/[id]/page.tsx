@@ -456,7 +456,7 @@ export default function ProductPage() {
           {/* Image Gallery */}
           <Dialog open={isZoomViewOpen} onOpenChange={setIsZoomViewOpen}>
             <div className="grid grid-cols-1 gap-4">
-              <div className="relative w-full max-w-[80%] mx-auto">
+              <div className="relative w-[80%] mx-auto">
                 {product.isImported && <ImportedProductBadge />}
                 <Carousel
                   setApi={setCarouselApi}

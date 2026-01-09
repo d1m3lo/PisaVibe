@@ -143,7 +143,7 @@ const SearchBar = () => {
 
   const { data: products } = useCollection<Product>(productsQuery);
 
-  const searchResults = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     if (queryValue.trim().length < 2 || !products) return [];
     
     const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -154,8 +154,11 @@ const SearchBar = () => {
         const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
         return productName.includes(normalizedQuery) || productBrand.includes(normalizedQuery);
       })
-      .slice(0, 15);
   }, [queryValue, products]);
+
+  const searchResults = useMemo(() => {
+      return filteredProducts.slice(0, 15);
+  }, [filteredProducts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +221,7 @@ const SearchBar = () => {
                     </Link>
                     ))}
                 </div>
-                {queryValue.trim().length > 1 && searchResults.length > 0 && (
+                {queryValue.trim().length > 1 && filteredProducts.length > searchResults.length && (
                     <div className="mt-2 p-2">
                          <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
                             <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>

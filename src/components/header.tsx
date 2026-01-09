@@ -221,13 +221,6 @@ const SearchBar = () => {
                     </Link>
                     ))}
                 </div>
-                {queryValue.trim().length > 1 && filteredProducts.length > searchResults.length && (
-                    <div className="mt-2 p-2">
-                         <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
-                            <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>
-                         </Button>
-                    </div>
-                )}
               </div>
            </ScrollArea>
         ) : (
@@ -236,6 +229,13 @@ const SearchBar = () => {
               Nenhum resultado encontrado.
             </p>
           )
+        )}
+        {queryValue.trim().length > 1 && filteredProducts.length > searchResults.length && (
+            <div className="mt-2 p-2 border-t">
+                  <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
+                    <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>
+                  </Button>
+            </div>
         )}
       </PopoverContent>
     </Popover>

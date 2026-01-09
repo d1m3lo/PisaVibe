@@ -296,16 +296,16 @@ export default function CheckoutContent() {
     if (!validateForm() || !user) return;
   
     const formattedItems = cartItems.map((item) => {
-        const description = item.product.subCategory === 'mochilas'
-            ? `${item.variant.color}`
-            : `${item.variant.color} / ${item.size}`;
-
+        const title = item.product.subCategory === 'mochilas'
+            ? `${item.displayName || item.product.name} (${item.variant.color})`
+            : `${item.displayName || item.product.name} (${item.variant.color} / ${item.size})`;
+        
         return {
             id: item.product.id,
-            title: item.displayName || item.product.name,
+            title: title,
             quantity: item.quantity,
             unit_price: item.variant.price,
-            description: description,
+            description: title,
             picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
         }
     });
@@ -595,4 +595,5 @@ export default function CheckoutContent() {
   );
 }
 
+    
     

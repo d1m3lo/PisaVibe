@@ -8,8 +8,6 @@ import {
   doc,
   writeBatch,
   deleteDoc,
-  getDoc,
-  addDoc,
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import {
@@ -38,6 +36,7 @@ import {
   XCircle,
   Loader2,
   Package,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -55,12 +54,12 @@ import {
 interface UnverifiedOrder {
   id: string;
   userId: string;
-  originalSessionId: string;
+  originalSessionId?: string;
   customerInfo: { name: string; email: string; };
   items: OrderItem[];
   totalAmount: number;
   shippingAddress: string;
-  paymentMethod: string;
+  paymentMethod: 'pix' | 'card';
   status: string;
   createdAt: string;
 }
@@ -166,12 +165,43 @@ export default function AdminPixVerification() {
      }
   }
 
+  const getPaymentMethodIcon = (method: 'pix' | 'card') => {
+    if (method === 'card') {
+      return <CreditCard className="h-4 w-4 mr-2" />;
+    }
+    // Default to PIX or other icon
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 mr-2"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M12 22h-1a2 2 0 0 1-2-2v-1H7.5a2.5 2.5 0 0 1-2.5-2.5V12" />
+            <path d="M22 12v-1a2 2 0 0 0-2-2h-1" />
+            <path d="M2 12v-1a2 2 0 0 1 2-2h1" />
+            <path d="m7 12-4-4 4-4" />
+            <path d="M17 12l4-4-4-4" />
+            <path d="m14 8 3 3" />
+            <path d="M9 11v.01" />
+            <path d="M15 11v.01" />
+            <path d="M12 11v.01" />
+            <path d="M12 17v.01" />
+            <path d="M12 22v-3" />
+        </svg>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Verificar Pagamentos PIX</CardTitle>
+        <CardTitle>Verificação de Pagamentos</CardTitle>
         <CardDescription>
-          Confirme ou recuse os pagamentos PIX informados pelos clientes.
+          Confirme ou recuse pagamentos PIX e Cartão informados pelos clientes.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -181,7 +211,7 @@ export default function AdminPixVerification() {
               <TableHead>Data</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Método</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -202,7 +232,10 @@ export default function AdminPixVerification() {
                     </TableCell>
                     <TableCell className="font-semibold">R$ {order.totalAmount.toFixed(2).replace('.', ',')}</TableCell>
                     <TableCell>
-                        <Badge variant="secondary">{order.status}</Badge>
+                        <Badge variant="secondary" className="capitalize">
+                            {getPaymentMethodIcon(order.paymentMethod)}
+                            {order.paymentMethod}
+                        </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                         {processingId === order.id ? (
@@ -221,7 +254,7 @@ export default function AdminPixVerification() {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Recusar Pagamento?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                Esta ação irá remover a solicitação de verificação. O cliente será notificado que o pagamento não foi identificado. Tem certeza?
+                                                Esta ação irá remover a solicitação de verificação. O cliente será notificado que o pagamento não foi identificado (para PIX). Tem certeza?
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -268,3 +301,5 @@ export default function AdminPixVerification() {
     </Card>
   );
 }
+
+    

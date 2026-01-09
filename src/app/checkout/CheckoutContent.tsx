@@ -293,7 +293,7 @@ export default function CheckoutContent() {
   };
 
   const handleCardPayment = async () => {
-    if (!validateForm() || !user) return;
+    if (!validateForm() || !user || !firestore) return;
   
     const formattedItems = cartItems.map((item) => {
         const title = item.product.subCategory === 'mochilas'
@@ -309,6 +309,42 @@ export default function CheckoutContent() {
             picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
         }
     });
+
+    // Enviar solicitação de verificação para o admin em segundo plano
+    const unverifiedOrderData: any = {
+      userId: user.uid,
+      customerInfo: {
+        name: shippingInfo.name,
+        email: shippingInfo.email,
+      },
+      items: cartItems.map(item => ({
+        productId: item.product.id,
+        productName: item.displayName || item.product.name,
+        variantColor: item.variant.color,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.variant.price,
+        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
+      })),
+      totalAmount: finalTotal,
+      shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
+      paymentMethod: 'card',
+      status: 'Pagamento em análise',
+      createdAt: new Date().toISOString(),
+      discountAmount: discount,
+    };
+
+    if (appliedCoupon) {
+      unverifiedOrderData.couponCode = appliedCoupon.code;
+    }
+    
+    try {
+      // Adiciona a ordem de verificação sem bloquear o fluxo do usuário
+      addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+    } catch (error) {
+       console.error("Erro ao criar ordem de verificação para cartão:", error);
+       // Não notifica o usuário, pois a falha é apenas no lado do admin
+    }
   
     try {
       const res = await fetch("/api/create-payment", {
@@ -595,5 +631,6 @@ export default function CheckoutContent() {
   );
 }
 
+    
     
     

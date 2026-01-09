@@ -150,6 +150,9 @@ const OrderHistory = () => {
                                                       <p className="text-xs text-muted-foreground">
                                                           {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
                                                       </p>
+                                                      <p className="text-xs text-muted-foreground">
+                                                          Cor: {item.variantColor} / Tam: {item.size}
+                                                      </p>
                                                   </div>
                                               </div>
                                           ))}

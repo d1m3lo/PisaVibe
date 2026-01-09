@@ -62,9 +62,12 @@ export async function POST(req: NextRequest) {
     const result = await preference.create({
       body: {
         items: finalItems.map(item => ({
-            ...item,
-            // A descrição é adicionada aqui para ser exibida no Mercado Pago
-            description: item.description || item.title
+            id: item.id,
+            title: item.title,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            description: item.description || item.title, // Garante que a descrição seja enviada
+            picture_url: item.picture_url,
         })),
         payer: {
           name: shippingInfo.name,
@@ -87,8 +90,15 @@ export async function POST(req: NextRequest) {
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
             shippingInfo: JSON.stringify(shippingInfo),
-            // Salva os itens originais sem o desconto no metadado
-            cartItems: JSON.stringify(items), 
+            // Salva os itens originais (incluindo a descrição detalhada) no metadado
+            cartItems: JSON.stringify(items.map(item => ({
+                id: item.id,
+                title: item.title,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                description: item.description,
+                picture_url: item.picture_url
+            }))),
             couponCode: coupon?.code || undefined,
             discountAmount: discount > 0 ? discount : undefined,
         },

@@ -133,4 +133,3 @@ async function createOrderFromPayment(payment: any) {
 
   console.log(`✅ Pedido criado com sucesso para o usuário ${userId} a partir do pagamento ${payment.id}.`);
 }
-

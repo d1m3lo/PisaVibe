@@ -295,14 +295,20 @@ export default function CheckoutContent() {
   const handleCardPayment = async () => {
     if (!validateForm() || !user) return;
   
-    const formattedItems = cartItems.map((item) => ({
-      id: item.product.id,
-      title: item.displayName || item.product.name,
-      quantity: item.quantity,
-      unit_price: item.variant.price,
-      description: `${item.variant.color} / ${item.size}`,
-      picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
-    }));
+    const formattedItems = cartItems.map((item) => {
+        const description = item.product.subCategory === 'mochilas'
+            ? `${item.variant.color}`
+            : `${item.variant.color} / ${item.size}`;
+
+        return {
+            id: item.product.id,
+            title: item.displayName || item.product.name,
+            quantity: item.quantity,
+            unit_price: item.variant.price,
+            description: description,
+            picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
+        }
+    });
   
     try {
       const res = await fetch("/api/create-payment", {

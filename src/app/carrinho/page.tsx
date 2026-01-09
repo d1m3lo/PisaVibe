@@ -36,7 +36,7 @@ export default function CartPage() {
     if (item.product.subCategory === 'mochilas' && item.selectedImage) {
         return fixImageUrl(item.selectedImage);
     }
-    return fixImageUrl(item.variant.images[0]);
+    return fixImageUrl(item.variant?.images[0]);
   }
 
   return (
@@ -46,7 +46,9 @@ export default function CartPage() {
         <div className="lg:col-span-2">
             <div className="flex flex-col gap-5">
               {cartItems.map((item) => {
+                if (!item.product || !item.variant) return null;
                 const cartItemId = getCartItemId(item.product, item.variant, item.size, item.selectedImage);
+                const price = typeof item.variant.price === 'number' ? item.variant.price : 0;
                 return (
                   <div key={cartItemId} className="flex items-start gap-4 rounded-lg border p-4">
                     <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
@@ -69,7 +71,7 @@ export default function CartPage() {
                           {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
                         </div>
                       <p className="mt-1 font-bold text-base">
-                        R$ {item.variant.price.toFixed(2).replace(".", ",")}
+                        R$ {price.toFixed(2).replace(".", ",")}
                       </p>
                       <div className="mt-4 flex items-center gap-2">
                         <Button

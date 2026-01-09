@@ -46,7 +46,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
     if (item.product.subCategory === 'mochilas' && item.selectedImage) {
         return fixImageUrl(item.selectedImage);
     }
-    return fixImageUrl(item.variant.images[0]);
+    return fixImageUrl(item.variant?.images[0]);
   }
 
 
@@ -55,7 +55,9 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-5 pr-6">
           {cartItems.map((item) => {
+            if (!item.product || !item.variant) return null;
             const cartItemId = getCartItemId(item.product, item.variant, item.size, item.selectedImage);
+            const price = typeof item.variant.price === 'number' ? item.variant.price : 0;
             return (
               <div key={cartItemId} className="flex items-start gap-4">
                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
@@ -78,7 +80,7 @@ export function CartSheetContent({ showEmptyState = false }: { showEmptyState?: 
                       {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
                     </div>
                   <p className="mt-1 font-bold text-sm">
-                  R$ {item.variant.price.toFixed(2).replace(".", ",")}
+                  R$ {price.toFixed(2).replace(".", ",")}
                   </p>
                    <div className="mt-3 flex items-center gap-2">
                     <Button

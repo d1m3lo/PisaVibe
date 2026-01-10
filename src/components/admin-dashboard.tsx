@@ -39,7 +39,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               onClick={() => setActiveTab('pix')}
             >
               <ShieldCheck className="h-5 w-5" />
-              Verificar Pagamentos PIX
+              Verificar Pagamentos
             </Button>
             <Button
               variant={activeTab === 'central' ? 'secondary' : 'ghost'}

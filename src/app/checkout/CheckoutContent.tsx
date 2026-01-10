@@ -391,29 +391,40 @@ export default function CheckoutContent() {
     if (zipCode.length === 8) {
       setIsCalculatingShipping(true);
       try {
-        // Lógica de cálculo de frete
-        const cepAsNumber = parseInt(zipCode, 10);
-        if (cepAsNumber >= 35160000 && cepAsNumber <= 35164999) {
-            setShippingCost(0); // Frete grátis para Ipatinga
-        } else {
-            setShippingCost(25); // Frete fixo para outras localidades
-        }
-
         const response = await fetch(`/api/cep/${zipCode}`);
         if (!response.ok) {
-            console.error("A resposta da API de CEP não foi OK.");
+            toast({ variant: "destructive", title: "Erro de Frete", description: "CEP não encontrado."});
+            setIsCalculatingShipping(false);
             return;
         }
         const data = await response.json();
-        if (!data.error) {
-          setShippingInfo(prev => ({
-            ...prev,
-            street: data.logradouro,
-            neighborhood: data.bairro,
-            city: data.localidade,
-            state: data.uf,
-          }));
+        if (data.error) {
+            toast({ variant: "destructive", title: "Erro de Frete", description: "CEP não encontrado."});
+            setIsCalculatingShipping(false);
+            return;
         }
+
+        const cepAsNumber = parseInt(zipCode, 10);
+        if (cepAsNumber >= 35160000 && cepAsNumber <= 35164999) {
+            setShippingCost(0); // Frete grátis para Ipatinga
+        } else if (data.uf === 'MG') {
+            setShippingCost(15.00); // Resto de MG
+        } else if (['SP', 'RJ', 'ES'].includes(data.uf)) {
+            setShippingCost(25.00); // Sudeste
+        } else if (['PR', 'SC', 'RS', 'GO', 'MT', 'MS', 'DF'].includes(data.uf)) {
+            setShippingCost(35.00); // Sul e Centro-Oeste
+        } else {
+            setShippingCost(50.00); // Norte e Nordeste
+        }
+        
+        setShippingInfo(prev => ({
+          ...prev,
+          street: data.logradouro,
+          neighborhood: data.bairro,
+          city: data.localidade,
+          state: data.uf,
+        }));
+        
       } catch (error) {
         console.error("Erro ao buscar CEP:", error);
         toast({ variant: "destructive", title: "Erro de Frete", description: "Não foi possível calcular o frete para este CEP."});

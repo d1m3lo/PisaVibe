@@ -1,6 +1,6 @@
 
 
-import { Award, CheckCircle, Diamond, Package, Star, Truck, Gem } from 'lucide-react';
+import { Award, CheckCircle, Diamond, Package, Star, Truck, Gem, MapPin } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -64,6 +64,23 @@ export default function ShippingAndDeliveryPage() {
                             <li>Melhor disponibilidade de modelos e tamanhos</li>
                         </ul>
                          <p>Por esse motivo, a embalagem pode variar, podendo chegar em caixas ou embalagens diferentes do padrão da loja.</p>
+                    </div>
+                </section>
+                
+                <section>
+                    <h2 className="mb-4 flex items-center gap-3 font-headline text-2xl font-bold">
+                        <MapPin className="h-7 w-7 text-primary" />
+                        Área de Cobertura e Custos
+                    </h2>
+                    <div className="space-y-4 text-muted-foreground">
+                        <p>
+                           Atualmente, oferecemos <strong>entregas locais em Ipatinga, Minas Gerais</strong>, e também realizamos <strong>envios para todo o Brasil</strong> através de transportadoras parceiras.
+                        </p>
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+                             <p className="font-semibold">
+                                Atenção: A cobrança de frete pode ser implementada ou alterada a qualquer momento, sem aviso prévio. Os custos de envio, quando aplicáveis, serão sempre exibidos de forma clara durante o processo de checkout, antes da finalização da sua compra.
+                            </p>
+                        </div>
                     </div>
                 </section>
 

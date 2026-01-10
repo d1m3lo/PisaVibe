@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare, ShieldCheck, BellRing, BellOff } from 'lucide-react';
+import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare, ShieldCheck, BellRing, BellOff, Loader2 } from 'lucide-react';
 import ProductManagement from './admin-product-management';
 import CustomerManagement from './admin-customer-management';
 import AdminOrderManagement from './admin-order-management';
@@ -12,7 +12,7 @@ import AdminCouponManagement from './admin-coupon-management';
 import AdminCentralControle from './admin-central-controle';
 import AdminPixVerification from './admin-pix-verification';
 import { useFirestore } from '@/firebase';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -22,15 +22,68 @@ import { initializeFirebase } from '@/firebase';
 const NotificationManager = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [notificationPermission, setNotificationPermission] = useState('default');
+    const [permission, setPermission] = useState('default');
+    const [isTokenRegistered, setIsTokenRegistered] = useState(false);
+    const [currentToken, setCurrentToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Check initial permission status on mount
+    const getVapidKey = () => {
+        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        if (!vapidKey) {
+            console.error("VAPID key is not configured in .env.local");
+            toast({ variant: 'destructive', title: "Erro de Configuração", description: "A chave de notificação (VAPID key) não foi encontrada." });
+        }
+        return vapidKey;
+    };
+
+    const fetchTokenAndCheckRegistration = useCallback(async () => {
+        if (!firestore || permission !== 'granted') {
+            setIsLoading(false);
+            return;
+        }
+
+        const vapidKey = getVapidKey();
+        if (!vapidKey) {
+            setIsLoading(false);
+            return;
+        }
+        
+        try {
+            const { messaging } = initializeFirebase();
+            if (!messaging) throw new Error("Messaging service is not available.");
+            
+            const token = await getToken(messaging, { vapidKey });
+            if (token) {
+                setCurrentToken(token);
+                const tokenRef = doc(firestore, 'fcmTokens', token);
+                const docSnap = await getDoc(tokenRef);
+                setIsTokenRegistered(docSnap.exists());
+            } else {
+                setCurrentToken(null);
+                setIsTokenRegistered(false);
+            }
+        } catch (error) {
+            console.error('Error getting FCM token or checking registration:', error);
+            setCurrentToken(null);
+            setIsTokenRegistered(false);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [firestore, permission, toast]);
+
+
     useEffect(() => {
         if (typeof window !== 'undefined' && 'Notification' in window) {
-            setNotificationPermission(Notification.permission);
+            setPermission(Notification.permission);
         }
+        setIsLoading(false);
     }, []);
 
+    useEffect(() => {
+        fetchTokenAndCheckRegistration();
+    }, [permission, fetchTokenAndCheckRegistration]);
+
+    // Listener for foreground messages
     useEffect(() => {
         const { messaging } = initializeFirebase();
         if (!messaging) return;
@@ -46,55 +99,71 @@ const NotificationManager = () => {
         return () => unsubscribe();
     }, [toast]);
     
-    const handleEnableNotifications = async () => {
-        try {
-            const { messaging } = initializeFirebase();
-            if (!messaging) {
-                throw new Error("Messaging service is not available.");
-            }
+    const handleToggleNotifications = async () => {
+        setIsLoading(true);
 
-            const permission = await Notification.requestPermission();
-            setNotificationPermission(permission);
-
-            if (permission === 'granted') {
-                const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-                if (!vapidKey) {
-                    throw new Error("VAPID key is not configured.");
+        if (isTokenRegistered) { // Turn off notifications
+            if (currentToken && firestore) {
+                try {
+                    await deleteDoc(doc(firestore, 'fcmTokens', currentToken));
+                    setIsTokenRegistered(false);
+                    toast({ title: "Notificações desativadas", description: "Você não receberá mais alertas de novos pedidos neste dispositivo." });
+                } catch (error) {
+                    toast({ variant: 'destructive', title: "Erro", description: "Não foi possível desativar as notificações." });
                 }
+            }
+        } else { // Turn on notifications
+            try {
+                const newPermission = await Notification.requestPermission();
+                setPermission(newPermission);
 
-                const currentToken = await getToken(messaging, { vapidKey });
+                if (newPermission === 'granted') {
+                    await fetchTokenAndCheckRegistration(); // Re-fetch and check
+                    
+                     // After permission, try to register the token if it wasn't already
+                    const vapidKey = getVapidKey();
+                    if(!vapidKey) return;
 
-                if (currentToken) {
-                    console.log('FCM Token:', currentToken);
-                    if (firestore) {
-                        await setDoc(doc(firestore, 'fcmTokens', currentToken), {
-                           createdAt: new Date().toISOString() 
-                        });
-                        toast({ title: "Notificações ativadas!", description: "Você receberá alertas de novos pedidos."});
+                    const { messaging } = initializeFirebase();
+                    if (!messaging) throw new Error("Messaging service is not available.");
+                    
+                    const token = await getToken(messaging, { vapidKey });
+
+                    if(token && firestore){
+                       await setDoc(doc(firestore, 'fcmTokens', token), { createdAt: new Date().toISOString() });
+                       setIsTokenRegistered(true);
+                       setCurrentToken(token);
+                       toast({ title: "Notificações ativadas!", description: "Você receberá alertas de novos pedidos." });
                     }
                 } else {
-                    toast({ variant: 'destructive', title: "Erro", description: "Não foi possível obter o token de notificação."});
+                    toast({ variant: 'destructive', title: "Permissão negada", description: "Você bloqueou as notificações." });
                 }
-            } else {
-                 toast({ variant: 'destructive', title: "Permissão negada", description: "As notificações foram bloqueadas. Você pode reativá-las nas configurações do seu navegador."});
+            } catch (error: any) {
+                console.error('Error toggling notifications:', error);
+                toast({ variant: 'destructive', title: "Erro de Notificação", description: error.message });
             }
-        } catch(error: any) {
-            console.error('Error getting FCM token:', error);
-            toast({ variant: 'destructive', title: "Erro de Notificação", description: error.message || "Não foi possível ativar as notificações." });
         }
+        setIsLoading(false);
     };
     
-    const isGranted = notificationPermission === 'granted';
+    const buttonText = isTokenRegistered ? 'Notificações Ativas' : 'Ativar Notificações';
+    const Icon = isTokenRegistered ? BellRing : BellOff;
 
     return (
         <Button 
-          variant={isGranted ? 'ghost' : 'secondary'}
+          variant={isTokenRegistered ? 'secondary' : 'ghost'}
           className="w-full justify-start gap-2"
-          onClick={handleEnableNotifications}
-          disabled={isGranted}
+          onClick={handleToggleNotifications}
+          disabled={isLoading || permission === 'denied'}
         >
-          {isGranted ? <BellRing className="h-5 w-5 text-green-500" /> : <BellOff className="h-5 w-5" />}
-          {isGranted ? 'Notificações Ativas' : 'Ativar Notificações'}
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Icon className={cn("h-5 w-5", isTokenRegistered && 'text-green-500')} />
+          )}
+          <span>
+            {isLoading ? 'Carregando...' : (permission === 'denied' ? 'Notificações Bloqueadas' : buttonText)}
+          </span>
         </Button>
     )
 }

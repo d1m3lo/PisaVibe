@@ -1,7 +1,9 @@
-
 import * as functions from "firebase-functions";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import * as admin from 'firebase-admin';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 admin.initializeApp();
 
@@ -10,8 +12,15 @@ const db = admin.firestore();
 /* ================================
    MERCADO PAGO CLIENT
 ================================ */
+const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+if (!accessToken) {
+    console.error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
+    throw new Error("Credencial do Mercado Pago não encontrada.");
+}
+
 const client = new MercadoPagoConfig({
-  accessToken: "APP_USR-4471136097030537-122919-8fbdd981af51d484d5cc90907b5574ba-481737354",
+  accessToken,
 });
 
 const payment = new Payment(client);
@@ -51,6 +60,10 @@ export const createPixPayment = functions.https.onRequest(async (req, res) => {
     });
 
     const pix = result.point_of_interaction?.transaction_data;
+
+    if (!pix) {
+        throw new Error("Resposta inesperada do Mercado Pago ao gerar PIX.");
+    }
 
     res.status(200).json({
       payment_id: result.id,

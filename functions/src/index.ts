@@ -8,6 +8,7 @@ dotenv.config();
 admin.initializeApp();
 
 const db = admin.firestore();
+const messaging = admin.messaging();
 
 /* ================================
    MERCADO PAGO CLIENT
@@ -105,3 +106,54 @@ export const logAccess = functions.https.onRequest(async (req, res) => {
     res.status(500).send('Error logging access');
   }
 });
+
+
+/* ================================
+   NOTIFICAÇÃO DE NOVO PEDIDO
+================================ */
+export const sendOrderNotification = functions.firestore
+  .document('unverified-orders/{orderId}')
+  .onCreate(async (snapshot) => {
+    const orderData = snapshot.data();
+
+    // 1. Get all saved FCM tokens
+    const tokensSnapshot = await db.collection('fcmTokens').get();
+    if (tokensSnapshot.empty) {
+      console.log('Nenhum token de notificação encontrado.');
+      return;
+    }
+
+    const tokens = tokensSnapshot.docs.map(doc => doc.id);
+
+    // 2. Create the notification payload
+    const payload: admin.messaging.MessagingPayload = {
+      notification: {
+        title: 'Novo Pedido Pendente!',
+        body: `Cliente: ${orderData.customerInfo.name} - Valor: R$ ${orderData.totalAmount.toFixed(2).replace('.', ',')}`,
+        icon: 'https://i.postimg.cc/FFPt3fFJ/Chat-GPT-Image-7-de-jan-de-2026-09-45-35-removebg-preview.png',
+        click_action: 'https://pisa-vibe-shop.web.app/admdylondelas' // URL para abrir o painel
+      }
+    };
+    
+    // 3. Send the notification to all tokens
+    try {
+      const response = await messaging.sendToDevice(tokens, payload);
+      console.log('Notificação enviada com sucesso:', response);
+      
+      // Clean up invalid tokens
+      response.results.forEach((result, index) => {
+        const error = result.error;
+        if (error) {
+          console.error('Falha ao enviar notificação para', tokens[index], error);
+          if (error.code === 'messaging/registration-token-not-registered' ||
+              error.code === 'messaging/invalid-registration-token') {
+            // Remove the invalid token from the database
+            db.collection('fcmTokens').doc(tokens[index]).delete();
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+    }
+  });

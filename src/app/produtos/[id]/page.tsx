@@ -183,9 +183,10 @@ const ImageZoomView = ({
   return (
       <DialogContent 
         className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
+        onClick={onClose}
       >
           <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
-          <div ref={containerRef} className="relative w-[35%] h-auto mx-auto" onClick={onClose}>
+          <div ref={containerRef} className="relative w-[35%] h-auto mx-auto">
               <Image
                 ref={imgRef}
                 src={images[currentIndex]}

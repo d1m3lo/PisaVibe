@@ -195,7 +195,7 @@ const SearchBar = () => {
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {searchResults.length > 0 ? (
-           <ScrollArea className="h-auto max-h-[50vh]">
+           <ScrollArea className="max-h-[50vh]">
              <div className="p-2">
                 <div className="flex flex-col gap-2">
                     {searchResults.map((product) => (
@@ -230,7 +230,7 @@ const SearchBar = () => {
             </p>
           )
         )}
-        {queryValue.trim().length > 1 && filteredProducts.length > searchResults.length && (
+        {queryValue.trim().length > 1 && filteredProducts.length > 0 && (
             <div className="mt-2 p-2 border-t">
                   <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
                     <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>

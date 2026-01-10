@@ -193,7 +193,7 @@ const ImageZoomView = ({
                 fill
                 className="object-contain transition-transform duration-300 ease-out"
                 style={{
-                    transform: isZoomed ? 'scale(1.75)' : 'scale(0.9)',
+                    transform: isZoomed ? 'scale(1.75)' : 'scale(0.8)',
                     cursor: getCursorStyle(),
                     userSelect: 'none',
                     transformOrigin: 'center center',

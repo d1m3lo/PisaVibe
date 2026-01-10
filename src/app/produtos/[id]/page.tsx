@@ -138,14 +138,8 @@ const ImageZoomView = ({
         width: containerWidth,
         height: containerHeight,
       } = containerRef.current.getBoundingClientRect();
-      const {
-        width: imgWidth,
-        height: imgHeight,
-      } = imgRef.current.getBoundingClientRect();
-
-      // The image is scaled, so its real size for movement calculation is imgWidth/1.75
-      const realImgWidth = imgWidth / 1.75;
-      const realImgHeight = imgHeight / 1.75;
+      const imgWidth = imgRef.current.offsetWidth * 1.75;
+      const imgHeight = imgRef.current.offsetHeight * 1.75;
 
       const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
       const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
@@ -162,7 +156,6 @@ const ImageZoomView = ({
     if (!hasDragged && e.target === imgRef.current) {
       setIsZoomed((prev) => !prev);
       if (isZoomed) {
-        // When zooming out, reset position
         setPosition({ x: 0, y: 0 });
       }
     }
@@ -190,13 +183,16 @@ const ImageZoomView = ({
   return (
     <DialogContent
       className="flex h-full w-full max-w-full max-h-full items-center justify-center border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-      onInteractOutside={onClose}
-      onEscapeKeyDown={onClose}
     >
+      <div
+        className="fixed inset-0 bg-black/80"
+        onClick={onClose}
+      />
       <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
       <div
         ref={containerRef}
-        className="relative w-[35%] h-auto mx-auto overflow-hidden"
+        className="relative w-[35%] h-auto mx-auto"
+        onClick={(e) => e.stopPropagation()}
         onMouseUp={handleMouseUp}
         onMouseLeave={() => setIsDragging(false)}
       >
@@ -208,16 +204,15 @@ const ImageZoomView = ({
           height={1080}
           className="object-contain transition-transform duration-300 ease-out w-full h-auto relative"
           style={{
-            transform: isZoomed ? `scale(1.75)` : "scale(1)",
-            left: isZoomed ? position.x : 0,
-            top: isZoomed ? position.y : 0,
+            transform: isZoomed
+              ? `scale(1.75) translate(${position.x}px, ${position.y}px)`
+              : "scale(1) translate(0,0)",
             cursor: getCursorStyle(),
             userSelect: "none",
           }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onDragStart={(e) => e.preventDefault()}
-          onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to the background
         />
       </div>
 
@@ -712,5 +707,3 @@ export default function ProductPage() {
     </>
   );
 }
-
-    

@@ -20,7 +20,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useFirestore, useUser } from "@/firebase";
 import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import type { Order, Coupon } from "@/lib/types";
 
@@ -61,8 +61,11 @@ export default function CheckoutContent() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
 
-  const finalTotal = cartTotal - discount;
+  const finalTotal = cartTotal - discount + (shippingCost || 0);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
@@ -383,9 +386,19 @@ export default function CheckoutContent() {
   const handleZipCodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const zipCode = e.target.value.replace(/\D/g, '');
     setShippingInfo(prev => ({...prev, zipCode}));
+    setShippingCost(null);
 
     if (zipCode.length === 8) {
+      setIsCalculatingShipping(true);
       try {
+        // Lógica de cálculo de frete
+        const cepAsNumber = parseInt(zipCode, 10);
+        if (cepAsNumber >= 35160000 && cepAsNumber <= 35164999) {
+            setShippingCost(0); // Frete grátis para Ipatinga
+        } else {
+            setShippingCost(25); // Frete fixo para outras localidades
+        }
+
         const response = await fetch(`/api/cep/${zipCode}`);
         if (!response.ok) {
             console.error("A resposta da API de CEP não foi OK.");
@@ -403,6 +416,9 @@ export default function CheckoutContent() {
         }
       } catch (error) {
         console.error("Erro ao buscar CEP:", error);
+        toast({ variant: "destructive", title: "Erro de Frete", description: "Não foi possível calcular o frete para este CEP."});
+      } finally {
+        setIsCalculatingShipping(false);
       }
     }
   };
@@ -519,6 +535,20 @@ export default function CheckoutContent() {
                     <span>- R$ {discount.toFixed(2).replace('.',',')}</span>
                 </div>
             )}
+             <div className="flex justify-between">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Truck size={14}/> Frete
+                </span>
+                {isCalculatingShipping ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : shippingCost !== null ? (
+                    <span>
+                        {shippingCost === 0 ? 'Grátis' : `R$ ${shippingCost.toFixed(2).replace('.',',')}`}
+                    </span>
+                ) : (
+                    <span>-</span>
+                )}
+            </div>
             <Separator />
              <div className="flex justify-between font-bold text-base">
                 <span>Total</span>
@@ -528,11 +558,11 @@ export default function CheckoutContent() {
           
 
           <div className="mt-6 space-y-3">
-              <Button className="w-full" onClick={handlePixPayment} disabled={isGeneratingPix || pixStatus !== 'idle'}>
+              <Button className="w-full" onClick={handlePixPayment} disabled={isGeneratingPix || pixStatus !== 'idle' || shippingCost === null}>
                 {isGeneratingPix ? <Loader2 className="animate-spin" /> : "Pagar com PIX"}
               </Button>
 
-              <Button className="w-full" variant="outline" onClick={handleCardPayment} disabled={pixStatus !== 'idle' || !!preferenceId}>
+              <Button className="w-full" variant="outline" onClick={handleCardPayment} disabled={pixStatus !== 'idle' || !!preferenceId || shippingCost === null}>
                 Pagar com Cartão
               </Button>
           </div>
@@ -630,7 +660,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
-    
-    
-    

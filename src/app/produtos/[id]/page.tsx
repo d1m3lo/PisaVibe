@@ -112,7 +112,7 @@ const ImageZoomView = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasDragged, setHasDragged] = useState(false);
-  
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setHasDragged(false);
@@ -124,38 +124,45 @@ const ImageZoomView = ({
       });
     }
   };
-  
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !isZoomed) return;
+    e.preventDefault();
     setHasDragged(true);
-  
+
     if (imgRef.current && containerRef.current) {
       let newX = e.clientX - dragStart.x;
       let newY = e.clientY - dragStart.y;
-  
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const imgRect = imgRef.current.getBoundingClientRect();
-  
-      const imgWidth = imgRect.width / 1.75 * 1.75;
-      const imgHeight = imgRect.height / 1.75 * 1.75;
-      const containerWidth = containerRect.width;
-      const containerHeight = containerRect.height;
-  
+
+      const {
+        width: containerWidth,
+        height: containerHeight,
+      } = containerRef.current.getBoundingClientRect();
+      const {
+        width: imgWidth,
+        height: imgHeight,
+      } = imgRef.current.getBoundingClientRect();
+
+      // The image is scaled, so its real size for movement calculation is imgWidth/1.75
+      const realImgWidth = imgWidth / 1.75;
+      const realImgHeight = imgHeight / 1.75;
+
       const maxX = Math.max(0, (imgWidth - containerWidth) / 2);
       const maxY = Math.max(0, (imgHeight - containerHeight) / 2);
-  
+
       newX = Math.max(Math.min(newX, maxX), -maxX);
       newY = Math.max(Math.min(newY, maxY), -maxY);
-  
+
       setPosition({ x: newX, y: newY });
     }
   };
-  
+
   const handleMouseUp = (e: React.MouseEvent) => {
     setIsDragging(false);
     if (!hasDragged && e.target === imgRef.current) {
-      setIsZoomed(prev => !prev);
+      setIsZoomed((prev) => !prev);
       if (isZoomed) {
+        // When zooming out, reset position
         setPosition({ x: 0, y: 0 });
       }
     }
@@ -167,7 +174,7 @@ const ImageZoomView = ({
     setIsZoomed(false);
     setPosition({ x: 0, y: 0 });
   };
-  
+
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
@@ -176,61 +183,80 @@ const ImageZoomView = ({
   };
 
   const getCursorStyle = () => {
-    if (isZoomed) return isDragging ? 'grabbing' : 'grab';
-    return 'zoom-in';
+    if (isZoomed) return isDragging ? "grabbing" : "grab";
+    return "zoom-in";
   };
-  
+
   return (
-      <DialogContent 
-        className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
-        onClick={onClose}
+    <DialogContent
+      className="flex h-full w-full max-w-full max-h-full items-center justify-center border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+      onInteractOutside={onClose}
+      onEscapeKeyDown={onClose}
+    >
+      <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
+      <div
+        ref={containerRef}
+        className="relative w-[35%] h-auto mx-auto overflow-hidden"
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => setIsDragging(false)}
       >
-          <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
-          <div ref={containerRef} className="relative w-[35%] h-auto mx-auto">
-              <Image
-                ref={imgRef}
-                src={images[currentIndex]}
-                alt={alt}
-                width={1080}
-                height={1080}
-                className="object-contain transition-transform duration-300 ease-out w-full h-auto"
-                style={{
-                    transform: isZoomed ? 'scale(1.75)' : 'scale(1)',
-                    cursor: getCursorStyle(),
-                    userSelect: 'none',
-                    transformOrigin: 'center center',
-                    left: isZoomed ? position.x : 0,
-                    top: isZoomed ? position.y : 0,
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onDragStart={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              />
-          </div>
-          
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={onClose}>
-              <X className="h-6 w-6" />
-            </Button>
-          </DialogClose>
-          
-          {images.length > 1 && (
-             <>
-                <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={prevImage}>
-                    <ChevronLeft className="h-6 w-6" />
-                </Button>
-                <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white" onClick={nextImage}>
-                    <ChevronRight className="h-6 w-6" />
-                </Button>
-            </>
-          )}
-          
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
-            {currentIndex + 1} / {images.length}
-          </div>
-      </DialogContent>
+        <Image
+          ref={imgRef}
+          src={images[currentIndex]}
+          alt={alt}
+          width={1080}
+          height={1080}
+          className="object-contain transition-transform duration-300 ease-out w-full h-auto relative"
+          style={{
+            transform: isZoomed ? `scale(1.75)` : "scale(1)",
+            left: isZoomed ? position.x : 0,
+            top: isZoomed ? position.y : 0,
+            cursor: getCursorStyle(),
+            userSelect: "none",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onDragStart={(e) => e.preventDefault()}
+          onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to the background
+        />
+      </div>
+
+      <DialogClose asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white"
+          onClick={onClose}
+        >
+          <X className="h-6 w-6" />
+        </Button>
+      </DialogClose>
+
+      {images.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white"
+            onClick={prevImage}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 text-white bg-black/20 hover:bg-black/50 hover:text-white"
+            onClick={nextImage}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </>
+      )}
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 text-white bg-black/40 px-2 py-1 rounded-md text-sm">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </DialogContent>
   );
 };
 
@@ -686,3 +712,5 @@ export default function ProductPage() {
     </>
   );
 }
+
+    

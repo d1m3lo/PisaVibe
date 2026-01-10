@@ -22,15 +22,21 @@ import { initializeFirebase } from '@/firebase';
 const NotificationManager = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+    const [notificationPermission, setNotificationPermission] = useState('default');
+
+    // Check initial permission status on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            setNotificationPermission(Notification.permission);
+        }
+    }, []);
 
     useEffect(() => {
-        // Listen for foreground messages
-        const { firebaseApp } = initializeFirebase();
-        const messaging = getMessaging(firebaseApp);
+        const { messaging } = initializeFirebase();
+        if (!messaging) return;
         
         const unsubscribe = onMessage(messaging, (payload) => {
-            console.log('Message received. ', payload);
+            console.log('Foreground message received. ', payload);
             toast({
                 title: payload.notification?.title || 'Nova Notificação',
                 description: payload.notification?.body,
@@ -42,15 +48,21 @@ const NotificationManager = () => {
     
     const handleEnableNotifications = async () => {
         try {
-            const { firebaseApp } = initializeFirebase();
-            const messaging = getMessaging(firebaseApp);
+            const { messaging } = initializeFirebase();
+            if (!messaging) {
+                throw new Error("Messaging service is not available.");
+            }
+
             const permission = await Notification.requestPermission();
             setNotificationPermission(permission);
 
             if (permission === 'granted') {
-                const currentToken = await getToken(messaging, {
-                    vapidKey: 'BMD6I_yUaYvK2nEWNy-s_h5F0Doro0yqSPnFpS9wLsoB0i510P9p0q2R9zM9_d4g_r-y7K8-B4rU7fJ9y6lUoT8',
-                });
+                const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+                if (!vapidKey) {
+                    throw new Error("VAPID key is not configured.");
+                }
+
+                const currentToken = await getToken(messaging, { vapidKey });
 
                 if (currentToken) {
                     console.log('FCM Token:', currentToken);
@@ -66,21 +78,23 @@ const NotificationManager = () => {
             } else {
                  toast({ variant: 'destructive', title: "Permissão negada", description: "As notificações foram bloqueadas. Você pode reativá-las nas configurações do seu navegador."});
             }
-        } catch(error) {
+        } catch(error: any) {
             console.error('Error getting FCM token:', error);
-            toast({ variant: 'destructive', title: "Erro de Notificação", description: "Não foi possível ativar as notificações." });
+            toast({ variant: 'destructive', title: "Erro de Notificação", description: error.message || "Não foi possível ativar as notificações." });
         }
     };
     
+    const isGranted = notificationPermission === 'granted';
+
     return (
         <Button 
-          variant={notificationPermission === 'granted' ? 'ghost' : 'secondary'}
+          variant={isGranted ? 'ghost' : 'secondary'}
           className="w-full justify-start gap-2"
           onClick={handleEnableNotifications}
-          disabled={notificationPermission === 'granted'}
+          disabled={isGranted}
         >
-          {notificationPermission === 'granted' ? <BellRing className="h-5 w-5 text-green-500" /> : <BellOff className="h-5 w-5" />}
-          {notificationPermission === 'granted' ? 'Notificações Ativas' : 'Ativar Notificações'}
+          {isGranted ? <BellRing className="h-5 w-5 text-green-500" /> : <BellOff className="h-5 w-5" />}
+          {isGranted ? 'Notificações Ativas' : 'Ativar Notificações'}
         </Button>
     )
 }

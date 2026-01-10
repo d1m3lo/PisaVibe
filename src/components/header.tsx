@@ -193,9 +193,10 @@ const SearchBar = () => {
         className="w-[320px] p-0 lg:w-[400px]" 
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onWheel={(e) => e.stopPropagation()} // Impede que o scroll se propague para a página
       >
-        {searchResults.length > 0 ? (
-           <ScrollArea className="max-h-[50vh]">
+        <ScrollArea className="max-h-[50vh] overflow-y-auto">
+          {searchResults.length > 0 && (
              <div className="p-2">
                 <div className="flex flex-col gap-2">
                     {searchResults.map((product) => (
@@ -222,15 +223,14 @@ const SearchBar = () => {
                     ))}
                 </div>
               </div>
-           </ScrollArea>
-        ) : (
-          queryValue.trim().length > 1 && (
+          )}
+        </ScrollArea>
+        {queryValue.trim().length > 1 && searchResults.length === 0 && (
             <p className="p-4 text-center text-sm text-muted-foreground">
               Nenhum resultado encontrado.
             </p>
-          )
         )}
-        {queryValue.trim().length > 1 && filteredProducts.length > 0 && (
+        {filteredProducts.length > 0 && (
             <div className="mt-2 p-2 border-t">
                   <Button asChild className="w-full" variant="secondary" onClick={() => setQueryValue("")}>
                     <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>

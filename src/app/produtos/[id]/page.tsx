@@ -185,15 +185,16 @@ const ImageZoomView = ({
         className="p-0 border-0 bg-transparent shadow-none w-full h-full max-w-full max-h-full flex items-center justify-center focus-visible:ring-0 focus-visible:ring-offset-0"
       >
           <DialogTitle className="sr-only">Visualizador de Imagem: {alt}</DialogTitle>
-          <div ref={containerRef} className="relative h-full w-full flex items-center justify-center" onClick={onClose}>
+          <div ref={containerRef} className="relative w-[35%] h-auto mx-auto" onClick={onClose}>
               <Image
                 ref={imgRef}
                 src={images[currentIndex]}
                 alt={alt}
-                fill
-                className="object-contain transition-transform duration-300 ease-out"
+                width={1080}
+                height={1080}
+                className="object-contain transition-transform duration-300 ease-out w-full h-auto"
                 style={{
-                    transform: isZoomed ? 'scale(1.75)' : 'scale(0.8)',
+                    transform: isZoomed ? 'scale(1.75)' : 'scale(1)',
                     cursor: getCursorStyle(),
                     userSelect: 'none',
                     transformOrigin: 'center center',
@@ -456,7 +457,7 @@ export default function ProductPage() {
           {/* Image Gallery */}
           <Dialog open={isZoomViewOpen} onOpenChange={setIsZoomViewOpen}>
             <div className="grid grid-cols-1 gap-4">
-              <div className="relative w-[80%] mx-auto">
+              <div className="relative w-full mx-auto">
                 {product.isImported && <ImportedProductBadge />}
                 <Carousel
                   setApi={setCarouselApi}

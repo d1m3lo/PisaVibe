@@ -20,9 +20,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useFirestore, useUser } from "@/firebase";
 import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import type { Order, Coupon } from "@/lib/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 type PixStatus = 'idle' | 'generated' | 'pending_verification' | 'confirmed' | 'error' | 'rejected';
 
@@ -547,9 +549,19 @@ export default function CheckoutContent() {
                 </div>
             )}
              <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Truck size={14}/> Frete
-                </span>
+                 <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                       <span className="text-muted-foreground flex items-center gap-1 cursor-help">
+                          <Truck size={14}/> Frete <Info size={12} />
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Nosso centro de distribuição fica em Ipatinga-MG. O valor do frete é calculado com base na sua distância, garantindo um custo justo para cada região do Brasil.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
                 {isCalculatingShipping ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                 ) : shippingCost !== null ? (

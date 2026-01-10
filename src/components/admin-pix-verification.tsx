@@ -108,7 +108,7 @@ export default function AdminPixVerification() {
 
         // 1. Define the new order in the user's subcollection
         const newOrderRef = doc(collection(firestore, `users/${order.userId}/orders`));
-        batch.set(newOrderRef, {
+        const newOrderData: any = {
             userId: order.userId,
             customerInfo: order.customerInfo,
             items: order.items,
@@ -117,8 +117,13 @@ export default function AdminPixVerification() {
             shippingAddress: order.shippingAddress,
             status: 'Pedido confirmado',
             paymentMethod: order.paymentMethod,
-            originalSessionId: order.originalSessionId,
-        });
+        };
+        
+        if (order.originalSessionId) {
+            newOrderData.originalSessionId = order.originalSessionId;
+        }
+
+        batch.set(newOrderRef, newOrderData);
 
         // 2. Delete the unverified order
         const unverifiedOrderRef = doc(firestore, 'unverified-orders', order.id);

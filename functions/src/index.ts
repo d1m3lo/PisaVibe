@@ -11,7 +11,7 @@ const db = admin.firestore();
    MERCADO PAGO CLIENT
 ================================ */
 const client = new MercadoPagoConfig({
-  accessToken: "APP_USR-XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  accessToken: "APP_USR-4471136097030537-122919-8fbdd981af51d484d5cc90907b5574ba-481737354",
 });
 
 const payment = new Payment(client);

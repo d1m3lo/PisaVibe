@@ -22,36 +22,36 @@ import { initializeFirebase } from '@/firebase';
 const NotificationManager = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [permission, setPermission] = useState('default');
+
+    const [permission, setPermission] = useState<NotificationPermission>('default');
     const [isTokenRegistered, setIsTokenRegistered] = useState(false);
     const [currentToken, setCurrentToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const getVapidKey = () => {
+    const getVapidKey = useCallback(() => {
         const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
         if (!vapidKey) {
             console.error("VAPID key is not configured in .env.local");
             toast({ variant: 'destructive', title: "Erro de Configuração", description: "A chave de notificação (VAPID key) não foi encontrada." });
         }
         return vapidKey;
-    };
-
-    const fetchTokenAndCheckRegistration = useCallback(async () => {
-        if (!firestore || permission !== 'granted') {
-            setIsLoading(false);
+    }, [toast]);
+    
+    // Function to get token and check registration status
+    const updateTokenStatus = useCallback(async () => {
+        if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted' || !firestore) {
+            setIsTokenRegistered(false);
+            setCurrentToken(null);
             return;
         }
 
         const vapidKey = getVapidKey();
-        if (!vapidKey) {
-            setIsLoading(false);
-            return;
-        }
-        
+        if (!vapidKey) return;
+
         try {
             const { messaging } = initializeFirebase();
-            if (!messaging) throw new Error("Messaging service is not available.");
-            
+            if (!messaging) throw new Error("Serviço de mensagens não disponível.");
+
             const token = await getToken(messaging, { vapidKey });
             if (token) {
                 setCurrentToken(token);
@@ -61,90 +61,93 @@ const NotificationManager = () => {
             } else {
                 setCurrentToken(null);
                 setIsTokenRegistered(false);
+                console.warn('Não foi possível obter o token de notificação. A permissão foi concedida?');
             }
         } catch (error) {
-            console.error('Error getting FCM token or checking registration:', error);
+            console.error('Erro ao obter token ou verificar registro:', error);
             setCurrentToken(null);
             setIsTokenRegistered(false);
-        } finally {
-            setIsLoading(false);
         }
-    }, [firestore, permission, toast]);
-
+    }, [firestore, getVapidKey]);
 
     useEffect(() => {
+        setIsLoading(true);
         if (typeof window !== 'undefined' && 'Notification' in window) {
             setPermission(Notification.permission);
         }
-        setIsLoading(false);
-    }, []);
-
-    useEffect(() => {
-        fetchTokenAndCheckRegistration();
-    }, [permission, fetchTokenAndCheckRegistration]);
-
-    // Listener for foreground messages
+        updateTokenStatus().finally(() => setIsLoading(false));
+    }, [updateTokenStatus]);
+    
+    // Foreground message listener
     useEffect(() => {
         const { messaging } = initializeFirebase();
         if (!messaging) return;
-        
+
         const unsubscribe = onMessage(messaging, (payload) => {
-            console.log('Foreground message received. ', payload);
             toast({
                 title: payload.notification?.title || 'Nova Notificação',
                 description: payload.notification?.body,
             });
         });
-
         return () => unsubscribe();
     }, [toast]);
-    
+
+
     const handleToggleNotifications = async () => {
         setIsLoading(true);
-
-        if (isTokenRegistered) { // Turn off notifications
+        if (isTokenRegistered) {
+            // --- DEACTIVATE ---
             if (currentToken && firestore) {
                 try {
                     await deleteDoc(doc(firestore, 'fcmTokens', currentToken));
                     setIsTokenRegistered(false);
-                    toast({ title: "Notificações desativadas", description: "Você não receberá mais alertas de novos pedidos neste dispositivo." });
+                    toast({ title: "Notificações Desativadas", description: "Você não receberá mais alertas de novos pedidos neste dispositivo." });
                 } catch (error) {
                     toast({ variant: 'destructive', title: "Erro", description: "Não foi possível desativar as notificações." });
                 }
             }
-        } else { // Turn on notifications
+        } else {
+            // --- ACTIVATE ---
             try {
                 const newPermission = await Notification.requestPermission();
                 setPermission(newPermission);
 
                 if (newPermission === 'granted') {
-                    await fetchTokenAndCheckRegistration(); // Re-fetch and check
-                    
-                     // After permission, try to register the token if it wasn't already
                     const vapidKey = getVapidKey();
-                    if(!vapidKey) return;
-
+                    if (!vapidKey || !firestore) {
+                        throw new Error("Configuração de notificação incompleta.");
+                    }
                     const { messaging } = initializeFirebase();
-                    if (!messaging) throw new Error("Messaging service is not available.");
-                    
-                    const token = await getToken(messaging, { vapidKey });
+                    if (!messaging) throw new Error("Serviço de mensagens não disponível.");
 
-                    if(token && firestore){
-                       await setDoc(doc(firestore, 'fcmTokens', token), { createdAt: new Date().toISOString() });
-                       setIsTokenRegistered(true);
-                       setCurrentToken(token);
-                       toast({ title: "Notificações ativadas!", description: "Você receberá alertas de novos pedidos." });
+                    const token = await getToken(messaging, { vapidKey });
+                    if (token) {
+                        await setDoc(doc(firestore, 'fcmTokens', token), { createdAt: new Date().toISOString() });
+                        setIsTokenRegistered(true);
+                        setCurrentToken(token);
+                        toast({ title: "Notificações Ativadas!", description: "Você receberá alertas de novos pedidos." });
+                    } else {
+                         throw new Error("Não foi possível gerar o token de notificação.");
                     }
                 } else {
-                    toast({ variant: 'destructive', title: "Permissão negada", description: "Você bloqueou as notificações." });
+                    toast({ variant: 'destructive', title: "Permissão Negada", description: "Você bloqueou as notificações para este site." });
                 }
             } catch (error: any) {
-                console.error('Error toggling notifications:', error);
+                console.error('Erro ao ativar notificações:', error);
                 toast({ variant: 'destructive', title: "Erro de Notificação", description: error.message });
             }
         }
         setIsLoading(false);
     };
+
+    if (permission === 'denied') {
+        return (
+             <Button variant="ghost" className="w-full justify-start gap-2" disabled>
+                <BellOff className="h-5 w-5 text-destructive" />
+                <span>Notificações Bloqueadas</span>
+            </Button>
+        );
+    }
     
     const buttonText = isTokenRegistered ? 'Notificações Ativas' : 'Ativar Notificações';
     const Icon = isTokenRegistered ? BellRing : BellOff;
@@ -154,7 +157,7 @@ const NotificationManager = () => {
           variant={isTokenRegistered ? 'secondary' : 'ghost'}
           className="w-full justify-start gap-2"
           onClick={handleToggleNotifications}
-          disabled={isLoading || permission === 'denied'}
+          disabled={isLoading}
         >
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -162,7 +165,7 @@ const NotificationManager = () => {
             <Icon className={cn("h-5 w-5", isTokenRegistered && 'text-green-500')} />
           )}
           <span>
-            {isLoading ? 'Carregando...' : (permission === 'denied' ? 'Notificações Bloqueadas' : buttonText)}
+            {isLoading ? 'Carregando...' : buttonText}
           </span>
         </Button>
     )

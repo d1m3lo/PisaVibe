@@ -287,9 +287,12 @@ export default function CheckoutContent() {
       paymentMethod: method,
       status: method === 'card' ? 'Aguardando Pagamento' : 'Pagamento em análise',
       createdAt: new Date().toISOString(),
-      discountAmount: discount,
-      couponCode: appliedCoupon?.code, // Adicionado aqui
     };
+
+    if (appliedCoupon && discount > 0) {
+      unverifiedOrderData.discountAmount = discount;
+      unverifiedOrderData.couponCode = appliedCoupon.code;
+    }
   
     try {
       await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
@@ -653,3 +656,5 @@ export default function CheckoutContent() {
     </div>
   );
 }
+
+    

@@ -296,9 +296,49 @@ export default function CheckoutContent() {
        toast({ variant: "destructive", title: "Erro", description: "Não foi possível enviar o pagamento para análise." });
     }
   };
+  
+  const createUnverifiedOrderForCard = async (userId: string) => {
+    if (!firestore) return;
+  
+    const unverifiedOrderData: any = {
+      userId: userId,
+      customerInfo: {
+        name: shippingInfo.name,
+        email: shippingInfo.email,
+        phone: shippingInfo.phone,
+      },
+      items: cartItems.map(item => ({
+        productId: item.product.id,
+        productName: item.displayName || item.product.name,
+        variantColor: item.variant.color,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.variant.price,
+        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0]),
+      })),
+      totalAmount: finalTotal,
+      shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
+      paymentMethod: 'card',
+      status: 'Aguardando Pagamento', // Initial status
+      createdAt: new Date().toISOString(),
+      discountAmount: discount,
+      couponCode: appliedCoupon?.code || undefined,
+    };
+  
+    try {
+      // We don't await this so it doesn't block the user flow
+      addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+    } catch (error) {
+      console.error("Falha ao criar pré-ordem para cartão:", error);
+      // We don't notify the user as this is an internal control mechanism
+    }
+  };
 
   const handleCardPayment = async () => {
     if (!validateForm() || !user || !firestore) return;
+
+    // Create the unverified order for admin control immediately, but don't wait for it
+    createUnverifiedOrderForCard(user.uid);
   
     const formattedItems = cartItems.map((item) => {
         const title = item.product.subCategory === 'mochilas'
@@ -314,43 +354,7 @@ export default function CheckoutContent() {
             picture_url: fixImageUrl(item.selectedImage || item.variant.images[0]),
         }
     });
-
-    // Enviar solicitação de verificação para o admin em segundo plano
-    const unverifiedOrderData: any = {
-      userId: user.uid,
-      customerInfo: {
-        name: shippingInfo.name,
-        email: shippingInfo.email,
-      },
-      items: cartItems.map(item => ({
-        productId: item.product.id,
-        productName: item.displayName || item.product.name,
-        variantColor: item.variant.color,
-        size: item.size,
-        quantity: item.quantity,
-        price: item.variant.price,
-        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
-      })),
-      totalAmount: finalTotal,
-      shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
-      paymentMethod: 'card',
-      status: 'Pagamento em análise',
-      createdAt: new Date().toISOString(),
-      discountAmount: discount,
-    };
-
-    if (appliedCoupon) {
-      unverifiedOrderData.couponCode = appliedCoupon.code;
-    }
     
-    try {
-      // Adiciona a ordem de verificação sem bloquear o fluxo do usuário
-      addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
-    } catch (error) {
-       console.error("Erro ao criar ordem de verificação para cartão:", error);
-       // Não notifica o usuário, pois a falha é apenas no lado do admin
-    }
-  
     try {
       const res = await fetch("/api/create-payment", {
         method: "POST",
@@ -683,3 +687,5 @@ export default function CheckoutContent() {
     </div>
   );
 }
+
+    

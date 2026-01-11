@@ -257,15 +257,19 @@ const MobileSearch = () => {
 
     const { data: products } = useCollection<Product>(productsQuery);
 
-    const searchResults = useMemo(() => {
-        if (queryValue.trim().length < 2 || !products) return [];
-        const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        return products.filter((p) => {
-            const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
-            return productName.includes(normalizedQuery) || productBrand.includes(normalizedQuery);
-        }).slice(0, 5); // Limita a 5 resultados para mobile
+    const filteredProducts = useMemo(() => {
+      if (queryValue.trim().length < 2 || !products) return [];
+      const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      return products.filter((p) => {
+          const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+          return productName.includes(normalizedQuery) || productBrand.includes(normalizedQuery);
+      });
     }, [queryValue, products]);
+
+    const searchResults = useMemo(() => {
+        return filteredProducts.slice(0, 5); // Limita a 5 resultados para mobile
+    }, [filteredProducts]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -289,7 +293,7 @@ const MobileSearch = () => {
                     <span className="sr-only">Buscar</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="top" className="h-auto">
+            <SheetContent side="top" className="h-auto flex flex-col">
                  <form onSubmit={handleSearchSubmit} className="relative mt-4">
                     <Input
                         type="search"
@@ -309,31 +313,47 @@ const MobileSearch = () => {
                     </Button>
                 </form>
                 {searchResults.length > 0 && (
-                    <div className="mt-4 flex flex-col gap-2">
-                        {searchResults.map((product) => (
-                            <SheetClose asChild key={product.id}>
-                                <Link
-                                    href={`/produtos/${product.id}`}
-                                    className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
-                                    onClick={handleResultClick}
-                                >
-                                    <div className="relative h-16 w-16 flex-shrink-0">
-                                        <Image
-                                            src={fixImageUrl(product.variants[0].images[0])}
-                                            alt={product.name}
-                                            fill
-                                            className="rounded-md object-cover"
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold">{product.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            R$ {product.variants[0].price.toFixed(2).replace(".", ",")}
-                                        </p>
-                                    </div>
-                                </Link>
-                            </SheetClose>
-                        ))}
+                    <ScrollArea className="flex-1">
+                        <div className="mt-4 flex flex-col gap-2">
+                            {searchResults.map((product) => (
+                                <SheetClose asChild key={product.id}>
+                                    <Link
+                                        href={`/produtos/${product.id}`}
+                                        className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                                        onClick={handleResultClick}
+                                    >
+                                        <div className="relative h-16 w-16 flex-shrink-0">
+                                            <Image
+                                                src={fixImageUrl(product.variants[0].images[0])}
+                                                alt={product.name}
+                                                fill
+                                                className="rounded-md object-cover"
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold">{product.name}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                R$ {product.variants[0].price.toFixed(2).replace(".", ",")}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                </SheetClose>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                )}
+                 {queryValue.trim().length > 1 && searchResults.length === 0 && (
+                    <p className="p-4 text-center text-sm text-muted-foreground">
+                    Nenhum resultado encontrado.
+                    </p>
+                )}
+                {filteredProducts.length > 0 && (
+                    <div className="mt-auto border-t pt-2">
+                        <SheetClose asChild>
+                            <Button asChild className="w-full" variant="secondary" onClick={handleResultClick}>
+                                <Link href={`/produtos?q=${queryValue}`}>Ver todos os resultados</Link>
+                            </Button>
+                        </SheetClose>
                     </div>
                 )}
             </SheetContent>

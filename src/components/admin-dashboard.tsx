@@ -39,10 +39,16 @@ const NotificationManager = () => {
     
     // Function to get token and check registration status
     const updateTokenStatus = useCallback(async () => {
-        if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted' || !firestore) {
+        if (typeof window === 'undefined' || !('Notification' in window) || !firestore) {
             setIsTokenRegistered(false);
             setCurrentToken(null);
             return;
+        }
+
+        if (Notification.permission !== 'granted') {
+             setIsTokenRegistered(false);
+             setCurrentToken(null);
+             return;
         }
 
         const vapidKey = getVapidKey();
@@ -95,16 +101,23 @@ const NotificationManager = () => {
 
     const handleToggleNotifications = async () => {
         setIsLoading(true);
-        if (isTokenRegistered) {
+
+        const vapidKey = getVapidKey();
+        if (!vapidKey || !firestore) {
+            toast({ variant: 'destructive', title: 'Erro de Configuração', description: 'Serviços indisponíveis.' });
+            setIsLoading(false);
+            return;
+        }
+
+        if (isTokenRegistered && currentToken) {
             // --- DEACTIVATE ---
-            if (currentToken && firestore) {
-                try {
-                    await deleteDoc(doc(firestore, 'fcmTokens', currentToken));
-                    setIsTokenRegistered(false);
-                    toast({ title: "Notificações Desativadas", description: "Você não receberá mais alertas de novos pedidos neste dispositivo." });
-                } catch (error) {
-                    toast({ variant: 'destructive', title: "Erro", description: "Não foi possível desativar as notificações." });
-                }
+            try {
+                await deleteDoc(doc(firestore, 'fcmTokens', currentToken));
+                setIsTokenRegistered(false);
+                toast({ title: "Notificações Desativadas", description: "Você não receberá mais alertas de novos pedidos neste dispositivo." });
+            } catch (error) {
+                console.error('Erro ao desativar notificações:', error);
+                toast({ variant: 'destructive', title: "Erro", description: "Não foi possível desativar as notificações." });
             }
         } else {
             // --- ACTIVATE ---
@@ -113,10 +126,6 @@ const NotificationManager = () => {
                 setPermission(newPermission);
 
                 if (newPermission === 'granted') {
-                    const vapidKey = getVapidKey();
-                    if (!vapidKey || !firestore) {
-                        throw new Error("Configuração de notificação incompleta.");
-                    }
                     const { messaging } = initializeFirebase();
                     if (!messaging) throw new Error("Serviço de mensagens não disponível.");
 

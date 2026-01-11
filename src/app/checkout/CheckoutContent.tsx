@@ -322,8 +322,11 @@ export default function CheckoutContent() {
       status: 'Aguardando Pagamento', // Initial status
       createdAt: new Date().toISOString(),
       discountAmount: discount,
-      couponCode: appliedCoupon?.code || undefined,
     };
+    
+    if (appliedCoupon) {
+        unverifiedOrderData.couponCode = appliedCoupon.code;
+    }
   
     try {
       // We don't await this so it doesn't block the user flow
@@ -688,4 +691,5 @@ export default function CheckoutContent() {
   );
 }
 
+    
     

@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
+            userId: shippingInfo.userId, // Incluindo o userId nos metadados
             shippingInfo: JSON.stringify(shippingInfo),
             // Salva os itens originais (incluindo a descrição detalhada) no metadado
             cartItems: JSON.stringify(items.map(item => ({
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
                 description: item.description,
                 picture_url: item.picture_url
             }))),
-            couponCode: coupon?.code || undefined,
+            couponCode: coupon?.code,
             discountAmount: discount > 0 ? discount : undefined,
         },
       }

@@ -1,36 +1,25 @@
 
-import { XCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+'use client';
 
-export default function ErrorPaymentPage() {
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+
+// Esta página agora apenas redireciona
+export default function ErrorPaymentRedirectPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Redireciona para a página de retorno principal, passando os parâmetros
+    const params = new URLSearchParams(searchParams.toString());
+    router.replace(`/pagamento/retorno?${params.toString()}`);
+  }, [router, searchParams]);
+
   return (
-    <div className="container mx-auto flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-lg text-center">
-        <CardHeader>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
-            <XCircle className="h-8 w-8" />
-          </div>
-          <CardTitle className="mt-6 font-headline text-3xl">Falha no Pagamento</CardTitle>
-          <CardDescription className="text-lg">
-            Não foi possível processar seu pagamento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
-            <p className="text-muted-foreground">
-                Por favor, verifique os dados do seu cartão ou tente outra forma de pagamento. Se o erro persistir, entre em contato com nosso suporte.
-            </p>
-            <div className="flex gap-4">
-                <Button asChild variant="outline">
-                    <Link href="/carrinho">Voltar ao Carrinho</Link>
-                </Button>
-                <Button asChild>
-                    <Link href="/checkout">Tentar Novamente</Link>
-                </Button>
-            </div>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto flex min-h-[70vh] flex-col items-center justify-center gap-4 px-4 py-12">
+      <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+      <p className="text-muted-foreground">Processando informações do pagamento...</p>
     </div>
   );
 }

@@ -238,6 +238,9 @@ export default function CheckoutContent() {
       setLastPaymentId(data.payment_id); // Salva o ID para o listener
       setPixStatus('generated');
 
+      // Create unverified order for admin control
+      await createUnverifiedOrder(user.uid, data.payment_id, 'pix');
+
       toast({ title: "PIX gerado com sucesso" });
     } catch (err: any) {
       setPixStatus('error');
@@ -256,52 +259,15 @@ export default function CheckoutContent() {
       toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado ou ID do pagamento ausente." });
       return;
     }
-
     setPixStatus('pending_verification');
-
-    const unverifiedOrderData: any = {
-      userId: user.uid,
-      originalSessionId: lastPaymentId,
-      customerInfo: {
-        name: shippingInfo.name,
-        email: shippingInfo.email,
-      },
-      items: cartItems.map(item => ({
-        productId: item.product.id,
-        productName: item.displayName || item.product.name,
-        variantColor: item.variant.color,
-        size: item.size,
-        quantity: item.quantity,
-        price: item.variant.price,
-        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0])
-      })),
-      totalAmount: finalTotal,
-      shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
-      paymentMethod: 'pix',
-      status: 'Pagamento em análise',
-      createdAt: new Date().toISOString(),
-      discountAmount: discount,
-    };
-
-    if (appliedCoupon) {
-      unverifiedOrderData.couponCode = appliedCoupon.code;
-    }
-    
-    try {
-      await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
-      
-    } catch (error) {
-       console.error("Erro ao enviar para verificação:", error);
-       setPixStatus('error');
-       toast({ variant: "destructive", title: "Erro", description: "Não foi possível enviar o pagamento para análise." });
-    }
   };
   
-  const createUnverifiedOrderForCard = async (userId: string) => {
+  const createUnverifiedOrder = async (userId: string, paymentId: string, method: 'pix' | 'card') => {
     if (!firestore) return;
   
     const unverifiedOrderData: any = {
       userId: userId,
+      originalSessionId: paymentId,
       customerInfo: {
         name: shippingInfo.name,
         email: shippingInfo.email,
@@ -318,30 +284,23 @@ export default function CheckoutContent() {
       })),
       totalAmount: finalTotal,
       shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
-      paymentMethod: 'card',
-      status: 'Aguardando Pagamento', // Initial status
+      paymentMethod: method,
+      status: method === 'card' ? 'Aguardando Pagamento' : 'Pagamento em análise',
       createdAt: new Date().toISOString(),
       discountAmount: discount,
+      couponCode: appliedCoupon?.code, // Adicionado aqui
     };
-    
-    if (appliedCoupon) {
-        unverifiedOrderData.couponCode = appliedCoupon.code;
-    }
   
     try {
-      // We don't await this so it doesn't block the user flow
-      addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+      await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
     } catch (error) {
-      console.error("Falha ao criar pré-ordem para cartão:", error);
+      console.error(`Falha ao criar pré-ordem para ${method}:`, error);
       // We don't notify the user as this is an internal control mechanism
     }
   };
 
   const handleCardPayment = async () => {
     if (!validateForm() || !user || !firestore) return;
-
-    // Create the unverified order for admin control immediately, but don't wait for it
-    createUnverifiedOrderForCard(user.uid);
   
     const formattedItems = cartItems.map((item) => {
         const title = item.product.subCategory === 'mochilas'
@@ -359,6 +318,9 @@ export default function CheckoutContent() {
     });
     
     try {
+      // First, create the unverified order so the admin can see it
+      await createUnverifiedOrder(user.uid, 'card_' + Date.now(), 'card');
+      
       const res = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -366,6 +328,7 @@ export default function CheckoutContent() {
           items: formattedItems,
           shippingInfo,
           coupon: appliedCoupon,
+          userId: user.uid,
         }),
       });
   
@@ -690,6 +653,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
-    
-    

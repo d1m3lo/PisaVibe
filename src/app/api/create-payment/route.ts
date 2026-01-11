@@ -18,13 +18,12 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, shippingInfo, coupon } = await req.json();
+    const { items, shippingInfo, coupon, userId } = await req.json();
 
-    if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo) {
+    if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes ou inválidos.' }, { status: 400 });
     }
     
-    // Verificação da estrutura dos itens
     const areItemsValid = items.every(
       (item: any) =>
         typeof item.title === 'string' &&
@@ -66,7 +65,7 @@ export async function POST(req: NextRequest) {
             title: item.title,
             quantity: item.quantity,
             unit_price: item.unit_price,
-            description: item.description || item.title, // Garante que a descrição seja enviada
+            description: item.description || item.title,
             picture_url: item.picture_url,
         })),
         payer: {
@@ -82,16 +81,15 @@ export async function POST(req: NextRequest) {
           }
         },
         back_urls: {
-            success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/sucesso`,
-            failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/erro`,
-            pending: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/pendente`,
+            success: "https://pisavibe.shop/pagamento/retorno",
+            failure: "https://pisavibe.shop/pagamento/retorno",
+            pending: "https://pisavibe.shop/pagamento/retorno",
         },
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
-            userId: shippingInfo.userId, // Incluindo o userId nos metadados
+            userId: userId,
             shippingInfo: JSON.stringify(shippingInfo),
-            // Salva os itens originais (incluindo a descrição detalhada) no metadado
             cartItems: JSON.stringify(items.map(item => ({
                 id: item.id,
                 title: item.title,

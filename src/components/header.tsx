@@ -8,6 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Search, ShoppingCart, User, Sun, Moon, ChevronDown, LogOut } from "lucide-react";
@@ -246,14 +247,38 @@ const MobileSearch = () => {
     const router = useRouter();
     const [queryValue, setQueryValue] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    
+    const firestore = useFirestore();
 
-    const handleSearch = (e: React.FormEvent) => {
+    const productsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'products'), where('status', '==', 'ativo'));
+    }, [firestore]);
+
+    const { data: products } = useCollection<Product>(productsQuery);
+
+    const searchResults = useMemo(() => {
+        if (queryValue.trim().length < 2 || !products) return [];
+        const normalizedQuery = queryValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        return products.filter((p) => {
+            const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+            return productName.includes(normalizedQuery) || productBrand.includes(normalizedQuery);
+        }).slice(0, 5); // Limita a 5 resultados para mobile
+    }, [queryValue, products]);
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (queryValue.trim()) {
             router.push(`/produtos?q=${queryValue}`);
             setIsOpen(false);
             setQueryValue('');
         }
+    };
+    
+    const handleResultClick = () => {
+        setIsOpen(false);
+        setQueryValue('');
     };
 
     return (
@@ -265,7 +290,7 @@ const MobileSearch = () => {
                 </Button>
             </SheetTrigger>
             <SheetContent side="top" className="h-auto">
-                 <form onSubmit={handleSearch} className="relative mt-4">
+                 <form onSubmit={handleSearchSubmit} className="relative mt-4">
                     <Input
                         type="search"
                         placeholder="O que você procura?"
@@ -283,6 +308,34 @@ const MobileSearch = () => {
                         <Search className="h-5 w-5" />
                     </Button>
                 </form>
+                {searchResults.length > 0 && (
+                    <div className="mt-4 flex flex-col gap-2">
+                        {searchResults.map((product) => (
+                            <SheetClose asChild key={product.id}>
+                                <Link
+                                    href={`/produtos/${product.id}`}
+                                    className="flex items-center gap-4 rounded-md p-2 hover:bg-accent"
+                                    onClick={handleResultClick}
+                                >
+                                    <div className="relative h-16 w-16 flex-shrink-0">
+                                        <Image
+                                            src={fixImageUrl(product.variants[0].images[0])}
+                                            alt={product.name}
+                                            fill
+                                            className="rounded-md object-cover"
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">{product.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            R$ {product.variants[0].price.toFixed(2).replace(".", ",")}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </SheetClose>
+                        ))}
+                    </div>
+                )}
             </SheetContent>
         </Sheet>
     );
@@ -453,3 +506,5 @@ export default function Header() {
     </header>
   );
 }
+
+    

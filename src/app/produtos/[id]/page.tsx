@@ -25,7 +25,7 @@ import Link from "next/link";
 import { ColorSwatch } from "@/components/color-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight, X, Share2 } from "lucide-react";
+import { Globe, Info, ZoomIn, Search, ChevronLeft, ChevronRight, X, Share2, ArrowLeft } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { SizeChart } from "@/components/size-chart";
@@ -474,6 +474,14 @@ export default function ProductPage() {
   return (
     <>
       <div className="container mx-auto max-w-6xl px-4 py-12">
+        <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="mb-8 flex items-center gap-2"
+        >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+        </Button>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           
           {/* Image Gallery */}

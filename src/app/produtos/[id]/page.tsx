@@ -468,7 +468,7 @@ export default function ProductPage() {
   }
 
   const discountPercentage = selectedVariant.oldPrice && selectedVariant.oldPrice > selectedVariant.price 
-    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.price) * 100)
+    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.oldPrice) * 100)
     : 0;
 
   return (
@@ -592,7 +592,7 @@ export default function ProductPage() {
               <div className="mt-8 flex flex-col space-y-6">
                   <div className="space-y-3 rounded-lg border bg-card p-4">
                       <div className="flex items-baseline gap-3">
-                           {selectedVariant.oldPrice && (
+                           {selectedVariant.oldPrice && selectedVariant.oldPrice > 0 && (
                               <p className="text-xl text-muted-foreground line-through">
                                 R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
                               </p>
@@ -631,7 +631,7 @@ export default function ProductPage() {
                       <p className="text-3xl font-bold">
                       R$ {selectedVariant.price.toFixed(2).replace(".", ",")}
                       </p>
-                      {selectedVariant.oldPrice && (
+                      {selectedVariant.oldPrice && selectedVariant.oldPrice > 0 && (
                           <p className="text-xl text-muted-foreground line-through">
                           R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
                           </p>

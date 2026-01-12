@@ -110,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
       <CardFooter className="flex items-end justify-between p-4 pt-0">
         <div className="flex flex-col items-start">
-            {oldPrice && (
+            {oldPrice && oldPrice > 0 && (
                 <span className="text-xs text-muted-foreground line-through">
                 R$ {oldPrice.toFixed(2).replace(".", ",")}
                 </span>

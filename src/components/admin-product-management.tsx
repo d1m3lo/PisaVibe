@@ -128,7 +128,7 @@ const ProductForm = ({
     gender: product?.gender || 'masculino',
     category: product?.category || 'calcados',
     subCategory: product?.subCategory || '',
-    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], imageNames: [], sizes: [] }],
+    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, images: [''], imageNames: [], sizes: [] }],
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
@@ -313,7 +313,7 @@ const ProductForm = ({
       ...prev,
       variants: [
         ...prev.variants,
-        { id: Date.now().toString(), color: '', colorHex: '#000000', price: 0, oldPrice: 0, images: [''], imageNames: [], sizes: [] },
+        { id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, images: [''], imageNames: [], sizes: [] },
       ],
     }));
   };

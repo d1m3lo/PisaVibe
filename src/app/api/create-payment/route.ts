@@ -18,7 +18,7 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, shippingInfo, coupon, userId } = await req.json();
+    const { items, shippingInfo, coupon, userId, shippingCost } = await req.json();
 
     if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes ou inválidos.' }, { status: 400 });
@@ -55,6 +55,16 @@ export async function POST(req: NextRequest) {
         quantity: 1,
         description: 'Cupom de desconto aplicado'
       });
+    }
+
+    if (shippingCost && typeof shippingCost === 'number' && shippingCost > 0) {
+        finalItems.push({
+            id: 'shipping',
+            title: 'Frete',
+            unit_price: shippingCost,
+            quantity: 1,
+            description: 'Custo de envio'
+        });
     }
 
     const preference = new Preference(client);

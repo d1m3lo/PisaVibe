@@ -44,26 +44,72 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const [minPrice, setMinPrice] = useState(searchParams.get('preco_min') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('preco_max') || '');
   
-  const selectedCategory = searchParams.get('categoria');
+  const selectedCategories = useMemo(() => searchParams.get('categoria')?.split(',') || [], [searchParams]);
   const selectedGender = searchParams.get('genero');
-  const selectedSubCategory = searchParams.get('tipo');
+  const selectedSubCategories = useMemo(() => searchParams.get('tipo')?.split(',') || [], [searchParams]);
+
+  const handleMultiFilterChange = (key: string, value: string) => {
+    const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
+    const currentValues = currentParams.get(key)?.split(',') || [];
+    const newValues = new Set(currentValues);
+
+    if (newValues.has(value)) {
+      newValues.delete(value);
+    } else {
+      newValues.add(value);
+    }
+
+    const valuesArray = Array.from(newValues);
+    if (valuesArray.length > 0) {
+      currentParams.set(key, valuesArray.join(','));
+    } else {
+      currentParams.delete(key);
+    }
+
+    // When categories change, sub-categories might need to be re-evaluated or cleared.
+    // For simplicity, we'll keep them for now, but a more advanced logic could clear them
+    // if they are no longer relevant.
+
+    const search = currentParams.toString();
+    const query = search ? `?${search}` : "";
+    router.push(`${pathname}${query}`);
+  };
+
+  const handleGenderChange = (value: string) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    const currentValue = current.get('genero');
+
+    if (currentValue === value) {
+      current.delete('genero');
+    } else {
+      current.set('genero', value);
+    }
+    
+    // Reset category and sub-category if gender changes
+    current.delete('categoria');
+    current.delete('tipo');
+    
+    const search = current.toString();
+    const query = search ? `?${search}` : "";
+    router.push(`${pathname}${query}`);
+  }
 
   const availableSizes = useMemo(() => {
     const sizeMap = new Map<string, number>();
     
     let productsToFilter = [...products];
 
-    // Se uma categoria estiver selecionada, filtre os tamanhos para essa categoria
-    if (selectedCategory) {
-        productsToFilter = productsToFilter.filter(p => p.category === selectedCategory);
+    // Filter by category if any are selected
+    if (selectedCategories.length > 0) {
+        productsToFilter = productsToFilter.filter(p => selectedCategories.includes(p.category));
     }
     
     productsToFilter.forEach(product => {
       product.variants.forEach(variant => {
         variant.sizes.forEach(sizeInfo => {
           if (sizeInfo.stock > 0) {
-            // Se a categoria for "roupas", só adicione tamanhos que não são numéricos
-            if (selectedCategory === 'roupas' && !isNaN(parseFloat(sizeInfo.size))) {
+            // If any selected category is 'roupas', only show non-numeric sizes
+            if (selectedCategories.includes('roupas') && !isNaN(parseFloat(sizeInfo.size))) {
                 return;
             }
             sizeMap.set(sizeInfo.size, (sizeMap.get(sizeInfo.size) || 0) + 1);
@@ -75,7 +121,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     return Array.from(sizeMap.entries())
       .map(([size, count]) => ({ size, count }))
       .sort((a, b) => {
-        // Ordenação personalizada para tamanhos de roupa
         const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
         const aIsLetter = isNaN(parseFloat(a.size)) && sizeOrder[a.size.toUpperCase()];
         const bIsLetter = isNaN(parseFloat(b.size)) && sizeOrder[b.size.toUpperCase()];
@@ -84,17 +129,15 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
             return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
         }
         
-        // Ordenação numérica para outras categorias (ex: calçados)
         const numA = parseInt(a.size);
         const numB = parseInt(b.size);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
 
-        // Fallback para casos mistos ou não previstos
-        if (aIsLetter) return 1; // Coloca letras depois dos números
+        if (aIsLetter) return 1;
         if (bIsLetter) return -1;
         return a.size.localeCompare(b.size);
       });
-  }, [products, selectedCategory]);
+  }, [products, selectedCategories]);
 
   const availableSubCategories = useMemo(() => {
     const subCategoryMap = new Map<string, number>();
@@ -105,8 +148,8 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
         productsToFilter = productsToFilter.filter(p => p.gender === selectedGender || p.gender === 'unissex');
     }
     
-    if (selectedCategory) {
-        productsToFilter = productsToFilter.filter(p => p.category === selectedCategory);
+    if (selectedCategories.length > 0) {
+        productsToFilter = productsToFilter.filter(p => selectedCategories.includes(p.category));
     }
     
     productsToFilter.forEach(product => {
@@ -116,30 +159,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     });
 
     return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }));
-  }, [products, selectedCategory, selectedGender]);
-
-  const handleFilterChange = (key: string, value: string | null) => {
-    const current = new URLSearchParams(Array.from(searchParams.entries()));
-    const currentValue = current.get(key);
-
-    // Se o valor clicado já for o selecionado, desmarque-o. Caso contrário, selecione-o.
-    if (value !== null && currentValue === value) {
-      current.delete(key);
-    } else if (value !== null) {
-      current.set(key, value);
-    } else {
-      current.delete(key);
-    }
-    
-    // Reset sub-category if gender or category changes
-    if (key === 'genero' || key === 'categoria') {
-        current.delete('tipo');
-    }
-    
-    const search = current.toString();
-    const query = search ? `?${search}` : "";
-    router.push(`${pathname}${query}`);
-  };
+  }, [products, selectedCategories, selectedGender]);
 
   const handleSizeChange = (size: string, checked: boolean) => {
     const newSizes = new Set(selectedSizes);
@@ -212,7 +232,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                             <Checkbox
                                 id={`gender-${value}`}
                                 checked={selectedGender === value}
-                                onCheckedChange={() => handleFilterChange('genero', value)}
+                                onCheckedChange={() => handleGenderChange(value)}
                             />
                             <Label htmlFor={`gender-${value}`} className="cursor-pointer w-full">{label}</Label>
                         </div>
@@ -226,8 +246,8 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                          <div key={value} className="flex items-center space-x-2">
                             <Checkbox
                                 id={`cat-${value}`}
-                                checked={selectedCategory === value}
-                                onCheckedChange={() => handleFilterChange('categoria', value)}
+                                checked={selectedCategories.includes(value)}
+                                onCheckedChange={() => handleMultiFilterChange('categoria', value)}
                             />
                             <Label htmlFor={`cat-${value}`} className="cursor-pointer w-full">{label}</Label>
                         </div>
@@ -242,8 +262,8 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                     <div key={name} className="flex items-center space-x-2">
                         <Checkbox
                             id={`subcat-${name}`}
-                            checked={selectedSubCategory === name.toLowerCase()}
-                            onCheckedChange={() => handleFilterChange('tipo', name.toLowerCase())}
+                            checked={selectedSubCategories.includes(name.toLowerCase())}
+                            onCheckedChange={() => handleMultiFilterChange('tipo', name.toLowerCase())}
                         />
                         <Label htmlFor={`subcat-${name}`} className="cursor-pointer w-full flex justify-between items-center">
                             <span>{name}</span>

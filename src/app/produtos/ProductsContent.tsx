@@ -15,8 +15,8 @@ export default function ProductsContent() {
   const searchParams = useSearchParams();
   const firestore = useFirestore();
 
-  const category = searchParams.get("categoria");
-  const subCategory = searchParams.get("tipo");
+  const categories = searchParams.get("categoria")?.split(',');
+  const subCategories = searchParams.get("tipo")?.split(',');
   const gender = searchParams.get("genero");
   const searchQuery = searchParams.get("q");
   const sizeFilter = searchParams.get("tamanho");
@@ -44,15 +44,27 @@ export default function ProductsContent() {
             return productName.includes(normalizedSearchQuery) || productBrand.includes(normalizedSearchQuery);
         });
     }
+    
+    const specialCategories = categories?.filter(c => ['ofertas', 'lancamentos', 'importados'].includes(c)) || [];
+    const regularCategories = categories?.filter(c => !['ofertas', 'lancamentos', 'importados'].includes(c)) || [];
 
-    if (category === 'importados') {
-        products = products.filter(p => p.isImported === true);
-    } else if (category === 'ofertas' || category === 'lancamentos') {
-        products = products.filter(p => p.tags?.includes(category));
-    } else if (category) {
-        products = products.filter(p => p.category === category);
+    if (categories) {
+        products = products.filter(p => {
+            const matchesSpecial = specialCategories.length > 0 && specialCategories.some(sc => {
+                if (sc === 'importados') return p.isImported === true;
+                return p.tags?.includes(sc);
+            });
+            const matchesRegular = regularCategories.length > 0 && regularCategories.includes(p.category);
+
+            // If both types of categories are selected, it's an OR condition between them
+            if(specialCategories.length > 0 && regularCategories.length > 0) {
+                return matchesSpecial || matchesRegular;
+            }
+            if (specialCategories.length > 0) return matchesSpecial;
+            if (regularCategories.length > 0) return matchesRegular;
+            return false;
+        });
     }
-
 
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
@@ -62,16 +74,12 @@ export default function ProductsContent() {
       products = products.filter(p => p.brand?.toLowerCase() === brandFilter.toLowerCase());
     }
 
-    if (subCategory) {
-        const normalizedSubCategory = subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (subCategories && subCategories.length > 0) {
+        const normalizedSubCategories = subCategories.map(sc => sc.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
         products = products.filter(p => {
-            // Handle cases where 'tipo' might be a main category like 'perfumes'
-            if (p.category === normalizedSubCategory) return true;
-            
-            // Handle regular subcategories
             if (!p.subCategory) return false;
             const normalizedProductSubCategory = p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return normalizedProductSubCategory === normalizedSubCategory;
+            return normalizedSubCategories.includes(normalizedProductSubCategory);
         });
     }
     
@@ -94,7 +102,7 @@ export default function ProductsContent() {
 
     return products;
 
-  }, [productsData, searchQuery, category, subCategory, gender, brandFilter, sizeFilter, minPrice, maxPrice]);
+  }, [productsData, searchQuery, categories, subCategories, gender, brandFilter, sizeFilter, minPrice, maxPrice]);
 
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -130,22 +138,19 @@ export default function ProductsContent() {
     }
 
     const titleParts: string[] = [];
-    const isSpecialCategory = category === 'ofertas' || category === 'lancamentos' || category === 'importados';
     
     if (brandFilter) {
       titleParts.push(formatTitlePart(brandFilter));
     }
-    if (isSpecialCategory) {
-        titleParts.push(formatTitlePart(category));
+    
+    if (categories && categories.length > 0) {
+        titleParts.push(categories.map(formatTitlePart).join(' / '));
     }
      if (gender) {
         titleParts.push(formatTitlePart(gender));
     }
-    if (category && !isSpecialCategory) {
-        titleParts.push(formatTitlePart(category));
-    }
-     if (subCategory) {
-        titleParts.push(formatTitlePart(subCategory));
+     if (subCategories && subCategories.length > 0) {
+        titleParts.push(subCategories.map(formatTitlePart).join(' / '));
     }
     
     if (titleParts.length > 0) {
@@ -153,7 +158,7 @@ export default function ProductsContent() {
     }
 
     return "Todos os Produtos";
-  }, [searchQuery, category, gender, subCategory, brandFilter]);
+  }, [searchQuery, categories, gender, subCategories, brandFilter]);
   
 
 

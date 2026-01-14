@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ScrollArea } from './ui/scroll-area';
 
 interface FilterSectionProps {
   title: string;
@@ -41,6 +42,8 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const selectedSizes = useMemo(() => searchParams.get('tamanho')?.split(',') || [], [searchParams]);
   const [minPrice, setMinPrice] = useState(searchParams.get('preco_min') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('preco_max') || '');
+  
+  const selectedCategory = searchParams.get('categoria');
 
   const availableSizes = useMemo(() => {
     const sizeMap = new Map<string, number>();
@@ -66,13 +69,17 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
 
   const availableSubCategories = useMemo(() => {
     const subCategoryMap = new Map<string, number>();
-    products.forEach(product => {
+    const productsToFilter = selectedCategory 
+        ? products.filter(p => p.category === selectedCategory) 
+        : products;
+
+    productsToFilter.forEach(product => {
       if (product.subCategory) {
         subCategoryMap.set(product.subCategory, (subCategoryMap.get(product.subCategory) || 0) + 1);
       }
     });
     return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name, count }));
-  }, [products]);
+  }, [products, selectedCategory]);
 
   const handleFilterChange = (key: string, value: string | null) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -117,75 +124,78 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const hasActiveFilters = searchParams.toString().length > 0;
 
   const filtersContent = (
-    <div className="w-full">
-        <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Filtrar por</h2>
-            {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-destructive">
-                    <X className="mr-2 h-4 w-4" />
-                    Limpar
-                </Button>
-            )}
-        </div>
+    <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+        <div className="w-full">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Filtrar por</h2>
+                {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-destructive">
+                        <X className="mr-2 h-4 w-4" />
+                        Limpar
+                    </Button>
+                )}
+            </div>
 
-        {availableSubCategories.length > 0 && (
-          <FilterSection title="Categorias">
-            <div className="space-y-2">
-              {availableSubCategories.map(({ name, count }) => (
-                <Button
-                  key={name}
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => handleFilterChange('tipo', name.toLowerCase())}
-                >
-                  {name.charAt(0).toUpperCase() + name.slice(1)} ({count})
-                </Button>
-              ))}
-            </div>
-          </FilterSection>
-        )}
-        
-        {availableSizes.length > 0 && (
-          <FilterSection title="Tamanho">
-            <div className="grid grid-cols-3 gap-2">
-              {availableSizes.map(({ size, count }) => (
-                <div key={size} className="flex items-center">
-                  <Checkbox
-                    id={`size-${size}`}
-                    checked={selectedSizes.includes(size)}
-                    onCheckedChange={(checked) => handleSizeChange(size, !!checked)}
-                  />
-                  <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer">
-                    {size} <span className="text-muted-foreground">({count})</span>
-                  </Label>
+            {availableSubCategories.length > 0 && (
+            <FilterSection title="Categorias">
+                <div className="space-y-2">
+                {availableSubCategories.map(({ name, count }) => (
+                    <Button
+                    key={name}
+                    variant={searchParams.get('tipo') === name.toLowerCase() ? "secondary" : "ghost"}
+                    className="w-full justify-between"
+                    onClick={() => handleFilterChange('tipo', name.toLowerCase())}
+                    >
+                    <span>{name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                    <span className="text-muted-foreground">{count}</span>
+                    </Button>
+                ))}
                 </div>
-              ))}
+            </FilterSection>
+            )}
+            
+            {availableSizes.length > 0 && (
+            <FilterSection title="Tamanho">
+                <div className="grid grid-cols-3 gap-2">
+                {availableSizes.map(({ size, count }) => (
+                    <div key={size} className="flex items-center">
+                    <Checkbox
+                        id={`size-${size}`}
+                        checked={selectedSizes.includes(size)}
+                        onCheckedChange={(checked) => handleSizeChange(size, !!checked)}
+                    />
+                    <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer">
+                        {size} <span className="text-muted-foreground text-xs">({count})</span>
+                    </Label>
+                    </div>
+                ))}
+                </div>
+            </FilterSection>
+            )}
+            
+            <FilterSection title="Preço">
+            <div className="flex items-center gap-2">
+                <Input 
+                type="number" 
+                placeholder="De" 
+                value={minPrice}
+                onChange={e => setMinPrice(e.target.value)}
+                onBlur={handlePriceChange}
+                onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
+                />
+                <span className="text-muted-foreground">-</span>
+                <Input 
+                type="number" 
+                placeholder="Até" 
+                value={maxPrice}
+                onChange={e => setMaxPrice(e.target.value)}
+                onBlur={handlePriceChange}
+                onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
+                />
             </div>
-          </FilterSection>
-        )}
-        
-        <FilterSection title="Preço">
-          <div className="flex items-center gap-2">
-            <Input 
-              type="number" 
-              placeholder="De" 
-              value={minPrice}
-              onChange={e => setMinPrice(e.target.value)}
-              onBlur={handlePriceChange}
-              onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
-            />
-            <span className="text-muted-foreground">-</span>
-            <Input 
-              type="number" 
-              placeholder="Até" 
-              value={maxPrice}
-              onChange={e => setMaxPrice(e.target.value)}
-              onBlur={handlePriceChange}
-              onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
-            />
-          </div>
-        </FilterSection>
-    </div>
+            </FilterSection>
+        </div>
+    </ScrollArea>
   );
 
   return (
@@ -210,4 +220,3 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     </>
   );
 }
-

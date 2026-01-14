@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 interface FilterSectionProps {
   title: string;
@@ -35,14 +36,22 @@ interface ProductFiltersProps {
   products: Product[];
 }
 
+const priceRanges = [
+    { label: "Até R$ 100", min: "0", max: "100" },
+    { label: "R$ 100 - R$ 200", min: "100", max: "200" },
+    { label: "R$ 200 - R$ 300", min: "200", max: "300" },
+    { label: "R$ 300 - R$ 400", min: "300", max: "400" },
+    { label: "Acima de R$ 400", min: "400", max: undefined },
+];
+
 export default function ProductFilters({ products }: ProductFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const selectedSizes = useMemo(() => searchParams.get('tamanho')?.split(',') || [], [searchParams]);
-  const [minPrice, setMinPrice] = useState(searchParams.get('preco_min') || '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('preco_max') || '');
+  const minPrice = searchParams.get('preco_min');
+  const maxPrice = searchParams.get('preco_max');
   
   const selectedCategories = useMemo(() => searchParams.get('categoria')?.split(',') || [], [searchParams]);
   const selectedGender = searchParams.get('genero');
@@ -66,10 +75,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       currentParams.delete(key);
     }
 
-    // When categories change, sub-categories might need to be re-evaluated or cleared.
-    // For simplicity, we'll keep them for now, but a more advanced logic could clear them
-    // if they are no longer relevant.
-
     const search = currentParams.toString();
     const query = search ? `?${search}` : "";
     router.push(`${pathname}${query}`);
@@ -85,7 +90,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       current.set('genero', value);
     }
     
-    // Reset category and sub-category if gender changes
     current.delete('categoria');
     current.delete('tipo');
     
@@ -101,7 +105,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
 
     // Filter by category if any are selected
     if (selectedCategories.length > 0) {
-        productsToFilter = productsToFilter.filter(p => selectedCategories.includes(p.category));
+        productsToFilter = productsToFilter.filter(p => selectedCategories.some(sc => p.category === sc || p.tags?.includes(sc)));
     }
     
     productsToFilter.forEach(product => {
@@ -109,7 +113,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
         variant.sizes.forEach(sizeInfo => {
           if (sizeInfo.stock > 0) {
             // If any selected category is 'roupas', only show non-numeric sizes
-            if (selectedCategories.includes('roupas') && !isNaN(parseFloat(sizeInfo.size))) {
+            const isRoupasSelected = selectedCategories.includes('roupas');
+            if (isRoupasSelected && !isNaN(parseFloat(sizeInfo.size))) {
+                return;
+            }
+             if (selectedCategories.includes('calcados') && isNaN(parseFloat(sizeInfo.size))) {
                 return;
             }
             sizeMap.set(sizeInfo.size, (sizeMap.get(sizeInfo.size) || 0) + 1);
@@ -149,7 +157,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     }
     
     if (selectedCategories.length > 0) {
-        productsToFilter = productsToFilter.filter(p => selectedCategories.includes(p.category));
+        productsToFilter = productsToFilter.filter(p => selectedCategories.some(sc => p.category === sc || p.tags?.includes(sc)));
     }
     
     productsToFilter.forEach(product => {
@@ -158,15 +166,15 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       }
     });
 
-    return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }));
+    return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count, value: name.toLowerCase() }));
   }, [products, selectedCategories, selectedGender]);
 
-  const handleSizeChange = (size: string, checked: boolean) => {
+  const handleSizeChange = (size: string) => {
     const newSizes = new Set(selectedSizes);
-    if (checked) {
-      newSizes.add(size);
+    if (newSizes.has(size)) {
+        newSizes.delete(size);
     } else {
-      newSizes.delete(size);
+        newSizes.add(size);
     }
     const sizesArray = Array.from(newSizes);
     
@@ -182,19 +190,29 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     router.push(`${pathname}${query}`);
   };
   
-  const handlePriceChange = () => {
-    const current = new URLSearchParams(Array.from(searchParams.entries()));
-    if(minPrice) current.set('preco_min', minPrice); else current.delete('preco_min');
-    if(maxPrice) current.set('preco_max', maxPrice); else current.delete('preco_max');
-    const search = current.toString();
-    const query = search ? `?${search}` : "";
-    router.push(`${pathname}${query}`);
-  };
+   const handlePriceChange = (value: string) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        const [min, max] = value.split('-');
+
+        if (min === minPrice && max === maxPrice) {
+             current.delete('preco_min');
+             current.delete('preco_max');
+        } else {
+            current.set('preco_min', min);
+            if (max) {
+                current.set('preco_max', max);
+            } else {
+                current.delete('preco_max');
+            }
+        }
+        
+        const search = current.toString();
+        const query = search ? `?${search}` : "";
+        router.push(`${pathname}${query}`);
+    };
   
   const clearFilters = () => {
     router.push(pathname);
-    setMinPrice('');
-    setMaxPrice('');
   };
 
   const hasActiveFilters = searchParams.toString().length > 0;
@@ -202,7 +220,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const genders = [
     { value: 'masculino', label: 'Masculino' },
     { value: 'feminino', label: 'Feminino' },
-    { value: 'unissex', label: 'Unissex' },
   ];
   
   const categories = [
@@ -258,14 +275,14 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
             {availableSubCategories.length > 0 && (
             <FilterSection title="Subcategorias">
                 <div className="space-y-3">
-                {availableSubCategories.map(({ name, count }) => (
-                    <div key={name} className="flex items-center space-x-2">
+                {availableSubCategories.map(({ name, count, value }) => (
+                    <div key={value} className="flex items-center space-x-2">
                         <Checkbox
-                            id={`subcat-${name}`}
-                            checked={selectedSubCategories.includes(name.toLowerCase())}
-                            onCheckedChange={() => handleMultiFilterChange('tipo', name.toLowerCase())}
+                            id={`subcat-${value}`}
+                            checked={selectedSubCategories.includes(value)}
+                            onCheckedChange={() => handleMultiFilterChange('tipo', value)}
                         />
-                        <Label htmlFor={`subcat-${name}`} className="cursor-pointer w-full flex justify-between items-center">
+                        <Label htmlFor={`subcat-${value}`} className="cursor-pointer w-full flex justify-between items-center">
                             <span>{name}</span>
                             <span className="text-xs text-muted-foreground">({count})</span>
                         </Label>
@@ -283,7 +300,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                     <Checkbox
                         id={`size-${size}`}
                         checked={selectedSizes.includes(size)}
-                        onCheckedChange={(checked) => handleSizeChange(size, !!checked)}
+                        onCheckedChange={() => handleSizeChange(size)}
                     />
                     <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer flex-grow">
                         {size} <span className="text-muted-foreground text-xs">({count})</span>
@@ -295,26 +312,21 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
             )}
             
             <FilterSection title="Preço">
-            <div className="flex items-center gap-2">
-                <Input 
-                type="number" 
-                placeholder="De" 
-                value={minPrice}
-                onChange={e => setMinPrice(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
-                />
-                <span className="text-muted-foreground">-</span>
-                <Input 
-                type="number" 
-                placeholder="Até" 
-                value={maxPrice}
-                onChange={e => setMaxPrice(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
-                />
-                <Button variant="outline" size="icon" onClick={handlePriceChange} aria-label="Aplicar filtro de preço">
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-            </div>
+              <RadioGroup
+                value={
+                  maxPrice ? `${minPrice}-${maxPrice}` : minPrice ? `${minPrice}-` : ''
+                }
+                onValueChange={handlePriceChange}
+              >
+                {priceRanges.map((range) => (
+                  <div key={range.label} className="flex items-center space-x-2">
+                    <RadioGroupItem value={`${range.min}-${range.max || ''}`} id={range.label} />
+                    <Label htmlFor={range.label} className="cursor-pointer">
+                      {range.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </FilterSection>
         </div>
     </ScrollArea>

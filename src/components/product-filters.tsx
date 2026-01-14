@@ -44,6 +44,13 @@ const priceRanges = [
     { label: "Acima de R$ 400", min: "400", max: undefined },
 ];
 
+const subCategoryDisplayNames: { [key: string]: string } = {
+  calcas: 'Calças',
+  sandalias: 'Sandálias',
+  bones: 'Bonés',
+  relogios: 'Relógios',
+};
+
 export default function ProductFilters({ products }: ProductFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -166,7 +173,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       }
     });
 
-    return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count, value: name.toLowerCase() }));
+    return Array.from(subCategoryMap.entries()).map(([name, count]) => {
+      const value = name.toLowerCase();
+      const displayName = subCategoryDisplayNames[value] || (name.charAt(0).toUpperCase() + name.slice(1));
+      return { name: displayName, count, value };
+    });
   }, [products, selectedCategories, selectedGender]);
 
   const handleSizeChange = (size: string) => {

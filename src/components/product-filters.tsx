@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface FilterSectionProps {
   title: string;
@@ -45,10 +46,19 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   
   const selectedCategory = searchParams.get('categoria');
   const selectedGender = searchParams.get('genero');
+  const selectedSubCategory = searchParams.get('tipo');
 
   const availableSizes = useMemo(() => {
     const sizeMap = new Map<string, number>();
-    products.forEach(product => {
+    
+    let productsToFilter = [...products];
+
+    // Se uma categoria estiver selecionada, filtre os tamanhos para essa categoria
+    if (selectedCategory) {
+        productsToFilter = productsToFilter.filter(p => p.category === selectedCategory);
+    }
+    
+    productsToFilter.forEach(product => {
       product.variants.forEach(variant => {
         variant.sizes.forEach(sizeInfo => {
           if (sizeInfo.stock > 0) {
@@ -64,9 +74,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
         const numA = parseInt(a.size);
         const numB = parseInt(b.size);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        if (!isNaN(numA) && isNaN(numB)) return -1;
+        if (isNaN(numA) && !isNaN(numB)) return 1;
         return a.size.localeCompare(b.size);
       });
-  }, [products]);
+  }, [products, selectedCategory]);
 
   const availableSubCategories = useMemo(() => {
     const subCategoryMap = new Map<string, number>();
@@ -87,16 +99,20 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       }
     });
 
-    return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name, count }));
+    return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }));
   }, [products, selectedCategory, selectedGender]);
 
   const handleFilterChange = (key: string, value: string | null) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
+    const currentValue = current.get(key);
 
-    if (value === null) {
+    // Se o valor clicado já for o selecionado, desmarque-o. Caso contrário, selecione-o.
+    if (value !== null && currentValue === value) {
       current.delete(key);
-    } else {
+    } else if (value !== null) {
       current.set(key, value);
+    } else {
+      current.delete(key);
     }
     
     // Reset sub-category if gender or category changes
@@ -117,7 +133,17 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       newSizes.delete(size);
     }
     const sizesArray = Array.from(newSizes);
-    handleFilterChange('tamanho', sizesArray.length > 0 ? sizesArray.join(',') : null);
+    
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    if(sizesArray.length > 0) {
+      current.set('tamanho', sizesArray.join(','));
+    } else {
+      current.delete('tamanho');
+    }
+    
+    const search = current.toString();
+    const query = search ? `?${search}` : "";
+    router.push(`${pathname}${query}`);
   };
   
   const handlePriceChange = () => {
@@ -164,48 +190,50 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
             </div>
             
             <FilterSection title="Gênero">
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {genders.map(({ value, label }) => (
-                        <Button
-                            key={value}
-                            variant={searchParams.get('genero') === value ? "secondary" : "ghost"}
-                            className="w-full justify-start"
-                            onClick={() => handleFilterChange('genero', value)}
-                        >
-                            {label}
-                        </Button>
+                       <div key={value} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`gender-${value}`}
+                                checked={selectedGender === value}
+                                onCheckedChange={() => handleFilterChange('genero', value)}
+                            />
+                            <Label htmlFor={`gender-${value}`} className="cursor-pointer w-full">{label}</Label>
+                        </div>
                     ))}
                 </div>
             </FilterSection>
 
              <FilterSection title="Categorias Principais">
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {categories.map(({ value, label }) => (
-                        <Button
-                            key={value}
-                            variant={searchParams.get('categoria') === value ? "secondary" : "ghost"}
-                            className="w-full justify-start"
-                            onClick={() => handleFilterChange('categoria', value)}
-                        >
-                            {label}
-                        </Button>
+                         <div key={value} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`cat-${value}`}
+                                checked={selectedCategory === value}
+                                onCheckedChange={() => handleFilterChange('categoria', value)}
+                            />
+                            <Label htmlFor={`cat-${value}`} className="cursor-pointer w-full">{label}</Label>
+                        </div>
                     ))}
                 </div>
             </FilterSection>
 
             {availableSubCategories.length > 0 && (
             <FilterSection title="Subcategorias">
-                <div className="space-y-2">
+                <div className="space-y-3">
                 {availableSubCategories.map(({ name, count }) => (
-                    <Button
-                    key={name}
-                    variant={searchParams.get('tipo') === name.toLowerCase() ? "secondary" : "ghost"}
-                    className="w-full justify-between"
-                    onClick={() => handleFilterChange('tipo', name.toLowerCase())}
-                    >
-                    <span>{name.charAt(0).toUpperCase() + name.slice(1)}</span>
-                    <span className="text-muted-foreground">{count}</span>
-                    </Button>
+                    <div key={name} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={`subcat-${name}`}
+                            checked={selectedSubCategory === name.toLowerCase()}
+                            onCheckedChange={() => handleFilterChange('tipo', name.toLowerCase())}
+                        />
+                        <Label htmlFor={`subcat-${name}`} className="cursor-pointer w-full flex justify-between items-center">
+                            <span>{name}</span>
+                            <span className="text-xs text-muted-foreground">({count})</span>
+                        </Label>
+                    </div>
                 ))}
                 </div>
             </FilterSection>
@@ -213,7 +241,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
             
             {availableSizes.length > 0 && (
             <FilterSection title="Tamanho">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                 {availableSizes.map(({ size, count }) => (
                     <div key={size} className="flex items-center">
                     <Checkbox
@@ -221,7 +249,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                         checked={selectedSizes.includes(size)}
                         onCheckedChange={(checked) => handleSizeChange(size, !!checked)}
                     />
-                    <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer">
+                    <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer flex-grow">
                         {size} <span className="text-muted-foreground text-xs">({count})</span>
                     </Label>
                     </div>

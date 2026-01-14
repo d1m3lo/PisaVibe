@@ -2,7 +2,7 @@
 "use client";
 
 import { ProductCard } from "@/components/product-card";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
@@ -10,8 +10,17 @@ import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
 import ProductFilters from "@/components/product-filters";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ProductsContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const firestore = useFirestore();
 
@@ -23,6 +32,7 @@ export default function ProductsContent() {
   const minPrice = searchParams.get("preco_min");
   const maxPrice = searchParams.get("preco_max");
   const brandFilter = searchParams.get("marca");
+  const sort = searchParams.get("sort");
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -98,11 +108,27 @@ export default function ProductsContent() {
     if (maxPrice) {
       products = products.filter(p => p.variants.some(v => v.price <= Number(maxPrice)));
     }
+    
+    // Sorting logic
+    if (sort) {
+      products.sort((a, b) => {
+        const priceA = a.variants[0]?.price ?? 0;
+        const priceB = b.variants[0]?.price ?? 0;
+        
+        if (sort === 'price_asc') {
+          return priceA - priceB;
+        }
+        if (sort === 'price_desc') {
+          return priceB - priceA;
+        }
+        return 0;
+      });
+    }
 
 
     return products;
 
-  }, [productsData, searchQuery, categories, subCategories, gender, brandFilter, sizeFilter, minPrice, maxPrice]);
+  }, [productsData, searchQuery, categories, subCategories, gender, brandFilter, sizeFilter, minPrice, maxPrice, sort]);
 
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -160,6 +186,17 @@ export default function ProductsContent() {
     return "Todos os Produtos";
   }, [searchQuery, categories, gender, subCategories, brandFilter]);
   
+  const handleSortChange = (value: string) => {
+    const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
+    if (value === "relevance") {
+      currentParams.delete("sort");
+    } else {
+      currentParams.set("sort", value);
+    }
+    const search = currentParams.toString();
+    const query = search ? `?${search}` : "";
+    router.push(`${pathname}${query}`);
+  };
 
 
   return (
@@ -168,6 +205,19 @@ export default function ProductsContent() {
             <h1 className="font-headline text-4xl font-bold">
             {title}
             </h1>
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Ordenar por:</span>
+                <Select value={sort || 'relevance'} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="relevance">Relevância</SelectItem>
+                        <SelectItem value="price_asc">Menor Preço</SelectItem>
+                        <SelectItem value="price_desc">Maior Preço</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
             <aside className="lg:col-span-1">

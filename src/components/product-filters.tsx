@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, ChevronRight } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -75,7 +75,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     return Array.from(sizeMap.entries())
       .map(([size, count]) => ({ size, count }))
       .sort((a, b) => {
-        // Ordenação personalizada
+        // Ordenação personalizada para tamanhos de roupa
         const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
         const aIsLetter = isNaN(parseFloat(a.size)) && sizeOrder[a.size.toUpperCase()];
         const bIsLetter = isNaN(parseFloat(b.size)) && sizeOrder[b.size.toUpperCase()];
@@ -90,8 +90,8 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
 
         // Fallback para casos mistos ou não previstos
-        if (!isNaN(numA) && isNaN(numB)) return -1;
-        if (isNaN(numA) && !isNaN(numB)) return 1;
+        if (aIsLetter) return 1; // Coloca letras depois dos números
+        if (bIsLetter) return -1;
         return a.size.localeCompare(b.size);
       });
   }, [products, selectedCategory]);
@@ -281,7 +281,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                 placeholder="De" 
                 value={minPrice}
                 onChange={e => setMinPrice(e.target.value)}
-                onBlur={handlePriceChange}
                 onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
                 />
                 <span className="text-muted-foreground">-</span>
@@ -290,9 +289,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                 placeholder="Até" 
                 value={maxPrice}
                 onChange={e => setMaxPrice(e.target.value)}
-                onBlur={handlePriceChange}
                 onKeyDown={e => e.key === 'Enter' && handlePriceChange()}
                 />
+                <Button variant="outline" size="icon" onClick={handlePriceChange} aria-label="Aplicar filtro de preço">
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
             </div>
             </FilterSection>
         </div>

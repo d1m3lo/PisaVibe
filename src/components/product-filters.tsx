@@ -44,6 +44,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const [maxPrice, setMaxPrice] = useState(searchParams.get('preco_max') || '');
   
   const selectedCategory = searchParams.get('categoria');
+  const selectedGender = searchParams.get('genero');
 
   const availableSizes = useMemo(() => {
     const sizeMap = new Map<string, number>();
@@ -69,17 +70,25 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
 
   const availableSubCategories = useMemo(() => {
     const subCategoryMap = new Map<string, number>();
-    const productsToFilter = selectedCategory 
-        ? products.filter(p => p.category === selectedCategory) 
-        : products;
+    
+    let productsToFilter = [...products];
 
+    if (selectedGender) {
+        productsToFilter = productsToFilter.filter(p => p.gender === selectedGender || p.gender === 'unissex');
+    }
+    
+    if (selectedCategory) {
+        productsToFilter = productsToFilter.filter(p => p.category === selectedCategory);
+    }
+    
     productsToFilter.forEach(product => {
       if (product.subCategory) {
         subCategoryMap.set(product.subCategory, (subCategoryMap.get(product.subCategory) || 0) + 1);
       }
     });
+
     return Array.from(subCategoryMap.entries()).map(([name, count]) => ({ name, count }));
-  }, [products, selectedCategory]);
+  }, [products, selectedCategory, selectedGender]);
 
   const handleFilterChange = (key: string, value: string | null) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -88,6 +97,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       current.delete(key);
     } else {
       current.set(key, value);
+    }
+    
+    // Reset sub-category if gender or category changes
+    if (key === 'genero' || key === 'categoria') {
+        current.delete('tipo');
     }
     
     const search = current.toString();
@@ -122,6 +136,19 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   };
 
   const hasActiveFilters = searchParams.toString().length > 0;
+  
+  const genders = [
+    { value: 'masculino', label: 'Masculino' },
+    { value: 'feminino', label: 'Feminino' },
+    { value: 'unissex', label: 'Unissex' },
+  ];
+  
+  const categories = [
+    { value: 'calcados', label: 'Calçados' },
+    { value: 'roupas', label: 'Roupas' },
+    { value: 'acessorios', label: 'Acessórios' },
+    { value: 'perfumes', label: 'Perfumes' },
+  ]
 
   const filtersContent = (
     <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
@@ -135,9 +162,39 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                     </Button>
                 )}
             </div>
+            
+            <FilterSection title="Gênero">
+                <div className="space-y-2">
+                    {genders.map(({ value, label }) => (
+                        <Button
+                            key={value}
+                            variant={searchParams.get('genero') === value ? "secondary" : "ghost"}
+                            className="w-full justify-start"
+                            onClick={() => handleFilterChange('genero', value)}
+                        >
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+            </FilterSection>
+
+             <FilterSection title="Categorias Principais">
+                <div className="space-y-2">
+                    {categories.map(({ value, label }) => (
+                        <Button
+                            key={value}
+                            variant={searchParams.get('categoria') === value ? "secondary" : "ghost"}
+                            className="w-full justify-start"
+                            onClick={() => handleFilterChange('categoria', value)}
+                        >
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+            </FilterSection>
 
             {availableSubCategories.length > 0 && (
-            <FilterSection title="Categorias">
+            <FilterSection title="Subcategorias">
                 <div className="space-y-2">
                 {availableSubCategories.map(({ name, count }) => (
                     <Button

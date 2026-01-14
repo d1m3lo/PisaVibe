@@ -62,6 +62,10 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
       product.variants.forEach(variant => {
         variant.sizes.forEach(sizeInfo => {
           if (sizeInfo.stock > 0) {
+            // Se a categoria for "roupas", só adicione tamanhos que não são numéricos
+            if (selectedCategory === 'roupas' && !isNaN(parseFloat(sizeInfo.size))) {
+                return;
+            }
             sizeMap.set(sizeInfo.size, (sizeMap.get(sizeInfo.size) || 0) + 1);
           }
         });
@@ -71,9 +75,21 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
     return Array.from(sizeMap.entries())
       .map(([size, count]) => ({ size, count }))
       .sort((a, b) => {
+        // Ordenação personalizada
+        const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
+        const aIsLetter = isNaN(parseFloat(a.size)) && sizeOrder[a.size.toUpperCase()];
+        const bIsLetter = isNaN(parseFloat(b.size)) && sizeOrder[b.size.toUpperCase()];
+        
+        if (aIsLetter && bIsLetter) {
+            return (sizeOrder[a.size.toUpperCase()] || 99) - (sizeOrder[b.size.toUpperCase()] || 99);
+        }
+        
+        // Ordenação numérica para outras categorias (ex: calçados)
         const numA = parseInt(a.size);
         const numB = parseInt(b.size);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+        // Fallback para casos mistos ou não previstos
         if (!isNaN(numA) && isNaN(numB)) return -1;
         if (isNaN(numA) && !isNaN(numB)) return 1;
         return a.size.localeCompare(b.size);

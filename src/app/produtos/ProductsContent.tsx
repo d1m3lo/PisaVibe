@@ -9,6 +9,7 @@ import { useFirestore } from '@/firebase';
 import type { Product } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
+import ProductFilters from "@/components/product-filters";
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
@@ -18,6 +19,10 @@ export default function ProductsContent() {
   const subCategory = searchParams.get("tipo");
   const gender = searchParams.get("genero");
   const searchQuery = searchParams.get("q");
+  const sizeFilter = searchParams.get("tamanho");
+  const minPrice = searchParams.get("preco_min");
+  const maxPrice = searchParams.get("preco_max");
+  const brandFilter = searchParams.get("marca");
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -33,7 +38,7 @@ export default function ProductsContent() {
 
     if (searchQuery) {
         const normalizedSearchQuery = searchQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        return products.filter(p => {
+        products = products.filter(p => {
             const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
             const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
             return productName.includes(normalizedSearchQuery) || productBrand.includes(normalizedSearchQuery);
@@ -52,6 +57,10 @@ export default function ProductsContent() {
     if (gender) {
       products = products.filter(p => p.gender === gender || p.gender === 'unissex');
     }
+    
+    if (brandFilter) {
+      products = products.filter(p => p.brand?.toLowerCase() === brandFilter.toLowerCase());
+    }
 
     if (subCategory) {
         const normalizedSubCategory = subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -65,10 +74,27 @@ export default function ProductsContent() {
             return normalizedProductSubCategory === normalizedSubCategory;
         });
     }
+    
+    // Size filter
+    if (sizeFilter) {
+      const sizes = sizeFilter.split(',');
+      products = products.filter(p => 
+        p.variants.some(v => v.sizes.some(s => sizes.includes(s.size) && s.stock > 0))
+      );
+    }
+
+    // Price filter
+    if (minPrice) {
+      products = products.filter(p => p.variants.some(v => v.price >= Number(minPrice)));
+    }
+    if (maxPrice) {
+      products = products.filter(p => p.variants.some(v => v.price <= Number(maxPrice)));
+    }
+
 
     return products;
 
-  }, [productsData, searchQuery, category, subCategory, gender]);
+  }, [productsData, searchQuery, category, subCategory, gender, brandFilter, sizeFilter, minPrice, maxPrice]);
 
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -106,6 +132,9 @@ export default function ProductsContent() {
     const titleParts: string[] = [];
     const isSpecialCategory = category === 'ofertas' || category === 'lancamentos' || category === 'importados';
     
+    if (brandFilter) {
+      titleParts.push(formatTitlePart(brandFilter));
+    }
     if (isSpecialCategory) {
         titleParts.push(formatTitlePart(category));
     }
@@ -124,41 +153,47 @@ export default function ProductsContent() {
     }
 
     return "Todos os Produtos";
-  }, [searchQuery, category, gender, subCategory]);
+  }, [searchQuery, category, gender, subCategory, brandFilter]);
   
 
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
-        <h1 className="font-headline text-4xl font-bold">
-          {title}
-        </h1>
-      </div>
-
-      {isLoading ? (
-         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-             <div key={i} className="flex flex-col space-y-3">
-              <Skeleton className="h-[300px] w-full rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            </div>
-          ))}
+        <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
+            <h1 className="font-headline text-4xl font-bold">
+            {title}
+            </h1>
         </div>
-      ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
+            <aside className="lg:col-span-1">
+                <ProductFilters products={productsData || []} />
+            </aside>
+            <main className="lg:col-span-3">
+                 {isLoading ? (
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex flex-col space-y-3">
+                        <Skeleton className="h-[300px] w-full rounded-xl" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                        </div>
+                    ))}
+                    </div>
+                ) : filteredProducts.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredProducts.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-20">
+                        <p className="text-xl text-muted-foreground">Nenhum produto encontrado com os filtros selecionados.</p>
+                    </div>
+                )}
+            </main>
         </div>
-      ) : (
-        <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">Nenhum produto encontrado.</p>
-        </div>
-      )}
     </div>
   );
 }

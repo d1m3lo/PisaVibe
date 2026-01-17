@@ -35,8 +35,7 @@ const client = new MercadoPagoConfig({
 const paymentClient = new Payment(client);
 
 export async function POST(req: NextRequest) {
-  console.log("--- [Webhook] ---");
-  console.log("[Webhook] Notificação do Mercado Pago recebida.");
+  console.log("--- [Webhook Acionado] ---");
   const body = await req.json();
   const topic = body.topic || body.type;
 
@@ -47,7 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   const paymentId = String(body.data.id);
-  console.log(`[Webhook] ID do Pagamento (payment.id): ${paymentId}`);
+  console.log(`[Webhook] ID do Pagamento Recebido: ${paymentId}`);
 
   try {
     const payment = await paymentClient.get({ id: paymentId });
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
     const paymentMethodIdentifier = payment.payment_method_id; // e.g., 'pix', 'visa', 'master'
 
     if (paymentMethodIdentifier === 'pix') {
-      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (PIX) usando o valor: ${paymentId}`);
+      console.log(`[Webhook] Valor de busca (PIX): ${paymentId} no campo 'originalSessionId'`);
       unverifiedQuery = await unverifiedOrdersRef.where('originalSessionId', '==', paymentId).limit(1).get();
     } else { // Handles cards and other methods
       const externalReference = payment.external_reference;
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
         console.warn(`[Webhook] Pagamento ${paymentId} (método: ${paymentMethodIdentifier}) não possui external_reference. Não é possível processar automaticamente.`);
         return NextResponse.json({ received: true });
       }
-      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (CARTÃO) usando o valor: ${externalReference}`);
+      console.log(`[Webhook] Valor de busca (Cartão): ${externalReference} no ID do documento`);
       const docSnap = await unverifiedOrdersRef.doc(externalReference).get();
       if (docSnap.exists) {
         unverifiedQuery = { docs: [docSnap], empty: false } as admin.firestore.QuerySnapshot;
@@ -91,9 +90,9 @@ export async function POST(req: NextRequest) {
 
     // 3. CREATE FINAL ORDER if pre-order is found
     if (unverifiedQuery && !unverifiedQuery.empty) {
+      console.log(`[Webhook] Pré-ordem encontrada: SIM (ID: ${unverifiedQuery.docs[0].id})`);
       const unverifiedOrderDoc = unverifiedQuery.docs[0];
       const unverifiedOrderData = unverifiedOrderDoc.data() as UnverifiedOrder;
-      console.log(`[Webhook] SUCESSO: Pré-ordem encontrada (ID: ${unverifiedOrderDoc.id}). Processando...`);
       
       // Additional check: Does the amount match?
       if (payment.transaction_amount && Math.abs(unverifiedOrderData.totalAmount - payment.transaction_amount) > 0.01) {
@@ -126,7 +125,8 @@ export async function POST(req: NextRequest) {
       console.log(`[Webhook] SUCESSO: Pedido ${finalOrderRef.id} criado automaticamente a partir da pré-ordem ${unverifiedOrderDoc.id}.`);
 
     } else {
-      console.log(`[Webhook] AVISO: Pré-ordem não encontrada para o pagamento ${paymentId}. Nenhuma ação automática será tomada.`);
+      console.log(`[Webhook] Pré-ordem encontrada: NÃO`);
+      console.log(`[Webhook] AVISO: Nenhuma pré-ordem encontrada para o pagamento ${paymentId}. Nenhuma ação automática será tomada.`);
     }
 
   } catch (error: any) {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -295,7 +294,6 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                         />
                         <Label htmlFor={`subcat-${value}`} className="cursor-pointer w-full flex justify-between items-center">
                             <span>{name}</span>
-                            <span className="text-xs text-muted-foreground">({count})</span>
                         </Label>
                     </div>
                 ))}
@@ -314,7 +312,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                         onCheckedChange={() => handleSizeChange(size)}
                     />
                     <Label htmlFor={`size-${size}`} className="ml-2 cursor-pointer flex-grow">
-                        {size} <span className="text-muted-foreground text-xs">({count})</span>
+                        {size}
                     </Label>
                     </div>
                 ))}

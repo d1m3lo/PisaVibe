@@ -35,22 +35,25 @@ const client = new MercadoPagoConfig({
 const paymentClient = new Payment(client);
 
 export async function POST(req: NextRequest) {
+  console.log("--- [Webhook] ---");
+  console.log("[Webhook] Notificação do Mercado Pago recebida.");
   const body = await req.json();
   const topic = body.topic || body.type;
 
   // We only care about payment events
   if (topic !== 'payment') {
+    console.log(`[Webhook] Evento do tipo '${topic}' ignorado.`);
     return NextResponse.json({ received: true });
   }
 
   const paymentId = String(body.data.id);
-  console.log(`[Webhook] Notificação de pagamento recebida para ID: ${paymentId}`);
+  console.log(`[Webhook] ID do Pagamento (payment.id): ${paymentId}`);
 
   try {
     const payment = await paymentClient.get({ id: paymentId });
 
     if (payment.status !== 'approved') {
-      console.log(`[Webhook] Pagamento ${paymentId} não está aprovado. Status: ${payment.status}. Ignorando.`);
+      console.log(`[Webhook] Pagamento ${paymentId} não está 'approved'. Status atual: '${payment.status}'. Ignorando.`);
       return NextResponse.json({ received: true });
     }
 
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
     const existingFinalOrderQuery = await finalOrdersCollection.where('originalSessionId', '==', paymentId).limit(1).get();
 
     if (!existingFinalOrderQuery.empty) {
-      console.log(`[Webhook] Pedido final para o pagamento ${paymentId} já existe (${existingFinalOrderQuery.docs[0].id}). Ignorando.`);
+      console.log(`[Webhook] IDEMPOTÊNCIA: Pedido final para o pagamento ${paymentId} já existe (ID: ${existingFinalOrderQuery.docs[0].id}). Ignorando.`);
       return NextResponse.json({ received: true });
     }
 
@@ -71,16 +74,15 @@ export async function POST(req: NextRequest) {
     const paymentMethodIdentifier = payment.payment_method_id; // e.g., 'pix', 'visa', 'master'
 
     if (paymentMethodIdentifier === 'pix') {
-      // For PIX, match by the payment ID saved during PIX creation
+      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (PIX) usando o valor: ${paymentId}`);
       unverifiedQuery = await unverifiedOrdersRef.where('originalSessionId', '==', paymentId).limit(1).get();
-      console.log(`[Webhook] Buscando pré-ordem PIX com originalSessionId: ${paymentId}`);
     } else { // Handles cards and other methods
       const externalReference = payment.external_reference;
       if (!externalReference) {
         console.warn(`[Webhook] Pagamento ${paymentId} (método: ${paymentMethodIdentifier}) não possui external_reference. Não é possível processar automaticamente.`);
         return NextResponse.json({ received: true });
       }
-      console.log(`[Webhook] Buscando pré-ordem (Cartão/Outro) com external_reference (docId): ${externalReference}`);
+      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (CARTÃO) usando o valor: ${externalReference}`);
       const docSnap = await unverifiedOrdersRef.doc(externalReference).get();
       if (docSnap.exists) {
         unverifiedQuery = { docs: [docSnap], empty: false } as admin.firestore.QuerySnapshot;
@@ -91,12 +93,11 @@ export async function POST(req: NextRequest) {
     if (unverifiedQuery && !unverifiedQuery.empty) {
       const unverifiedOrderDoc = unverifiedQuery.docs[0];
       const unverifiedOrderData = unverifiedOrderDoc.data() as UnverifiedOrder;
-      console.log(`[Webhook] Pré-ordem encontrada: ${unverifiedOrderDoc.id}. Processando...`);
+      console.log(`[Webhook] SUCESSO: Pré-ordem encontrada (ID: ${unverifiedOrderDoc.id}). Processando...`);
       
       // Additional check: Does the amount match?
       if (payment.transaction_amount && Math.abs(unverifiedOrderData.totalAmount - payment.transaction_amount) > 0.01) {
           console.error(`[Webhook] DISCREPÂNCIA DE VALOR para pré-ordem ${unverifiedOrderDoc.id}. Esperado: ${unverifiedOrderData.totalAmount}, Recebido: ${payment.transaction_amount}. Intervenção manual necessária.`);
-          // Don't process automatically if amounts don't match.
           return NextResponse.json({ error: 'Discrepância de valor' }, { status: 400 });
       }
 
@@ -125,15 +126,14 @@ export async function POST(req: NextRequest) {
       console.log(`[Webhook] SUCESSO: Pedido ${finalOrderRef.id} criado automaticamente a partir da pré-ordem ${unverifiedOrderDoc.id}.`);
 
     } else {
-      console.log(`[Webhook] AVISO: Pagamento aprovado ${paymentId} recebido, mas nenhuma pré-ordem correspondente foi encontrada. O admin pode precisar confirmar manualmente.`);
+      console.log(`[Webhook] AVISO: Pré-ordem não encontrada para o pagamento ${paymentId}. Nenhuma ação automática será tomada.`);
     }
 
   } catch (error: any) {
-    console.error(`[Webhook] ❌ Erro ao processar notificação para pagamento ${paymentId}:`, error);
+    console.error(`[Webhook] ❌ ERRO GERAL ao processar notificação para pagamento ${paymentId}:`, error);
     return NextResponse.json({ error: 'Falha ao processar a notificação.' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
 }
-
     

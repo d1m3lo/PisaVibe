@@ -18,9 +18,9 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, shippingInfo, coupon, userId, shippingCost } = await req.json();
+    const { items, shippingInfo, coupon, userId, shippingCost, unverifiedOrderId } = await req.json();
 
-    if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId) {
+    if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId || !unverifiedOrderId) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes ou inválidos.' }, { status: 400 });
     }
     
@@ -96,9 +96,11 @@ export async function POST(req: NextRequest) {
             pending: "https://pisavibe.shop/pagamento/retorno",
         },
         auto_return: "approved",
+        external_reference: unverifiedOrderId,
         notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
         metadata: {
             userId: userId,
+            unverifiedOrderId: unverifiedOrderId,
             shippingInfo: JSON.stringify(shippingInfo),
             cartItems: JSON.stringify(items.map(item => ({
                 id: item.id,
@@ -130,3 +132,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+    

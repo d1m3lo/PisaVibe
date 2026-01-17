@@ -239,7 +239,7 @@ export default function CheckoutContent() {
       setPixStatus('generated');
 
       // Create unverified order for admin control
-      await createUnverifiedOrder(user.uid, data.payment_id, 'pix');
+      await createUnverifiedOrder(user.uid, 'pix', data.payment_id);
 
       toast({ title: "PIX gerado com sucesso" });
     } catch (err: any) {
@@ -262,12 +262,11 @@ export default function CheckoutContent() {
     setPixStatus('pending_verification');
   };
   
-  const createUnverifiedOrder = async (userId: string, paymentId: string, method: 'pix' | 'card') => {
-    if (!firestore) return;
+  const createUnverifiedOrder = async (userId: string, method: 'pix' | 'card', paymentId?: string): Promise<string | null> => {
+    if (!firestore) return null;
   
     const unverifiedOrderData: any = {
       userId: userId,
-      originalSessionId: paymentId,
       customerInfo: {
         name: shippingInfo.name,
         email: shippingInfo.email,
@@ -289,16 +288,21 @@ export default function CheckoutContent() {
       createdAt: new Date().toISOString(),
     };
 
+    if (paymentId) {
+        unverifiedOrderData.originalSessionId = paymentId;
+    }
+
     if (appliedCoupon && discount > 0) {
       unverifiedOrderData.discountAmount = discount;
       unverifiedOrderData.couponCode = appliedCoupon.code;
     }
   
     try {
-      await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+      const docRef = await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+      return docRef.id;
     } catch (error) {
       console.error(`Falha ao criar pré-ordem para ${method}:`, error);
-      // We don't notify the user as this is an internal control mechanism
+      return null;
     }
   };
 
@@ -321,8 +325,11 @@ export default function CheckoutContent() {
     });
     
     try {
-      // First, create the unverified order so the admin can see it
-      await createUnverifiedOrder(user.uid, 'card_' + Date.now(), 'card');
+      // Create the unverified order first to get its ID
+      const unverifiedOrderId = await createUnverifiedOrder(user.uid, 'card');
+      if (!unverifiedOrderId) {
+        throw new Error("Não foi possível criar a pré-ordem. Tente novamente.");
+      }
       
       const res = await fetch("/api/create-payment", {
         method: "POST",
@@ -332,7 +339,8 @@ export default function CheckoutContent() {
           shippingInfo,
           coupon: appliedCoupon,
           userId: user.uid,
-          shippingCost: shippingCost
+          shippingCost: shippingCost,
+          unverifiedOrderId: unverifiedOrderId, // Pass the pre-order ID
         }),
       });
   
@@ -466,7 +474,7 @@ export default function CheckoutContent() {
           <CardTitle>Resumo e Pagamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-auto max-h-48 pr-4">
+          <ScrollArea className="h-auto max-h-[300px] pr-4">
             {cartItems.map((item, i) => (
                 <div key={i} className="flex gap-3 mb-4">
                 <Image
@@ -657,6 +665,8 @@ export default function CheckoutContent() {
     </div>
   );
 }
+
+    
 
     
 

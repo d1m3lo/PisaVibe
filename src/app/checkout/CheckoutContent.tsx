@@ -322,7 +322,7 @@ export default function CheckoutContent() {
     
     try {
       // First, create the unverified order so the admin can see it
-      // await createUnverifiedOrder(user.uid, 'card_' + Date.now(), 'card');
+      await createUnverifiedOrder(user.uid, 'card_' + Date.now(), 'card');
       
       const res = await fetch("/api/create-payment", {
         method: "POST",
@@ -657,5 +657,7 @@ export default function CheckoutContent() {
     </div>
   );
 }
+
+    
 
     

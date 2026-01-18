@@ -101,6 +101,7 @@ const CouponForm = ({
       discountType: formData.discountType as 'percentage' | 'fixed',
       discountValue: formData.discountValue,
       isActive: formData.isActive,
+      usageCount: coupon?.usageCount || 0,
       ...(formData.expiryDate && { expiryDate: new Date(formData.expiryDate).toISOString() }),
     };
     await onSave(couponData);
@@ -271,6 +272,7 @@ export default function AdminCouponManagement() {
               <TableHead>Código</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Valor</TableHead>
+              <TableHead>Usos</TableHead>
               <TableHead>Expira em</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -286,6 +288,7 @@ export default function AdminCouponManagement() {
                     ? `${coupon.discountValue}%`
                     : `R$ ${coupon.discountValue.toFixed(2).replace('.', ',')}`}
                 </TableCell>
+                <TableCell>{coupon.usageCount || 0}</TableCell>
                 <TableCell>
                   {coupon.expiryDate ? format(new Date(coupon.expiryDate), "dd/MM/yyyy", { locale: ptBR }) : 'Não expira'}
                 </TableCell>

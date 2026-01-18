@@ -124,6 +124,16 @@ export async function POST(req: NextRequest) {
         discountAmount: unverifiedOrderData.discountAmount,
       };
 
+      // Increment coupon usage
+      if (finalOrderData.couponCode) {
+          const couponsRef = db.collection('coupons');
+          const couponQuery = await couponsRef.where('code', '==', finalOrderData.couponCode).limit(1).get();
+          if (!couponQuery.empty) {
+              const couponDoc = couponQuery.docs[0];
+              batch.update(couponDoc.ref, { usageCount: admin.firestore.FieldValue.increment(1) });
+          }
+      }
+
       batch.set(finalOrderRef, finalOrderData);
       batch.delete(unverifiedOrderDoc.ref);
       
@@ -142,4 +152,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true });
 }
-    

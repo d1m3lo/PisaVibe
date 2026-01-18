@@ -95,4 +95,5 @@ export type Coupon = {
   discountValue: number;
   expiryDate?: string; // ISO String
   isActive: boolean;
+  usageCount?: number;
 }

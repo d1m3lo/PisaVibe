@@ -95,13 +95,13 @@ const CouponForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const couponData: Omit<CouponWithId, 'firestoreId'> = {
+    const couponData = {
       id: coupon?.id || new Date().getTime().toString(),
       code: formData.code.toUpperCase(),
       discountType: formData.discountType as 'percentage' | 'fixed',
       discountValue: formData.discountValue,
-      expiryDate: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined,
       isActive: formData.isActive,
+      ...(formData.expiryDate && { expiryDate: new Date(formData.expiryDate).toISOString() }),
     };
     await onSave(couponData);
     onClose();

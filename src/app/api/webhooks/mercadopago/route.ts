@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   const paymentId = String(body.data.id);
-  console.log(`[Webhook] ID do Pagamento Recebido: ${paymentId}`);
+  console.log(`[Webhook] ID do Pagamento Recebido: ${paymentId} | Tipo: ${typeof paymentId}`);
 
   try {
     const payment = await paymentClient.get({ id: paymentId });
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const paymentMethodIdentifier = payment.payment_method_id; // e.g., 'pix', 'visa', 'master'
 
     if (paymentMethodIdentifier === 'pix') {
-      console.log(`[Webhook] Valor de busca (PIX): ${paymentId} no campo 'originalSessionId'`);
+      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (PIX): where('originalSessionId', '==', '${paymentId}')`);
       unverifiedQuery = await unverifiedOrdersRef.where('originalSessionId', '==', paymentId).limit(1).get();
     } else { // Handles cards and other methods
       const externalReference = payment.external_reference;
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         console.warn(`[Webhook] Pagamento ${paymentId} (método: ${paymentMethodIdentifier}) não possui external_reference. Não é possível processar automaticamente.`);
         return NextResponse.json({ received: true });
       }
-      console.log(`[Webhook] Valor de busca (Cartão): ${externalReference} no ID do documento`);
+      console.log(`[Webhook] BUSCANDO PRÉ-ORDEM (Cartão): doc('${externalReference}')`);
       const docSnap = await unverifiedOrdersRef.doc(externalReference).get();
       if (docSnap.exists) {
         unverifiedQuery = { docs: [docSnap], empty: false } as admin.firestore.QuerySnapshot;
@@ -90,9 +90,15 @@ export async function POST(req: NextRequest) {
 
     // 3. CREATE FINAL ORDER if pre-order is found
     if (unverifiedQuery && !unverifiedQuery.empty) {
-      console.log(`[Webhook] Pré-ordem encontrada: SIM (ID: ${unverifiedQuery.docs[0].id})`);
       const unverifiedOrderDoc = unverifiedQuery.docs[0];
       const unverifiedOrderData = unverifiedOrderDoc.data() as UnverifiedOrder;
+
+      console.log(`[Webhook] Pré-ordem encontrada: SIM (ID: ${unverifiedOrderDoc.id})`);
+      const storedSessionId = unverifiedOrderData.originalSessionId;
+      if (paymentMethodIdentifier === 'pix') {
+          console.log(`[Webhook] COMPARAÇÃO PIX: ID recebido (${paymentId}, tipo: ${typeof paymentId}) vs ID salvo (${storedSessionId}, tipo: ${typeof storedSessionId})`);
+          console.log(`[Webhook] ID's são estritamente iguais (===)? ${paymentId === storedSessionId}`);
+      }
       
       // Additional check: Does the amount match?
       if (payment.transaction_amount && Math.abs(unverifiedOrderData.totalAmount - payment.transaction_amount) > 0.01) {

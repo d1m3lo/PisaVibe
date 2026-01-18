@@ -290,6 +290,7 @@ export default function CheckoutContent() {
 
     if (paymentId) {
         unverifiedOrderData.originalSessionId = paymentId;
+        console.log('[Checkout] Salvando pré-ordem PIX. originalSessionId:', paymentId, '| Tipo:', typeof paymentId);
     }
 
     if (appliedCoupon && discount > 0) {

@@ -60,10 +60,8 @@ export default function ProductsContent() {
         const regularCats = categories.filter(c => !['ofertas', 'lancamentos', 'importados'].includes(c));
         
         products = products.filter(p => {
-            // Must match one of the regular categories, OR there are no regular categories selected
             const regularMatch = regularCats.length === 0 || regularCats.includes(p.category);
             
-            // Must match one of the special tags, OR there are no special tags selected
             const specialMatch = specialCats.length === 0 || specialCats.some(sc => {
                 if (sc === 'importados') return p.isImported === true;
                 return p.tags?.includes(sc);
@@ -157,27 +155,43 @@ export default function ProductsContent() {
 
   const title = useMemo(() => {
     if (searchQuery) {
-        return `Busca por: "${searchQuery}"`;
+      return `Busca por: "${searchQuery}"`;
     }
 
     const titleParts: string[] = [];
+    const specialCats = categories?.filter(c => ['lancamentos', 'ofertas', 'importados'].includes(c)) || [];
+    const regularCats = categories?.filter(c => !['lancamentos', 'ofertas', 'importados'].includes(c)) || [];
+
+    if (specialCats.length > 0) {
+      // Order for special pages: Special Cat -> Gender -> Regular Cat
+      titleParts.push(specialCats.map(formatTitlePart).join(' / '));
+      if (gender) {
+        titleParts.push(formatTitlePart(gender));
+      }
+      if (regularCats.length > 0) {
+        titleParts.push(regularCats.map(formatTitlePart).join(' / '));
+      }
+    } else {
+      // Default order: Gender -> Regular Cat
+      if (gender) {
+        titleParts.push(formatTitlePart(gender));
+      }
+      if (regularCats.length > 0) {
+        titleParts.push(regularCats.map(formatTitlePart).join(' / '));
+      }
+    }
     
+    // Add subcategories and brand at the end for both cases
+    if (subCategories && subCategories.length > 0) {
+      titleParts.push(subCategories.map(formatTitlePart).join(' / '));
+    }
+
     if (brandFilter) {
       titleParts.push(formatTitlePart(brandFilter));
     }
     
-     if (gender) {
-        titleParts.push(formatTitlePart(gender));
-    }
-    if (categories && categories.length > 0) {
-        titleParts.push(categories.map(formatTitlePart).join(' / '));
-    }
-     if (subCategories && subCategories.length > 0) {
-        titleParts.push(subCategories.map(formatTitlePart).join(' / '));
-    }
-    
     if (titleParts.length > 0) {
-        return titleParts.join(' - ');
+      return titleParts.join(' - ');
     }
 
     return "Todos os Produtos";

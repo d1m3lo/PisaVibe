@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -64,7 +65,15 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const selectedSubCategories = useMemo(() => searchParams.get('tipo')?.split(',') || [], [searchParams]);
 
   const shouldShowSubCategories = useMemo(() => {
-    const mainCategories = ['calcados', 'roupas', 'acessorios', 'perfumes'];
+    const mainCategories = ['calcados', 'roupas', 'acessorios'];
+    const specialCategories = ['lancamentos', 'ofertas'];
+
+    // If a special category is active, never show sub-categories.
+    if (selectedCategories.some(c => specialCategories.includes(c))) {
+      return false;
+    }
+    
+    // Otherwise, only show if a main category is active.
     return selectedCategories.some(c => mainCategories.includes(c));
   }, [selectedCategories]);
 

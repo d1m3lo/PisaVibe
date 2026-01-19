@@ -43,68 +43,72 @@ export default function ProductsContent() {
 
   const filteredProducts = useMemo(() => {
     if (!productsData) return [];
-    
+
     let products = [...productsData];
 
-    if (searchQuery) {
+    const specialCats = categories?.filter(c => ['lancamentos', 'ofertas', 'importados'].includes(c)) || [];
+    const regularCats = categories?.filter(c => !['lancamentos', 'ofertas', 'importados'].includes(c)) || [];
+
+    products = products.filter(p => {
+      if (searchQuery) {
         const normalizedSearchQuery = searchQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        products = products.filter(p => {
-            const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
-            return productName.includes(normalizedSearchQuery) || productBrand.includes(normalizedSearchQuery);
+        const productName = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const productBrand = p.brand?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || '';
+        if (!productName.includes(normalizedSearchQuery) && !productBrand.includes(normalizedSearchQuery)) {
+          return false;
+        }
+      }
+
+      if (gender && !(p.gender === gender || p.gender === 'unissex')) {
+        return false;
+      }
+
+      if (brandFilter && p.brand?.toLowerCase() !== brandFilter.toLowerCase()) {
+        return false;
+      }
+
+      if (specialCats.length > 0) {
+        const specialMatch = specialCats.some(sc => {
+          if (sc === 'importados') return p.isImported === true;
+          return p.tags?.includes(sc);
         });
-    }
-    
-    if (categories && categories.length > 0) {
-        const specialCats = categories.filter(c => ['ofertas', 'lancamentos', 'importados'].includes(c));
-        const regularCats = categories.filter(c => !['ofertas', 'lancamentos', 'importados'].includes(c));
+        if (!specialMatch) return false;
+      }
+
+      if (regularCats.length > 0 && !regularCats.includes(p.category)) {
+        return false;
+      }
+
+      if (subCategories && subCategories.length > 0) {
+        const normalizedTypes = subCategories.map(sc => sc.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
         
-        products = products.filter(p => {
-            const regularMatch = regularCats.length === 0 || regularCats.includes(p.category);
-            
-            const specialMatch = specialCats.length === 0 || specialCats.some(sc => {
-                if (sc === 'importados') return p.isImported === true;
-                return p.tags?.includes(sc);
-            });
-            
-            return regularMatch && specialMatch;
-        });
-    }
+        if (specialCats.length > 0) {
+          const categoryMatch = normalizedTypes.includes(p.category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+          if (!categoryMatch) return false;
+        } else {
+          if (!p.subCategory || !normalizedTypes.includes(p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())) {
+            return false;
+          }
+        }
+      }
 
-    if (gender) {
-      products = products.filter(p => p.gender === gender || p.gender === 'unissex');
-    }
-    
-    if (brandFilter) {
-      products = products.filter(p => p.brand?.toLowerCase() === brandFilter.toLowerCase());
-    }
+      if (sizeFilter) {
+        const sizes = sizeFilter.split(',');
+        if (!p.variants.some(v => v.sizes.some(s => sizes.includes(s.size) && s.stock > 0))) {
+          return false;
+        }
+      }
 
-    if (subCategories && subCategories.length > 0) {
-        const normalizedSubCategories = subCategories.map(sc => sc.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-        products = products.filter(p => {
-            if (!p.subCategory) return false;
-            const normalizedProductSubCategory = p.subCategory.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return normalizedSubCategories.includes(normalizedProductSubCategory);
-        });
-    }
-    
-    // Size filter
-    if (sizeFilter) {
-      const sizes = sizeFilter.split(',');
-      products = products.filter(p => 
-        p.variants.some(v => v.sizes.some(s => sizes.includes(s.size) && s.stock > 0))
-      );
-    }
+      if (minPrice && !p.variants.some(v => v.price >= Number(minPrice))) {
+        return false;
+      }
+      if (maxPrice && !p.variants.some(v => v.price <= Number(maxPrice))) {
+        return false;
+      }
+      
+      return true;
+    });
 
-    // Price filter
-    if (minPrice) {
-      products = products.filter(p => p.variants.some(v => v.price >= Number(minPrice)));
-    }
-    if (maxPrice) {
-      products = products.filter(p => p.variants.some(v => v.price <= Number(maxPrice)));
-    }
-    
-    // Sorting logic
     if (sort) {
       products.sort((a, b) => {
         const priceA = a.variants[0]?.price ?? 0;
@@ -120,9 +124,7 @@ export default function ProductsContent() {
       });
     }
 
-
     return products;
-
   }, [productsData, searchQuery, categories, subCategories, gender, brandFilter, sizeFilter, minPrice, maxPrice, sort]);
 
 
@@ -163,7 +165,6 @@ export default function ProductsContent() {
     const regularCats = categories?.filter(c => !['lancamentos', 'ofertas', 'importados'].includes(c)) || [];
 
     if (specialCats.length > 0) {
-      // Order for special pages: Special Cat -> Gender -> Regular Cat
       titleParts.push(specialCats.map(formatTitlePart).join(' / '));
       if (gender) {
         titleParts.push(formatTitlePart(gender));
@@ -171,21 +172,21 @@ export default function ProductsContent() {
       if (regularCats.length > 0) {
         titleParts.push(regularCats.map(formatTitlePart).join(' / '));
       }
+       if (subCategories && subCategories.length > 0) {
+        titleParts.push(subCategories.map(formatTitlePart).join(' / '));
+      }
     } else {
-      // Default order: Gender -> Regular Cat
       if (gender) {
         titleParts.push(formatTitlePart(gender));
       }
       if (regularCats.length > 0) {
         titleParts.push(regularCats.map(formatTitlePart).join(' / '));
       }
+       if (subCategories && subCategories.length > 0) {
+        titleParts.push(subCategories.map(formatTitlePart).join(' / '));
+      }
     }
     
-    // Add subcategories and brand at the end for both cases
-    if (subCategories && subCategories.length > 0) {
-      titleParts.push(subCategories.map(formatTitlePart).join(' / '));
-    }
-
     if (brandFilter) {
       titleParts.push(formatTitlePart(brandFilter));
     }

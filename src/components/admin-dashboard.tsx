@@ -121,6 +121,11 @@ const NotificationManager = () => {
             }
         } else {
             // --- ACTIVATE ---
+            if (typeof window === 'undefined' || !('Notification' in window)) {
+                toast({ variant: 'destructive', title: 'Navegador incompatível', description: 'Seu navegador não suporta notificações.' });
+                setIsLoading(false);
+                return;
+            }
             try {
                 const newPermission = await Notification.requestPermission();
                 setPermission(newPermission);

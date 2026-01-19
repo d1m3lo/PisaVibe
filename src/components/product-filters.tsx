@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -62,6 +63,11 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
   const selectedCategories = useMemo(() => searchParams.get('categoria')?.split(',') || [], [searchParams]);
   const selectedGender = searchParams.get('genero');
   const selectedSubCategories = useMemo(() => searchParams.get('tipo')?.split(',') || [], [searchParams]);
+
+  const shouldShowSubCategories = useMemo(() => {
+    const mainCategories = ['calcados', 'roupas', 'acessorios', 'perfumes'];
+    return selectedCategories.some(c => mainCategories.includes(c));
+  }, [selectedCategories]);
 
   const handleMultiFilterChange = (key: string, value: string) => {
     const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
@@ -282,7 +288,7 @@ export default function ProductFilters({ products }: ProductFiltersProps) {
                 </div>
             </FilterSection>
 
-            {availableSubCategories.length > 0 && (
+            {availableSubCategories.length > 0 && shouldShowSubCategories && (
             <FilterSection title="Subcategorias">
                 <div className="space-y-3">
                 {availableSubCategories.map(({ name, count, value }) => (

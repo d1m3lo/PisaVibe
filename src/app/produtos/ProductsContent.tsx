@@ -166,11 +166,11 @@ export default function ProductsContent() {
       titleParts.push(formatTitlePart(brandFilter));
     }
     
-    if (categories && categories.length > 0) {
-        titleParts.push(categories.map(formatTitlePart).join(' / '));
-    }
      if (gender) {
         titleParts.push(formatTitlePart(gender));
+    }
+    if (categories && categories.length > 0) {
+        titleParts.push(categories.map(formatTitlePart).join(' / '));
     }
      if (subCategories && subCategories.length > 0) {
         titleParts.push(subCategories.map(formatTitlePart).join(' / '));

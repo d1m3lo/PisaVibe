@@ -12,10 +12,6 @@ export default function SessionTracker() {
           sessionStorage.setItem('pisa-vibe-session', 'true');
           fetch('https://us-central1-studio-4155277971-b1669.cloudfunctions.net/logAccess', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}), // Sending an empty JSON object
           }).catch(e => {
             console.error("SessionTracker: Failed to log access.", e);
           });

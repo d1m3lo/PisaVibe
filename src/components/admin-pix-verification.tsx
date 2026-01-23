@@ -111,17 +111,6 @@ export default function AdminPixVerification() {
     try {
         const batch = writeBatch(firestore);
 
-        // Increment coupon usage
-        if (order.couponCode) {
-            const couponsRef = collection(firestore, 'coupons');
-            const q = query(couponsRef, where("code", "==", order.couponCode));
-            const couponSnapshot = await getDocs(q);
-            if (!couponSnapshot.empty) {
-                const couponDocRef = couponSnapshot.docs[0].ref;
-                batch.update(couponDocRef, { usageCount: increment(1) });
-            }
-        }
-
         // 1. Define the new order in the user's subcollection
         const newOrderRef = doc(collection(firestore, `users/${order.userId}/orders`));
         const newOrderData: any = {
@@ -133,10 +122,24 @@ export default function AdminPixVerification() {
             shippingAddress: order.shippingAddress,
             status: 'Pedido confirmado',
             paymentMethod: order.paymentMethod,
-            couponCode: order.couponCode,
-            discountAmount: order.discountAmount,
         };
         
+        // Increment coupon usage and add data to order object
+        if (order.couponCode) {
+            newOrderData.couponCode = order.couponCode;
+            const couponsRef = collection(firestore, 'coupons');
+            const q = query(couponsRef, where("code", "==", order.couponCode));
+            const couponSnapshot = await getDocs(q);
+            if (!couponSnapshot.empty) {
+                const couponDocRef = couponSnapshot.docs[0].ref;
+                batch.update(couponDocRef, { usageCount: increment(1) });
+            }
+        }
+
+        if (order.discountAmount) {
+            newOrderData.discountAmount = order.discountAmount;
+        }
+
         if (order.originalSessionId) {
             newOrderData.originalSessionId = order.originalSessionId;
         }

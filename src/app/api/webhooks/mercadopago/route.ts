@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       const batch = db.batch();
       const finalOrderRef = db.collection(`users/${unverifiedOrderData.userId}/orders`).doc();
       
-      const finalOrderData: Omit<Order, 'id'> = {
+      const finalOrderData: Omit<Order, 'id'> & { [key: string]: any } = {
         userId: unverifiedOrderData.userId,
         customerInfo: unverifiedOrderData.customerInfo,
         items: unverifiedOrderData.items,
@@ -120,9 +120,14 @@ export async function POST(req: NextRequest) {
         status: 'Pedido confirmado',
         paymentMethod: payment.payment_method?.id as Order['paymentMethod'] || 'card',
         originalSessionId: paymentId, // Save the payment ID for idempotency
-        couponCode: unverifiedOrderData.couponCode,
-        discountAmount: unverifiedOrderData.discountAmount,
       };
+
+      if(unverifiedOrderData.couponCode) {
+        finalOrderData.couponCode = unverifiedOrderData.couponCode;
+      }
+      if(unverifiedOrderData.discountAmount) {
+        finalOrderData.discountAmount = unverifiedOrderData.discountAmount;
+      }
 
       // Increment coupon usage
       if (finalOrderData.couponCode) {

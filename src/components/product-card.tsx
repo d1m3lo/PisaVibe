@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -12,6 +11,7 @@ import { cn, fixImageUrl } from "@/lib/utils";
 import { Globe } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { ColorSwatch } from "./color-swatch";
 
 interface ProductCardProps {
   product: Product;
@@ -106,6 +106,25 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="mt-1 text-sm text-muted-foreground">
             {product.description}
           </p>
+          {product.variants && product.variants.length > 1 && (
+            <div className="mt-4">
+              <div className="flex items-center gap-2">
+                {product.variants.slice(0, 5).map((variant) => (
+                  <ColorSwatch
+                    key={variant.id}
+                    colorHex={variant.colorHex}
+                    title={variant.color}
+                    className="h-5 w-5"
+                  />
+                ))}
+                {product.variants.length > 5 && (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full border bg-muted text-xs font-semibold text-muted-foreground">
+                    +{product.variants.length - 5}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Link>
       <CardFooter className="flex items-end justify-between p-4 pt-0">

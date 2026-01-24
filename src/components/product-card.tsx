@@ -12,6 +12,7 @@ import { Globe } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { ColorSwatch } from "./color-swatch";
+import { SecuritySeal } from "./security-seal";
 
 interface ProductCardProps {
   product: Product;
@@ -137,6 +138,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="text-lg font-bold">
                 R$ {price.toFixed(2).replace(".", ",")}
             </span>
+            <SecuritySeal variant="compact" className="mt-2" />
         </div>
         <AddToCartButton product={product} size="icon" />
       </CardFooter>

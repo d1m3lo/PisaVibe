@@ -1,4 +1,3 @@
-
 "use client";
 
 import { notFound, useParams, useRouter } from "next/navigation";
@@ -30,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { SizeChart } from "@/components/size-chart";
 import { useToast } from "@/hooks/use-toast";
+import { SecuritySeal } from "@/components/security-seal";
 
 
 const ProductPageSkeleton = () => (
@@ -613,6 +613,7 @@ export default function ProductPage() {
                   </div>
 
                   <div className="space-y-4">
+                      <SecuritySeal className="justify-center" />
                       <Button size="lg" className="w-full text-lg h-12" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
                           {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
                       </Button>
@@ -702,7 +703,8 @@ export default function ProductPage() {
                   )}
 
 
-                  <div className="mt-8">
+                  <div className="mt-8 space-y-4">
+                      <SecuritySeal className="justify-center" />
                       <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
                           {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
                       </Button>

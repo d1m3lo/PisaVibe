@@ -221,7 +221,7 @@ export default function CheckoutContent() {
 
     try {
       const res = await fetch(
-        "https://southamerica-east1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
+        "https://us-central1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

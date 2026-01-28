@@ -2,9 +2,6 @@
 import * as functions from "firebase-functions";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import * as admin from 'firebase-admin';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
 
 admin.initializeApp();
 
@@ -14,7 +11,7 @@ const messaging = admin.messaging();
 /* ================================
    MERCADO PAGO CLIENT
 ================================ */
-const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+const accessToken = "APP_USR-4471136097030537-122919-8fbdd981af51d484d5cc90907b5574ba-481737354";
 
 if (!accessToken) {
     console.error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");

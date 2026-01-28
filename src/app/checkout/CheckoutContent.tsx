@@ -40,6 +40,7 @@ export default function CheckoutContent() {
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
+  const [showNightMessageForPix, setShowNightMessageForPix] = useState(false);
 
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const shippingFormRef = useRef<HTMLDivElement>(null);
@@ -220,7 +221,7 @@ export default function CheckoutContent() {
 
     try {
       const res = await fetch(
-        "https://us-central1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
+        "https://southamerica-east1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -259,6 +260,14 @@ export default function CheckoutContent() {
       toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado ou ID do pagamento ausente." });
       return;
     }
+    
+    const currentHour = new Date().getHours();
+    if (currentHour >= 0 && currentHour < 7) {
+      setShowNightMessageForPix(true);
+    } else {
+      setShowNightMessageForPix(false);
+    }
+    
     setPixStatus('pending_verification');
   };
   
@@ -626,11 +635,21 @@ export default function CheckoutContent() {
           )}
           
            {pixStatus === 'pending_verification' && (
-             <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
-                <Loader2 className="mx-auto h-10 w-10 mb-3 animate-spin" />
-                <h3 className="font-bold text-lg">Pagamento em análise</h3>
-                <p className="text-sm">Fique tranquilo, assim que confirmarmos o Pix você será notificado. Seu dinheiro está em boas mãos.</p>
-            </div>
+            showNightMessageForPix ? (
+                <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+                    <CheckCircle className="mx-auto h-10 w-10 mb-3 text-green-600" />
+                    <h3 className="font-bold text-lg">Compra finalizada com sucesso.</h3>
+                    <p className="text-sm max-w-md mx-auto">
+                        Recebemos seu pedido normalmente. Como a compra foi feita durante a madrugada, a validação do pagamento será feita a partir das 07:00 da manhã. Pode ficar tranquilo(a), assim que for validado o pedido aparece normalmente no sistema.
+                    </p>
+                </div>
+            ) : (
+                <div className="mt-6 text-center animate-in fade-in-50 p-4 bg-blue-50 text-blue-800 rounded-lg border border-blue-200">
+                    <Loader2 className="mx-auto h-10 w-10 mb-3 animate-spin" />
+                    <h3 className="font-bold text-lg">Pagamento em análise</h3>
+                    <p className="text-sm">Fique tranquilo, assim que confirmarmos o Pix você será notificado. Seu dinheiro está em boas mãos.</p>
+                </div>
+            )
            )}
            
            {pixStatus === 'confirmed' && (

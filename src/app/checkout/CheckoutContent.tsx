@@ -133,6 +133,8 @@ export default function CheckoutContent() {
   const isInvalid =
     !shippingInfo.name ||
     !shippingInfo.email ||
+    !shippingInfo.phone ||
+    !shippingInfo.zipCode ||
     !shippingInfo.street ||
     !shippingInfo.number ||
     !shippingInfo.city ||
@@ -142,7 +144,8 @@ export default function CheckoutContent() {
     if (isInvalid) {
       toast({
         variant: "destructive",
-        title: "Preencha os dados de entrega",
+        title: "Preencha todos os dados de entrega",
+        description: "Nome, email, telefone, CEP e endereço completo são obrigatórios para continuar."
       });
       shippingFormRef.current?.scrollIntoView({ behavior: "smooth" });
       return false;
@@ -446,7 +449,7 @@ export default function CheckoutContent() {
             </div>
             <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" type="tel" value={shippingInfo.phone} onChange={handleInputChange} placeholder="(XX) XXXXX-XXXX"/>
+                <Input id="phone" type="tel" value={shippingInfo.phone} onChange={handleInputChange} placeholder="(XX) XXXXX-XXXX" required/>
             </div>
             <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="zipCode">CEP</Label>
@@ -685,9 +688,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
-    
-
-    
-
-    

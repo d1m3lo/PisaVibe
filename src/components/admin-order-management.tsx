@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,6 +9,7 @@ import {
   doc,
   updateDoc,
   collection,
+  deleteDoc,
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import {
@@ -276,11 +276,12 @@ export default function AdminOrderManagement() {
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<
     Record<string, boolean>
   >({});
+  const firestore = useFirestore();
 
   useEffect(() => {
     if (!firestore) return;
@@ -402,6 +403,27 @@ export default function AdminOrderManagement() {
     }
   };
   
+  const handleDeleteOrder = async (orderPath: string, orderId: string) => {
+    if (!firestore) return;
+    setDeletingOrderId(orderId);
+    try {
+        await deleteDoc(doc(firestore, orderPath));
+        toast({
+            title: 'Pedido Removido!',
+            description: 'O pedido foi removido com sucesso.',
+        });
+    } catch (error) {
+        console.error('Error deleting order:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro!',
+            description: 'Não foi possível remover o pedido.',
+        });
+    } finally {
+        setDeletingOrderId(null);
+    }
+  };
+
    const handleSaveOrderEdit = async (orderPath: string, updatedItems: OrderItem[]) => {
     if (!firestore) return;
     
@@ -597,16 +619,51 @@ export default function AdminOrderManagement() {
                                   <h4 className="font-bold">
                                     Itens do Pedido
                                   </h4>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      setEditingOrderId(order.id)
-                                    }
-                                  >
-                                    <Edit className="mr-2 h-3 w-3" />
-                                    Editar Itens
-                                  </Button>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        setEditingOrderId(order.id)
+                                      }
+                                    >
+                                      <Edit className="mr-2 h-3 w-3" />
+                                      Editar Itens
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                disabled={deletingOrderId === order.id}
+                                            >
+                                                {deletingOrderId === order.id ? (
+                                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="mr-2 h-3 w-3" />
+                                                )}
+                                                Excluir
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Excluir este pedido?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta ação não pode ser desfeita. O pedido #{order.id.slice(0, 7)} será permanentemente apagado.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleDeleteOrder(order.path, order.id)}
+                                                    className="bg-destructive hover:bg-destructive/90"
+                                                >
+                                                    Sim, excluir pedido
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
                                 </div>
                                 <div className="space-y-4">
                                   {order.items.map((item, index) => (

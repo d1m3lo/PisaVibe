@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart, getCartItemId } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Gift } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fixImageUrl } from "@/lib/utils";
@@ -47,7 +47,7 @@ export default function CartPage() {
             <div className="flex flex-col gap-5">
               {cartItems.map((item) => {
                 if (!item.product || !item.variant) return null;
-                const cartItemId = getCartItemId(item.product, item.variant, item.size, item.selectedImage);
+                const cartItemId = getCartItemId(item.product, item.variant, item.size, item.selectedImage, item.giftChoice);
                 const price = typeof item.variant.price === 'number' ? item.variant.price : 0;
                 return (
                   <div key={cartItemId} className="flex items-start gap-4 rounded-lg border p-4">
@@ -69,7 +69,13 @@ export default function CartPage() {
                       <div className="text-sm text-muted-foreground">
                           {item.variant.color}
                           {item.product.subCategory !== 'mochilas' && ` / ${item.size}`}
+                      </div>
+                      {item.giftChoice && (
+                        <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-600 font-semibold">
+                            <Gift className="h-3 w-3" />
+                            <span>Brinde: Pulseira {item.giftChoice}</span>
                         </div>
+                      )}
                       <p className="mt-1 font-bold text-base">
                         R$ {price.toFixed(2).replace(".", ",")}
                       </p>

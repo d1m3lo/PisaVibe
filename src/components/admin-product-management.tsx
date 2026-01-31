@@ -135,6 +135,7 @@ const ProductForm = ({
     isImported: product?.isImported || false,
     showSizeChart: product?.showSizeChart || false,
     origin: product?.origin || '',
+    hasGift: product?.hasGift || false,
   });
 
   const [subCategoryOptions, setSubCategoryOptions] = useState<string[]>([]);
@@ -410,6 +411,7 @@ const ProductForm = ({
       isImported: formData.isImported,
       showSizeChart: formData.showSizeChart,
       origin: formData.origin,
+      hasGift: formData.hasGift,
     };
     
     // Remove price from top-level product data if it exists from old structure
@@ -551,6 +553,14 @@ const ProductForm = ({
                         onCheckedChange={(checked) => setFormData(prev => ({...prev, showSizeChart: !!checked}))}
                     />
                     <Label htmlFor="showSizeChart">Exibir Tabela de Medidas</Label>
+                </div>
+                 <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                        id="hasGift"
+                        checked={formData.hasGift}
+                        onCheckedChange={(checked) => setFormData(prev => ({...prev, hasGift: !!checked}))}
+                    />
+                    <Label htmlFor="hasGift">Oferecer Pulseira de Brinde</Label>
                 </div>
 
           </div>
@@ -966,5 +976,3 @@ export default function ProductManagement() {
     </Card>
   );
 }
-
-    

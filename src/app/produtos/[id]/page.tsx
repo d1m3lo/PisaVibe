@@ -1,3 +1,4 @@
+
 "use client";
 
 import { notFound, useParams, useRouter } from "next/navigation";
@@ -30,6 +31,8 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "
 import { SizeChart } from "@/components/size-chart";
 import { useToast } from "@/hooks/use-toast";
 import { SecuritySeal } from "@/components/security-seal";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 
 const ProductPageSkeleton = () => (
@@ -276,6 +279,7 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
+  const [giftChoice, setGiftChoice] = useState<'dourada' | 'prata' | null>(null);
   
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [isZoomViewOpen, setIsZoomViewOpen] = useState(false);
@@ -412,10 +416,18 @@ export default function ProductPage() {
     }
     if (!product || !selectedVariant) return;
 
+    if (product.hasGift && !giftChoice) {
+      toast({
+        variant: "destructive",
+        title: "Escolha a cor do seu brinde!",
+      });
+      return;
+    }
+
     if (isPerfume || isBackpack || isCap || isWatch) {
-        addToCart(product, selectedVariant, 'U', 1, selectedImage, isBackpack ? displayName : undefined);
+        addToCart(product, selectedVariant, 'U', 1, selectedImage, isBackpack ? displayName : undefined, giftChoice || undefined);
     } else if (selectedSize) {
-        addToCart(product, selectedVariant, selectedSize, 1, selectedImage);
+        addToCart(product, selectedVariant, selectedSize, 1, selectedImage, undefined, giftChoice || undefined);
     }
   };
     
@@ -426,7 +438,7 @@ export default function ProductPage() {
   
   const isAddToCartDisabled = (isPerfume || isBackpack || isCap || isWatch)
     ? stockForSelectedSize === 0
-    : !selectedSize || stockForSelectedSize === 0;
+    : !selectedSize || stockForSelectedSize === 0 || (product?.hasGift && !giftChoice);
 
   const handleShare = async () => {
     const shareData = {
@@ -702,11 +714,28 @@ export default function ProductPage() {
                       </div>
                   )}
 
+                  {product.hasGift && (
+                    <div className="mt-8 space-y-3 rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 p-4">
+                        <h3 className="font-semibold text-primary">Parabéns, você ganhou uma pulseira de brinde.</h3>
+                        <p className="text-sm text-muted-foreground">Escolha a cor:</p>
+                        <RadioGroup onValueChange={(value: 'dourada' | 'prata') => setGiftChoice(value)} value={giftChoice || undefined}>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="dourada" id="dourada" />
+                                <Label htmlFor="dourada">Dourada</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="prata" id="prata" />
+                                <Label htmlFor="prata">Prata</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                  )}
+
 
                   <div className="mt-8 space-y-4">
                       <SecuritySeal className="justify-center" />
                       <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={isAddToCartDisabled}>
-                          {isAddToCartDisabled ? "Esgotado" : "Adicionar ao Carrinho"}
+                          {isAddToCartDisabled ? (product.hasGift && !giftChoice ? "Escolha o brinde" : "Esgotado") : "Adicionar ao Carrinho"}
                       </Button>
                   </div>
               </>

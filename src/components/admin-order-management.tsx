@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import {
@@ -43,6 +44,7 @@ import {
   PlusCircle,
   Save,
   X,
+  Gift,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -132,10 +134,10 @@ const EditOrderForm = ({
   const handleItemChange = (
     index: number,
     field: keyof OrderItem,
-    value: string | number
+    value: string | number | undefined
   ) => {
     const newItems = [...items];
-    const item = newItems[index];
+    const item: any = newItems[index];
 
     if (field === 'productId') {
       const selectedProduct = products.find((p) => p.id === value);
@@ -149,11 +151,11 @@ const EditOrderForm = ({
         item.imageUrl = fixImageUrl(defaultVariant?.images[0]);
       }
     } else {
-      (item[field] as any) = value;
+      item[field] = value;
     }
 
     if (field === 'quantity' || field === 'price') {
-      (item[field] as any) = Number(value) < 0 ? 0 : Number(value);
+      item[field] = Number(value) < 0 ? 0 : Number(value);
     }
 
     setItems(newItems);
@@ -173,7 +175,7 @@ const EditOrderForm = ({
         {items.map((item, index) => (
           <div
             key={index}
-            className="grid grid-cols-[1fr_120px_90px_90px_auto] gap-3 items-end rounded-md border p-3"
+            className="grid grid-cols-[1fr_120px_90px_90px_110px_auto] gap-3 items-end rounded-md border p-3"
           >
             <div>
               <Label className="text-xs">Produto</Label>
@@ -235,6 +237,24 @@ const EditOrderForm = ({
                   handleItemChange(index, 'price', e.target.value)
                 }
               />
+            </div>
+             <div>
+              <Label className="text-xs">Brinde</Label>
+                <Select
+                    value={item.giftChoice || 'nenhum'}
+                    onValueChange={(value) =>
+                    handleItemChange(index, 'giftChoice', value === 'nenhum' ? undefined : value)
+                    }
+                >
+                    <SelectTrigger>
+                    <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="nenhum">Nenhum</SelectItem>
+                    <SelectItem value="dourada">Dourada</SelectItem>
+                    <SelectItem value="prata">Prata</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <Button
               variant="ghost"
@@ -692,6 +712,12 @@ export default function AdminOrderManagement() {
                                           Cor: {item.variantColor} / Tam:{' '}
                                           {item.size}
                                         </p>
+                                         {item.giftChoice && (
+                                            <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-500 font-semibold">
+                                                <Gift className="h-3 w-3" />
+                                                <span>Brinde: Pulseira {item.giftChoice}</span>
+                                            </div>
+                                        )}
                                       </div>
                                     </div>
                                   ))}

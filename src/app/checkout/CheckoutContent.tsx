@@ -20,7 +20,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useFirestore, useUser } from "@/firebase";
 import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info, Gift } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import type { Order, Coupon } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -224,7 +224,7 @@ export default function CheckoutContent() {
 
     try {
       const res = await fetch(
-        "https://us-central1-studio-4155277971-b1669.cloudfunctions.net/createPixPayment",
+        "https://us-central1-pisa-vibe-shop.cloudfunctions.net/createPixPayment",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -292,6 +292,7 @@ export default function CheckoutContent() {
         quantity: item.quantity,
         price: item.variant.price,
         imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0]),
+        giftChoice: item.giftChoice,
       })),
       totalAmount: finalTotal,
       shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
@@ -499,6 +500,12 @@ export default function CheckoutContent() {
                 />
                 <div>
                     <p className="font-semibold">{item.displayName || item.product.name}</p>
+                    {item.giftChoice && (
+                        <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-600 font-semibold">
+                            <Gift className="h-3 w-3" />
+                            <span>Brinde: Pulseira {item.giftChoice}</span>
+                        </div>
+                    )}
                     <p className="text-sm text-muted-foreground">R$ {item.variant.price.toFixed(2).replace('.',',')}</p>
                 </div>
                 </div>

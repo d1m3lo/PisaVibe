@@ -33,6 +33,7 @@ export type Product = {
   isImported?: boolean; // Selo de produto importado
   showSizeChart?: boolean; // Exibir tabela de medidas
   origin?: string; // Campo de origem para uso do admin
+  hasGift?: boolean; // Opção de brinde
 };
 
 export type CartItem = {
@@ -42,6 +43,7 @@ export type CartItem = {
   quantity: number;
   selectedImage?: string; // Add selectedImage for backpacks
   displayName?: string; // Nome a ser exibido no carrinho (para mochilas)
+  giftChoice?: 'dourada' | 'prata'; // Cor do brinde
 };
 
 export type UserProfile = {
@@ -60,6 +62,7 @@ export type OrderItem = {
     quantity: number;
     price: number;
     imageUrl: string;
+    giftChoice?: 'dourada' | 'prata';
 }
 
 export type OrderStatus =

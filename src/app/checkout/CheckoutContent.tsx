@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCart } from "@/context/cart-context";
@@ -22,7 +21,7 @@ import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } fr
 import { fixImageUrl } from "@/lib/utils";
 import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info, Gift } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
-import type { Order, Coupon } from "@/lib/types";
+import type { Order, Coupon, OrderItem } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
@@ -284,16 +283,23 @@ export default function CheckoutContent() {
         email: shippingInfo.email,
         phone: shippingInfo.phone,
       },
-      items: cartItems.map(item => ({
-        productId: item.product.id,
-        productName: item.displayName || item.product.name,
-        variantColor: item.variant.color,
-        size: item.size,
-        quantity: item.quantity,
-        price: item.variant.price,
-        imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0]),
-        giftChoice: item.giftChoice,
-      })),
+      items: cartItems.map(item => {
+        const orderItem: OrderItem = {
+          productId: item.product.id,
+          productName: item.displayName || item.product.name,
+          variantColor: item.variant.color,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.variant.price,
+          imageUrl: fixImageUrl(item.selectedImage || item.variant.images[0]),
+        };
+
+        if (item.giftChoice) {
+          orderItem.giftChoice = item.giftChoice;
+        }
+
+        return orderItem;
+      }),
       totalAmount: finalTotal,
       shippingAddress: `${shippingInfo.street}, ${shippingInfo.number}, ${shippingInfo.neighborhood}, ${shippingInfo.city}, ${shippingInfo.state}`,
       paymentMethod: method,

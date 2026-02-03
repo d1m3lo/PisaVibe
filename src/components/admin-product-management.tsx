@@ -87,7 +87,7 @@ const categoryMappings = {
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Vestidos', 'Moletom', 'Calças', 'Streetwear', 'Casual'],
-    'acessorios': ['Relógios', 'Bag'],
+    'acessorios': ['Bonés', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   unissex: {

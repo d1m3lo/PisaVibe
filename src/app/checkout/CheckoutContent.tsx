@@ -90,6 +90,7 @@ export default function CheckoutContent() {
       ...prev,
       name: user.displayName || prev.name,
       email: user.email || prev.email,
+      phone: user.phoneNumber || prev.phone
     }));
   }, [user]);
 
@@ -398,29 +399,18 @@ export default function CheckoutContent() {
       try {
         const response = await fetch(`/api/cep/${zipCode}`);
         if (!response.ok) {
-            toast({ variant: "destructive", title: "Erro de Frete", description: "CEP não encontrado."});
+            toast({ variant: "destructive", title: "Erro de CEP", description: "CEP não encontrado ou inválido."});
             setIsCalculatingShipping(false);
             return;
         }
         const data = await response.json();
-        if (data.error) {
-            toast({ variant: "destructive", title: "Erro de Frete", description: "CEP não encontrado."});
+        if (data.erro) {
+            toast({ variant: "destructive", title: "Erro de CEP", description: "CEP não encontrado."});
             setIsCalculatingShipping(false);
             return;
         }
 
-        const cepAsNumber = parseInt(zipCode, 10);
-        if (cepAsNumber >= 35160000 && cepAsNumber <= 35164999) {
-            setShippingCost(0); // Frete grátis para Ipatinga
-        } else if (data.uf === 'MG') {
-            setShippingCost(15.00); // Resto de MG
-        } else if (['SP', 'RJ', 'ES'].includes(data.uf)) {
-            setShippingCost(25.00); // Sudeste
-        } else if (['PR', 'SC', 'RS', 'GO', 'MT', 'MS', 'DF'].includes(data.uf)) {
-            setShippingCost(35.00); // Sul e Centro-Oeste
-        } else {
-            setShippingCost(50.00); // Norte e Nordeste
-        }
+        setShippingCost(0);
         
         setShippingInfo(prev => ({
           ...prev,
@@ -432,7 +422,7 @@ export default function CheckoutContent() {
         
       } catch (error) {
         console.error("Erro ao buscar CEP:", error);
-        toast({ variant: "destructive", title: "Erro de Frete", description: "Não foi possível calcular o frete para este CEP."});
+        toast({ variant: "destructive", title: "Erro de CEP", description: "Não foi possível consultar o CEP."});
       } finally {
         setIsCalculatingShipping(false);
       }
@@ -558,18 +548,9 @@ export default function CheckoutContent() {
                 </div>
             )}
              <div className="flex justify-between">
-                 <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                       <span className="text-muted-foreground flex items-center gap-1 cursor-help">
-                          <Truck size={14}/> Frete <Info size={12} />
-                        </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">Nosso centro de distribuição fica em Ipatinga-MG. O valor do frete é calculado com base na sua distância, garantindo um custo justo para cada região do Brasil.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                 <span className="text-muted-foreground flex items-center gap-1">
+                    <Truck size={14}/> Frete
+                </span>
 
                 {isCalculatingShipping ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

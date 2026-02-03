@@ -87,7 +87,7 @@ const categoryMappings = {
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Vestidos', 'Moletom', 'Calças', 'Streetwear', 'Casual'],
-    'acessorios': ['Bolsas', 'Relógios', 'Bag'],
+    'acessorios': ['Relógios', 'Bag'],
     'perfumes': [],
   },
   unissex: {
@@ -373,12 +373,12 @@ const ProductForm = ({
       }
 
 
-      if (formData.category === 'perfumes' || formData.subCategory === 'mochilas' || formData.category === 'acessorios') {
+      if (formData.category === 'perfumes' || formData.category === 'acessorios') {
           const singleSize = variant.sizes?.find(s => s.size === 'U');
           variant.sizes = [{ size: 'U', stock: singleSize?.stock || 0 }];
       }
 
-      if (formData.subCategory === 'mochilas') {
+      if (formData.subCategory === 'bag') {
         variant.imageNames = v.imageNames;
       } else {
         delete variant.imageNames;
@@ -426,7 +426,7 @@ const ProductForm = ({
   };
 
   const isPerfume = formData.category === 'perfumes';
-  const isBackpack = formData.subCategory === 'mochilas';
+  const isBag = formData.subCategory === 'bag';
   const isSizeGeneratorVisible = ['calcados', 'roupas'].includes(formData.category);
 
 
@@ -579,7 +579,7 @@ const ProductForm = ({
                    </AccordionTrigger>
                    <AccordionContent className="p-4 pt-0">
                      <div className="space-y-4">
-                        {(!isPerfume || isBackpack) && (
+                        {(!isPerfume || isBag) && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label>Nome da Cor</Label>
@@ -625,7 +625,7 @@ const ProductForm = ({
                         </div>
 
                         <div className="space-y-3">
-                          <Label>{isBackpack ? 'Imagens da Variação' : 'Links das Imagens'}</Label>
+                          <Label>{isBag ? 'Imagens da Variação' : 'Links das Imagens'}</Label>
                           {variant.images.map((image, index) => (
                             <div key={index} className="flex items-center gap-2">
                               <div className="flex-grow space-y-1">
@@ -635,9 +635,9 @@ const ProductForm = ({
                                     onChange={(e) => handleImageChange(variant.id, index, 'url', e.target.value)}
                                     required={index === 0}
                                 />
-                                {isBackpack && (
+                                {isBag && (
                                     <Input
-                                        placeholder="Nome da variação (Ex: Mochila Stitch)"
+                                        placeholder="Nome da variação (Ex: Bag Stitch)"
                                         value={variant.imageNames?.[index] || ''}
                                         onChange={(e) => handleImageChange(variant.id, index, 'name', e.target.value)}
                                     />
@@ -655,7 +655,7 @@ const ProductForm = ({
                           </Button>
                         </div>
                         
-                        {(isPerfume || isBackpack || formData.category === 'acessorios') ? (
+                        {(isPerfume || isBag || formData.category === 'acessorios') ? (
                            <div className="space-y-2">
                                 <Label htmlFor={`stock-${variant.id}-U`}>Estoque</Label>
                                 <Input 

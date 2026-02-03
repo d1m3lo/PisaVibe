@@ -81,7 +81,6 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Acessórios",
         links: [
-          { title: "Bolsas", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bolsas" },
           { title: "Relógios", href: "/produtos?genero=feminino&categoria=acessorios&tipo=relogios" },
           { title: "Bag", href: "/produtos?genero=feminino&categoria=acessorios&tipo=bag" },
         ],

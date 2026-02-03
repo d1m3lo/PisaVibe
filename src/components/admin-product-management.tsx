@@ -81,19 +81,19 @@ const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Streetwear', 'Casual'],
-    'acessorios': ['Bonés', 'Mochilas', 'Relógios', 'Bag'],
+    'acessorios': ['Bonés', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Vestidos', 'Moletom', 'Calças', 'Streetwear', 'Casual'],
-    'acessorios': ['Bolsas', 'Mochilas', 'Relógios', 'Bag'],
+    'acessorios': ['Bolsas', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   unissex: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Moletom', 'Streetwear'],
-    'acessorios': ['Bonés', 'Mochilas', 'Bag'],
+    'acessorios': ['Bonés', 'Bag'],
     'perfumes': [],
   }
 };

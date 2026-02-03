@@ -81,19 +81,19 @@ const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Streetwear', 'Casual'],
-    'acessorios': ['Bonés', 'Mochilas', 'Relógios'],
+    'acessorios': ['Bonés', 'Mochilas', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Vestidos', 'Moletom', 'Calças', 'Streetwear', 'Casual'],
-    'acessorios': ['Bolsas', 'Mochilas', 'Relógios'],
+    'acessorios': ['Bolsas', 'Mochilas', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   unissex: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
     'roupas': ['Camisetas', 'Moletom', 'Streetwear'],
-    'acessorios': ['Bonés', 'Mochilas'],
+    'acessorios': ['Bonés', 'Mochilas', 'Bag'],
     'perfumes': [],
   }
 };
@@ -314,8 +314,7 @@ const ProductForm = ({
       ...prev,
       variants: [
         ...prev.variants,
-        { id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, images: [''], imageNames: [], sizes: [] },
-      ],
+        { id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, images: [''], imageNames: [], sizes: [] }],
     }));
   };
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { notFound, useParams, useRouter } from "next/navigation";
@@ -288,14 +287,17 @@ export default function ProductPage() {
   const sortedSizes = useMemo(() => {
     if (!selectedVariant?.sizes) return [];
     
+    const unwantedSizes = ['G1', 'G2', 'G3'];
+    const filteredSizes = selectedVariant.sizes.filter(s => !unwantedSizes.includes(s.size));
+
     // Custom sort function
-    return [...selectedVariant.sizes].sort((a, b) => {
+    return [...filteredSizes].sort((a, b) => {
       // Handle "U" size to always be at the end
       if (a.size === 'U') return 1;
       if (b.size === 'U') return -1;
   
       // Handle letter sizes
-      const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
+      const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
       const aIsLetter = isNaN(parseFloat(a.size)) && sizeOrder[a.size.toUpperCase()];
       const bIsLetter = isNaN(parseFloat(b.size)) && sizeOrder[b.size.toUpperCase()];
       if (aIsLetter && bIsLetter) {
@@ -635,7 +637,7 @@ export default function ProductPage() {
                    
                   <div>
                     <h3 className="text-base font-semibold">Descrição</h3>
-                    <p className={cn("mt-2 text-muted-foreground", (product.category === 'roupas' || product.category === 'acessorios') && "whitespace-pre-line")}>{product.longDescription}</p>
+                    <p className={cn("mt-2 text-muted-foreground", (isClothing || product.category === 'acessorios') && "whitespace-pre-line")}>{product.longDescription}</p>
                   </div>
               </div>
             ) : (
@@ -656,7 +658,7 @@ export default function ProductPage() {
 
                   <div className="mt-6">
                       <h3 className="text-base font-semibold">Descrição</h3>
-                      <p className={cn("mt-2 text-muted-foreground", (product.category === 'roupas' || product.category === 'acessorios') && "whitespace-pre-line")}>{product.longDescription}</p>
+                      <p className={cn("mt-2 text-muted-foreground", (isClothing || product.category === 'acessorios') && 'whitespace-pre-line')}>{product.longDescription}</p>
                   </div>
 
                   <div className="mt-8">
@@ -746,3 +748,5 @@ export default function ProductPage() {
     </>
   );
 }
+
+    

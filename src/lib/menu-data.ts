@@ -30,11 +30,11 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Roupas",
         links: [
-          { title: "Moletom", href: "/produtos?genero=masculino&categoria=roupas&tipo=moletom" },
-          { title: "Calças", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },
-          { title: "Bermudas", href: "/produtos?genero=masculino&categoria=roupas&tipo=bermudas" },
-          { title: "Polos", href: "/produtos?genero=masculino&categoria=roupas&tipo=polos" },
           { title: "Streetwear", href: "/produtos?genero=masculino&categoria=roupas&tipo=streetwear" },
+          { title: "Moletom", href: "/produtos?genero=masculino&categoria=roupas&tipo=moletom" },
+          { title: "Bermudas", href: "/produtos?genero=masculino&categoria=roupas&tipo=bermudas" },
+          { title: "Calças", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },
+          { title: "Polos", href: "/produtos?genero=masculino&categoria=roupas&tipo=polos" },
         ],
       },
       {
@@ -69,11 +69,11 @@ export const megaMenuData: MenuCategory[] = [
       {
         title: "Roupas",
         links: [
-          { title: "Casual", href: "/produtos?genero=feminino&categoria=roupas&tipo=casual" },
+          { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },
           { title: "Vestidos", href: "/produtos?genero=feminino&categoria=roupas&tipo=vestidos" },
           { title: "Moletom", href: "/produtos?genero=feminino&categoria=roupas&tipo=moletom" },
           { title: "Calças", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
-          { title: "Streetwear", href: "/produtos?genero=feminino&categoria=roupas&tipo=streetwear" },
+          { title: "Casual", href: "/produtos?genero=feminino&categoria=roupas&tipo=casual" },
         ],
       },
       {

@@ -9,9 +9,6 @@ const sizeData = [
     { size: "M", width: 54, length: 72, sleeve: 24 },
     { size: "G", width: 57, length: 73, sleeve: 25 },
     { size: "GG", width: 58, length: 75, sleeve: 26 },
-    { size: "G1", width: 60, length: 77, sleeve: 27 },
-    { size: "G2", width: 62, length: 79, sleeve: 28 },
-    { size: "G3", width: 64, length: 81, sleeve: 29 },
 ];
 
 interface SizeChartProps {
@@ -51,7 +48,7 @@ export const SizeChart = ({ selectedSize }: SizeChartProps) => {
             <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
                 <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <p>
-                    Os tamanhos <span className="font-bold">GG, G1, G2 e G3</span> são indicados para quem prefere roupas mais largas ou possui maior estrutura corporal, oferecendo mais conforto e melhor caimento.
+                    O tamanho <span className="font-bold">GG</span> é indicado para quem prefere roupas mais largas ou possui maior estrutura corporal, oferecendo mais conforto e melhor caimento.
                 </p>
             </div>
         </div>

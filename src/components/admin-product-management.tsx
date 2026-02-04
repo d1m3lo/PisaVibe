@@ -99,7 +99,7 @@ const categoryMappings = {
 };
 
 const allSizes = {
-    roupas: ['P', 'M', 'G', 'GG', 'G1', 'G2', 'G3'],
+    roupas: ['P', 'M', 'G', 'GG'],
     calcados: [], // Será preenchido dinamicamente
     acessorios: ['U'],
     perfumes: ['U']
@@ -149,7 +149,7 @@ const ProductForm = ({
         if (b === 'U') return -1;
 
         // Handle letter sizes
-        const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4, 'G1': 5, 'G2': 6, 'G3': 7 };
+        const sizeOrder: Record<string, number> = { 'P': 1, 'M': 2, 'G': 3, 'GG': 4 };
         const aIsLetter = isNaN(parseFloat(a)) && sizeOrder[a.toUpperCase()];
         const bIsLetter = isNaN(parseFloat(b)) && sizeOrder[b.toUpperCase()];
         if (aIsLetter && bIsLetter) {

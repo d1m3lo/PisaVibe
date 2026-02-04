@@ -199,7 +199,8 @@ const ProductForm = ({
     const uniqueExistingSizes = [...new Set(allVariantSizes)];
 
     const combinedSizes = [...new Set([...initialSizes, ...uniqueExistingSizes])];
-    setAvailableSizes(sortSizes(combinedSizes));
+    const filteredCombinedSizes = combinedSizes.filter(s => !['G1', 'G2', 'G3'].includes(s));
+    setAvailableSizes(sortSizes(filteredCombinedSizes));
 
 
   }, [formData.gender, formData.category, product]);

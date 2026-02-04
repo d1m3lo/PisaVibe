@@ -635,7 +635,7 @@ export default function ProductPage() {
                    
                   <div>
                     <h3 className="text-base font-semibold">Descrição</h3>
-                    <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
+                    <p className="mt-2 text-muted-foreground whitespace-pre-line">{product.longDescription}</p>
                   </div>
               </div>
             ) : (
@@ -656,7 +656,7 @@ export default function ProductPage() {
 
                   <div className="mt-6">
                       <h3 className="text-base font-semibold">Descrição</h3>
-                      <p className="mt-2 text-muted-foreground">{product.longDescription}</p>
+                      <p className="mt-2 text-muted-foreground whitespace-pre-line">{product.longDescription}</p>
                   </div>
 
                   <div className="mt-8">

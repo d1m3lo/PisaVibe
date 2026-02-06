@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import type { Product } from "@/lib/types";
+import type { Product, Variant } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import AddToCartButton from "./add-to-cart-button";
 import { QualityBadge } from "./quality-badge";
@@ -37,18 +38,24 @@ const ImportedProductBadge = () => (
 )
 
 export function ProductCard({ product }: ProductCardProps) {
-  const firstVariant = product.variants?.[0];
-  const secondVariant = product.variants?.[1];
-  
-  const firstImage = fixImageUrl(firstVariant?.images?.[0]);
-  const secondImage = fixImageUrl(secondVariant?.images?.[0] ?? firstImage);
-
+  // State for the selected variant, default to the first one
+  const [selectedVariant, setSelectedVariant] = useState<Variant | undefined>(product.variants?.[0]);
   const [isHovered, setIsHovered] = useState(false);
-  
-  const hasMultipleVariants = !!secondVariant && !!secondImage && firstImage !== secondImage;
 
-  const price = firstVariant?.price ?? 0;
-  const oldPrice = firstVariant?.oldPrice;
+  // Determine images based on selected variant
+  const mainImage = fixImageUrl(selectedVariant?.images?.[0]);
+  const hoverImage = fixImageUrl(selectedVariant?.images?.[1]); // Use second image of the same variant for hover
+  const showHoverImage = isHovered && hoverImage && hoverImage !== mainImage;
+
+  // Determine price based on selected variant
+  const price = selectedVariant?.price ?? 0;
+  const oldPrice = selectedVariant?.oldPrice;
+  
+  const handleColorClick = (e: React.MouseEvent, variant: Variant) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedVariant(variant);
+  }
 
   return (
     <Card 
@@ -66,36 +73,34 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div className="relative h-64 w-full overflow-hidden rounded-t-lg">
             
-            {firstImage && (
+            {mainImage ? (
               <>
                 {/* Main Image */}
                 <Image
-                  src={firstImage}
+                  src={mainImage}
                   alt={product.name}
                   fill
                   className={cn(
                     "object-cover transition-opacity duration-300",
-                    isHovered && hasMultipleVariants ? "opacity-0" : "opacity-100"
+                    showHoverImage ? "opacity-0" : "opacity-100"
                   )}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
                 {/* Hover Image */}
-                {secondImage && (
+                {hoverImage && (
                   <Image
-                    src={secondImage}
+                    src={hoverImage}
                     alt={`${product.name} - segunda cor`}
                     fill
                     className={cn(
                       "object-cover transition-opacity duration-300",
-                      isHovered && hasMultipleVariants ? "opacity-100" : "opacity-0"
+                      showHoverImage ? "opacity-100" : "opacity-0"
                     )}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 )}
               </>
-            )}
-            
-            {!firstImage && (
+            ) : (
                <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
                 Sem imagem
               </div>
@@ -111,12 +116,13 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="mt-4">
               <div className="flex items-center gap-2">
                 {product.variants.slice(0, 5).map((variant) => (
-                  <ColorSwatch
-                    key={variant.id}
-                    colorHex={variant.colorHex}
-                    title={variant.color}
-                    className="h-5 w-5"
-                  />
+                  <button key={variant.id} onClick={(e) => handleColorClick(e, variant)} className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                    <ColorSwatch
+                      colorHex={variant.colorHex}
+                      title={variant.color}
+                      className={cn("h-5 w-5", selectedVariant?.id === variant.id && "ring-2 ring-primary ring-offset-1")}
+                    />
+                  </button>
                 ))}
                 {product.variants.length > 5 && (
                   <div className="flex h-5 w-5 items-center justify-center rounded-full border bg-muted text-xs font-semibold text-muted-foreground">
@@ -140,7 +146,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
             <SecuritySeal variant="compact" className="mt-2" />
         </div>
-        <AddToCartButton product={product} size="icon" />
+        <AddToCartButton product={product} variant={selectedVariant} size="icon" />
       </CardFooter>
     </Card>
   );

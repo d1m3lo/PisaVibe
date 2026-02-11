@@ -35,6 +35,7 @@ export const megaMenuData: MenuCategory[] = [
           { title: "Bermudas", href: "/produtos?genero=masculino&categoria=roupas&tipo=bermudas" },
           { title: "Calças", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },
           { title: "Polos", href: "/produtos?genero=masculino&categoria=roupas&tipo=polos" },
+          { title: "Camisetas de Time", href: "/produtos?genero=masculino&categoria=roupas&tipo=camisetas-de-time" },
         ],
       },
       {
@@ -74,6 +75,7 @@ export const megaMenuData: MenuCategory[] = [
           { title: "Moletom", href: "/produtos?genero=feminino&categoria=roupas&tipo=moletom" },
           { title: "Calças", href: "/produtos?genero=feminino&categoria=roupas&tipo=calcas" },
           { title: "Casual", href: "/produtos?genero=feminino&categoria=roupas&tipo=casual" },
+          { title: "Camisetas de Time", href: "/produtos?genero=feminino&categoria=roupas&tipo=camisetas-de-time" },
         ],
       },
       {

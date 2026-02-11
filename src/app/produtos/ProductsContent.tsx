@@ -149,6 +149,7 @@ export default function ProductsContent() {
         'calças': 'Calças',
         'sandalias': 'Sandálias',
         'sandálias': 'Sandálias',
+        'camisetas-de-time': 'Camisetas de Time',
     };
 
     const lowerPart = part.toLowerCase();

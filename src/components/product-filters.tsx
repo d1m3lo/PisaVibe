@@ -45,7 +45,7 @@ const priceRanges = [
 ];
 
 const subCategoryDisplayNames: { [key: string]: string } = {
-  'camisetas-de-time': 'Camisetas de Time',
+  'camisas-de-time': 'Camisas de Time',
   calcas: 'Calças',
   sandalias: 'Sandálias',
   bones: 'Bonés',

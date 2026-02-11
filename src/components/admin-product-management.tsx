@@ -80,13 +80,13 @@ type ProductWithId = Product & { firestoreId: string };
 const categoryMappings = {
   masculino: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Streetwear', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Camisetas de Time'],
+    'roupas': ['Streetwear', 'Moletom', 'Bermudas', 'Calças', 'Polos', 'Camisas de Time'],
     'acessorios': ['Bonés', 'Relógios', 'Bag'],
     'perfumes': [],
   },
   feminino: {
     'calcados': ['Casual', 'Sandálias', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Streetwear', 'Vestidos', 'Moletom', 'Calças', 'Casual', 'Camisetas de Time'],
+    'roupas': ['Streetwear', 'Vestidos', 'Moletom', 'Calças', 'Casual', 'Camisas de Time'],
     'acessorios': ['Bonés', 'Relógios', 'Bag'],
     'perfumes': [],
   },
@@ -489,7 +489,7 @@ const ProductForm = ({
                         </SelectTrigger>
                         <SelectContent>
                             {subCategoryOptions.map(sub => (
-                                <SelectItem key={sub} value={sub.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}>{sub}</SelectItem>
+                                <SelectItem key={sub} value={sub.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/ /g, '-')}>{sub}</SelectItem>
                             ))}
                         </SelectContent>
                         </Select>

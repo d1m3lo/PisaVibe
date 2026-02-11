@@ -92,7 +92,7 @@ const categoryMappings = {
   },
   unissex: {
     'calcados': ['Casual', 'Chinelo', 'Streetwear', 'Sneakers'],
-    'roupas': ['Streetwear', 'Camisetas', 'Moletom', 'Calças'],
+    'roupas': ['Streetwear', 'Camisetas', 'Moletom', 'Calças', 'Camisas de Time'],
     'acessorios': ['Bonés', 'Bag'],
     'perfumes': [],
   }
@@ -976,3 +976,4 @@ export default function ProductManagement() {
     </Card>
   );
 }
+

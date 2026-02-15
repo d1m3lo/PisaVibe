@@ -604,17 +604,18 @@ export default function ProductPage() {
             </div>
 
             <div className="mt-6 space-y-3">
-                <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-baseline gap-3">
-                            <p className="text-4xl font-bold text-primary">R$ {precoPix.toFixed(2).replace(".", ",")}</p>
-                            <span className="font-semibold text-primary">no Pix</span>
-                        </div>
-                        {acrescimoCartao > 0 && (
+                <div>
+                    <div className="flex items-baseline gap-2">
+                        <p className="text-4xl font-bold text-foreground">R$ {precoCartao.toFixed(2).replace(".", ",")}</p>
+                        <span className="text-lg text-muted-foreground">no cartão</span>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                        <p className="text-2xl font-bold text-primary">R$ {precoPix.toFixed(2).replace(".", ",")}</p>
+                        <span className="font-semibold text-primary">no Pix</span>
+                         {acrescimoCartao > 0 && (
                             <Badge className="bg-primary/90 text-primary-foreground hover:bg-primary/80">Economize R$ {acrescimoCartao.toFixed(2).replace(".", ",")}</Badge>
                         )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">ou R$ {precoCartao.toFixed(2).replace(".", ",")} no cartão</p>
                 </div>
             </div>
             

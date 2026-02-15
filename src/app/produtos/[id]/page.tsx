@@ -1,3 +1,4 @@
+
 "use client";
 
 import { notFound, useParams, useRouter } from "next/navigation";
@@ -481,9 +482,9 @@ export default function ProductPage() {
     )
   }
 
-  const discountPercentage = selectedVariant.oldPrice && selectedVariant.oldPrice > selectedVariant.price 
-    ? Math.round(((selectedVariant.oldPrice - selectedVariant.price) / selectedVariant.oldPrice) * 100)
-    : 0;
+  const acrescimoCartao = selectedVariant.acrescimoCartao ?? 20;
+  const precoPix = selectedVariant.price;
+  const precoCartao = precoPix + acrescimoCartao;
 
   return (
     <>
@@ -601,30 +602,30 @@ export default function ProductPage() {
                     <QualityBadge quality={product.quality} />
                 </div>
             </div>
+
+            <div className="mt-6 space-y-3">
+                <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-baseline gap-3">
+                            <p className="text-4xl font-bold text-primary">R$ {precoPix.toFixed(2).replace(".", ",")}</p>
+                            <span className="font-semibold text-primary">no Pix</span>
+                        </div>
+                        {acrescimoCartao > 0 && (
+                            <Badge className="bg-primary/90 text-primary-foreground hover:bg-primary/80">Economize R$ {acrescimoCartao.toFixed(2).replace(".", ",")}</Badge>
+                        )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">ou R$ {precoCartao.toFixed(2).replace(".", ",")} no cartão</p>
+                </div>
+            </div>
             
             {isPerfume ? (
               <div className="mt-8 flex flex-col space-y-6">
-                  <div className="space-y-3 rounded-lg border bg-card p-4">
-                      <div className="flex items-baseline gap-3">
-                           {selectedVariant.oldPrice && selectedVariant.oldPrice > 0 && (
-                              <p className="text-xl text-muted-foreground line-through">
-                                R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
-                              </p>
-                          )}
-                          {discountPercentage > 0 && (
-                              <Badge variant="destructive">-{discountPercentage}%</Badge>
-                          )}
+                  {stockForSelectedSize > 0 && (
+                       <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <p className="text-sm font-semibold text-green-600">Disponível</p>
                       </div>
-                      <p className="text-4xl font-bold">
-                          R$ {selectedVariant.price.toFixed(2).replace(".", ",")}
-                      </p>
-                      {stockForSelectedSize > 0 && (
-                           <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                              <p className="text-sm font-semibold text-green-600">Disponível</p>
-                          </div>
-                      )}
-                  </div>
+                  )}
 
                   <div className="space-y-4">
                       <SecuritySeal className="justify-center" />
@@ -642,20 +643,6 @@ export default function ProductPage() {
               </div>
             ) : (
               <>
-                  <div className="mt-4 flex items-baseline gap-3">
-                      <p className="text-3xl font-bold">
-                      R$ {selectedVariant.price.toFixed(2).replace(".", ",")}
-                      </p>
-                      {selectedVariant.oldPrice && selectedVariant.oldPrice > 0 && (
-                          <p className="text-xl text-muted-foreground line-through">
-                          R$ {selectedVariant.oldPrice.toFixed(2).replace(".", ",")}
-                          </p>
-                      )}
-                       {discountPercentage > 0 && (
-                          <Badge variant="destructive">-{discountPercentage}%</Badge>
-                      )}
-                  </div>
-
                   <div className="mt-6">
                       <h3 className="text-base font-semibold">Descrição</h3>
                       <p className={cn("mt-2 text-muted-foreground", (isClothing || product.category === 'acessorios') && 'whitespace-pre-line')}>{product.longDescription}</p>
@@ -748,5 +735,3 @@ export default function ProductPage() {
     </>
   );
 }
-
-    

@@ -15,7 +15,7 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, shippingInfo, coupon, userId, shippingCost, unverifiedOrderId } = await req.json();
+    const { items, shippingInfo, coupon, userId, shippingCost, unverifiedOrderId, totalAcrescimoCartao } = await req.json();
 
     if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId || !unverifiedOrderId) {
       return NextResponse.json({ error: 'Dados obrigatórios ausentes ou inválidos.' }, { status: 400 });
@@ -61,6 +61,16 @@ export async function POST(req: NextRequest) {
             unit_price: shippingCost,
             quantity: 1,
             description: 'Custo de envio'
+        });
+    }
+
+    if (totalAcrescimoCartao && typeof totalAcrescimoCartao === 'number' && totalAcrescimoCartao > 0) {
+        finalItems.push({
+            id: 'card_increment',
+            title: 'Acréscimo Cartão',
+            unit_price: totalAcrescimoCartao,
+            quantity: 1,
+            description: 'Acréscimo para pagamento com cartão de crédito'
         });
     }
 
@@ -129,5 +139,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-    

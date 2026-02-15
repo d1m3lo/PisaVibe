@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useFirestore, useUser } from "@/firebase";
 import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
@@ -67,6 +67,13 @@ export default function CheckoutContent() {
   
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  const totalAcrescimoCartao = useMemo(() => {
+    return cartItems.reduce((acc, item) => {
+        const acrescimo = item.variant.acrescimoCartao ?? 20;
+        return acc + (acrescimo * item.quantity);
+    }, 0);
+  }, [cartItems]);
 
   const finalTotal = cartTotal - discount + (shippingCost || 0);
 
@@ -362,7 +369,8 @@ export default function CheckoutContent() {
           coupon: appliedCoupon,
           userId: user.uid,
           shippingCost: shippingCost,
-          unverifiedOrderId: unverifiedOrderId, // Pass the pre-order ID
+          unverifiedOrderId: unverifiedOrderId,
+          totalAcrescimoCartao: totalAcrescimoCartao,
         }),
       });
   
@@ -564,7 +572,7 @@ export default function CheckoutContent() {
             </div>
             <Separator />
              <div className="flex justify-between font-bold text-base">
-                <span>Total</span>
+                <span>Total (no Pix)</span>
                 <span>R$ {finalTotal.toFixed(2).replace('.',',')}</span>
             </div>
           </div>
@@ -581,7 +589,34 @@ export default function CheckoutContent() {
           </div>
 
           {preferenceId && (
-            <div className="mt-4">
+            <div className="mt-6 space-y-4 rounded-lg border bg-secondary/50 p-4">
+                <h3 className="font-semibold text-center">Pagamento com Cartão</h3>
+                <Separator />
+                <div className="flex justify-between text-sm">
+                    <span>Subtotal dos produtos</span>
+                    <span>R$ {cartTotal.toFixed(2).replace('.',',')}</span>
+                </div>
+                {discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                        <span>Desconto ({appliedCoupon?.code})</span>
+                        <span>- R$ {discount.toFixed(2).replace('.',',')}</span>
+                    </div>
+                )}
+                <div className="flex justify-between text-sm">
+                    <span>Acréscimo do cartão</span>
+                    <span>+ R$ {totalAcrescimoCartao.toFixed(2).replace('.',',')}</span>
+                </div>
+                {shippingCost !== null && (
+                    <div className="flex justify-between text-sm">
+                        <span>Frete</span>
+                        <span>{shippingCost === 0 ? 'Grátis' : `R$ ${shippingCost.toFixed(2).replace('.',',')}`}</span>
+                    </div>
+                )}
+                <Separator />
+                <div className="flex justify-between font-bold text-base">
+                    <span>Total a pagar</span>
+                    <span>R$ {(finalTotal + totalAcrescimoCartao).toFixed(2).replace('.',',')}</span>
+                </div>
                 <Wallet initialization={{ preferenceId }} customization={{ texts: { valueProp: 'smart_option'}}} />
             </div>
            )}
@@ -683,5 +718,3 @@ export default function CheckoutContent() {
     </div>
   );
 }
-
-    

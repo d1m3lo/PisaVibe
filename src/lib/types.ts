@@ -10,6 +10,7 @@ export type Variant = {
   colorHex: string;
   price: number;
   oldPrice?: number;
+  acrescimoCartao?: number;
   images: string[];
   imageNames?: string[]; // Nome correspondente a cada imagem (para mochilas)
   sizes: SizeInfo[];

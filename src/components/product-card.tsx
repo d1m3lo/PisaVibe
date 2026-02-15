@@ -50,6 +50,8 @@ export function ProductCard({ product }: ProductCardProps) {
   // Determine price based on selected variant
   const price = selectedVariant?.price ?? 0;
   const oldPrice = selectedVariant?.oldPrice;
+  const acrescimoCartao = selectedVariant?.acrescimoCartao ?? 20;
+  const precoCartao = price + acrescimoCartao;
   
   const handleColorClick = (e: React.MouseEvent, variant: Variant) => {
     e.preventDefault();
@@ -138,12 +140,13 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex flex-col items-start">
             {oldPrice && oldPrice > 0 && (
                 <span className="text-xs text-muted-foreground line-through">
-                R$ {oldPrice.toFixed(2).replace(".", ",")}
+                    R$ {oldPrice.toFixed(2).replace(".", ",")}
                 </span>
             )}
             <span className="text-lg font-bold">
                 R$ {price.toFixed(2).replace(".", ",")}
             </span>
+             <span className="text-xs text-muted-foreground">no Pix ou R$ {precoCartao.toFixed(2).replace(".", ",")} no cartão</span>
             <SecuritySeal variant="compact" className="mt-2" />
         </div>
         <AddToCartButton product={product} variant={selectedVariant} size="icon" />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { notFound, useParams, useRouter } from "next/navigation";
@@ -638,14 +639,14 @@ export default function ProductPage() {
                    
                   <div>
                     <h3 className="text-base font-semibold">Descrição</h3>
-                    <p className={cn("mt-2 text-muted-foreground", (isClothing || product.category === 'acessorios') && "whitespace-pre-line")}>{product.longDescription}</p>
+                    <p className="mt-2 text-muted-foreground whitespace-pre-line">{product.longDescription}</p>
                   </div>
               </div>
             ) : (
               <>
                   <div className="mt-6">
                       <h3 className="text-base font-semibold">Descrição</h3>
-                      <p className={cn("mt-2 text-muted-foreground", (isClothing || product.category === 'acessorios') && 'whitespace-pre-line')}>{product.longDescription}</p>
+                      <p className="mt-2 text-muted-foreground whitespace-pre-line">{product.longDescription}</p>
                   </div>
 
                   <div className="mt-8">
@@ -735,3 +736,5 @@ export default function ProductPage() {
     </>
   );
 }
+
+    

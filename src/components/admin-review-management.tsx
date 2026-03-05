@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -41,7 +40,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Review } from '@/lib/types';
-import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2 } from 'lucide-react';
+import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2, User } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -63,6 +62,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { ScrollArea } from './ui/scroll-area';
 
 export default function AdminReviewManagement() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -287,15 +287,16 @@ export default function AdminReviewManagement() {
                     <TableCell colSpan={4}><div className="h-8 w-full bg-secondary animate-pulse rounded" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredProducts.filter(p => (p.reviews?.length || 0) > 0).length > 0 ? (
-                filteredProducts.filter(p => (p.reviews?.length || 0) > 0).map((product) => {
-                  const avg = product.reviews?.reduce((acc, r) => acc + r.rating, 0) || 0;
-                  const score = product.reviews?.length ? (avg / product.reviews.length).toFixed(1) : 0;
+              ) : filteredProducts.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).length > 0 ? (
+                filteredProducts.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).map((product) => {
+                  const productReviews = Array.isArray(product.reviews) ? product.reviews : [];
+                  const avg = productReviews.reduce((acc, r) => acc + r.rating, 0) || 0;
+                  const score = productReviews.length ? (avg / productReviews.length).toFixed(1) : 0;
                   return (
                     <React.Fragment key={product.id}>
                       <TableRow>
                         <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.reviews?.length || 0}</TableCell>
+                        <TableCell>{productReviews.length}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Star className="h-3 w-3 fill-primary text-primary" />
@@ -312,7 +313,7 @@ export default function AdminReviewManagement() {
                         <TableRow className="bg-secondary/20">
                           <TableCell colSpan={4} className="p-4">
                             <div className="space-y-4">
-                              {product.reviews?.map((review) => (
+                              {productReviews.map((review) => (
                                 <div key={review.id} className="flex items-start gap-4 p-3 bg-background rounded-lg border shadow-sm">
                                   <Avatar className="h-8 w-8 border">
                                     <AvatarImage src={review.userAvatar} />
@@ -333,7 +334,9 @@ export default function AdminReviewManagement() {
                                             <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
                                           </AlertDialogHeader>
                                           <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AccordionTrigger asChild>
+                                                <AlertDialogCancel>Cancelar</AccordionTrigger>
+                                            </AccordionTrigger>
                                             <AlertDialogAction onClick={() => handleDeleteReview(product.id, review)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
                                           </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -367,15 +370,6 @@ export default function AdminReviewManagement() {
           </Table>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-// Sub-component for scrollable area
-function ScrollArea({ children, className }: { children: React.ReactNode, className?: string }) {
-  return (
-    <div className={cn("overflow-y-auto", className)}>
-      {children}
     </div>
   );
 }

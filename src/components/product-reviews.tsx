@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -18,15 +17,20 @@ interface ProductReviewsProps {
 export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
   const [visibleCount, setVisibleCount] = useState(5);
 
-  const averageRating = useMemo(() => {
-    if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return Number((sum / reviews.length).toFixed(1));
+  // Garante que reviews seja sempre um array, mesmo se vier um número do banco de dados (legado)
+  const safeReviews = useMemo(() => {
+    return Array.isArray(reviews) ? reviews : [];
   }, [reviews]);
 
+  const averageRating = useMemo(() => {
+    if (safeReviews.length === 0) return 0;
+    const sum = safeReviews.reduce((acc, review) => acc + review.rating, 0);
+    return Number((sum / safeReviews.length).toFixed(1));
+  }, [safeReviews]);
+
   const sortedReviews = useMemo(() => {
-    return [...reviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [reviews]);
+    return [...safeReviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [safeReviews]);
 
   const displayedReviews = sortedReviews.slice(0, visibleCount);
 
@@ -60,7 +64,7 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
               {averageRating > 0 ? `${averageRating} de 5` : "Sem avaliações"}
             </p>
             <p className="text-sm text-muted-foreground">
-              ({reviews.length} {reviews.length === 1 ? "avaliação" : "avaliações"})
+              ({safeReviews.length} {safeReviews.length === 1 ? "avaliação" : "avaliações"})
             </p>
           </div>
         </div>
@@ -97,7 +101,7 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
               </div>
             ))}
 
-            {visibleCount < reviews.length && (
+            {visibleCount < safeReviews.length && (
               <div className="flex justify-center pt-4">
                 <Button 
                   variant="outline" 

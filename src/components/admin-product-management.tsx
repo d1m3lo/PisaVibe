@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import {
@@ -412,7 +411,8 @@ const ProductForm = ({
       variants: finalVariants,
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
-      reviews: product?.reviews || 0,
+      // Garante que reviews seja um array ao salvar, convertendo legados
+      reviews: Array.isArray(product?.reviews) ? product.reviews : [],
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
       isImported: formData.isImported,
@@ -840,7 +840,7 @@ export default function ProductManagement() {
       toast({
         variant: 'destructive',
         title: 'Erro!',
-        description: 'Não foi possível remover o produto.',
+        description: 'Não foi possível remover the produto.',
       });
     }
   };

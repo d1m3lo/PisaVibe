@@ -10,7 +10,6 @@ import {
   arrayRemove,
   query,
   orderBy,
-  writeBatch
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { 
@@ -47,6 +46,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
   DialogClose,

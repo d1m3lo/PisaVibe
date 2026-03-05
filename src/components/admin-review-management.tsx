@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Review } from '@/lib/types';
-import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2, User } from 'lucide-react';
+import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2, User, Sparkles, Check, ChevronsUpDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -63,13 +63,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from '@/lib/utils';
 
 export default function AdminReviewManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [productSearchTerm, setProductSearchTerm] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [isAddingReview, setIsAddingReview] = useState(false);
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -95,12 +99,70 @@ export default function AdminReviewManagement() {
     return () => unsubscribe();
   }, [firestore]);
 
-  const filteredProducts = useMemo(() => {
+  const filteredProductsForTable = useMemo(() => {
     return products.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
+
+  const activeProductsForSelection = useMemo(() => {
+    return products.filter(p => 
+      p.status === 'ativo' && 
+      (p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || 
+       p.brand?.toLowerCase().includes(productSearchTerm.toLowerCase()))
+    );
+  }, [products, productSearchTerm]);
+
+  const selectedProduct = useMemo(() => 
+    products.find(p => p.id === selectedProductId), 
+  [products, selectedProductId]);
+
+  const handleGenerateComment = () => {
+    if (!selectedProductId) {
+      toast({ variant: 'destructive', title: 'Selecione um produto primeiro' });
+      return;
+    }
+
+    const category = selectedProduct?.category || 'calcados';
+    
+    const comments: Record<string, string[]> = {
+      calcados: [
+        "Tênis muito confortável, superou minhas expectativas. Entrega rápida!",
+        "Gostei muito desse tênis, bem confortável e bonito.",
+        "Qualidade impecável, calça muito bem. Recomendo!",
+        "Muito satisfeito com a compra, o tênis é idêntico à foto.",
+        "Pisei e senti a diferença, amortecimento nota 10."
+      ],
+      roupas: [
+        "Camiseta muito boa, tecido confortável e veste bem.",
+        "O caimento ficou perfeito, material de primeira qualidade.",
+        "Muito estilosa e o tecido é bem macio. Vale cada centavo.",
+        "Gostei bastante, a cor é linda e o tamanho veio certinho.",
+        "Peça essencial no guarda-roupa, muito bem acabada."
+      ],
+      acessorios: [
+        "Acessório top, dá um up no visual. Recomendo muito.",
+        "Qualidade excelente e design muito moderno.",
+        "Chegou direitinho, muito bonito e bem feito.",
+        "Surpreendido com os detalhes, excelente acabamento.",
+        "Prático e estiloso, exatamente o que eu procurava."
+      ],
+      perfumes: [
+        "Fragrância incrível, fixação muito boa na minha pele.",
+        "Amei o cheiro, muito marcante e elegante.",
+        "Excelente custo-benefício, o perfume é maravilhoso.",
+        "Chegou muito bem embalado, perfume original e lacrado.",
+        "Fixa muito bem e projeta na medida certa. Sensacional."
+      ]
+    };
+
+    const options = comments[category as keyof typeof comments] || comments.calcados;
+    const randomComment = options[Math.floor(Math.random() * options.length)];
+    
+    setFormData(prev => ({ ...prev, comment: randomComment }));
+    toast({ title: 'Comentário sugerido com sucesso!' });
+  };
 
   const handleAddReview = async () => {
     if (!firestore || !selectedProductId) return;
@@ -133,6 +195,7 @@ export default function AdminReviewManagement() {
         userAvatar: '',
       });
       setSelectedProductId('');
+      setProductSearchTerm('');
     } catch (error) {
       console.error("Error adding review:", error);
       toast({
@@ -180,27 +243,66 @@ export default function AdminReviewManagement() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label>Selecione o Produto</Label>
-                    <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um produto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <div className="p-2">
-                          <Input 
-                            placeholder="Buscar produto..." 
-                            value={searchTerm} 
-                            onChange={(e) => setSearchTerm(e.target.value)} 
-                            className="mb-2"
-                          />
+                    <Label>Selecione o Produto (Somente Ativos)</Label>
+                    <Popover open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isProductSelectorOpen}
+                          className="w-full justify-between font-normal"
+                        >
+                          {selectedProductId
+                            ? products.find((p) => p.id === selectedProductId)?.name
+                            : "Escolha um produto..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Buscar produto..."
+                              value={productSearchTerm}
+                              onChange={(e) => setProductSearchTerm(e.target.value)}
+                              className="pl-8 h-9"
+                            />
+                          </div>
                         </div>
                         <ScrollArea className="h-[200px]">
-                          {filteredProducts.map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
+                          <div className="p-1">
+                            {activeProductsForSelection.length > 0 ? (
+                              activeProductsForSelection.map((p) => (
+                                <button
+                                  key={p.id}
+                                  className={cn(
+                                    "flex w-full items-center px-2 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left",
+                                    selectedProductId === p.id && "bg-accent"
+                                  )}
+                                  onClick={() => {
+                                    setSelectedProductId(p.id);
+                                    setIsProductSelectorOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedProductId === p.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="truncate">{p.name}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="p-4 text-center text-sm text-muted-foreground">
+                                Nenhum produto ativo encontrado.
+                              </div>
+                            )}
+                          </div>
                         </ScrollArea>
-                      </SelectContent>
-                    </Select>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label>Nome do Cliente</Label>
@@ -236,11 +338,25 @@ export default function AdminReviewManagement() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Comentário</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Comentário</Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                        onClick={handleGenerateComment}
+                        disabled={!selectedProductId}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Gerar comentário
+                      </Button>
+                    </div>
                     <Textarea 
                       placeholder="Escreva o que o cliente achou..." 
                       value={formData.comment}
                       onChange={e => setFormData(prev => ({...prev, comment: e.target.value}))}
+                      className="min-h-[100px]"
                     />
                   </div>
                 </div>
@@ -287,8 +403,8 @@ export default function AdminReviewManagement() {
                     <TableCell colSpan={4}><div className="h-8 w-full bg-secondary animate-pulse rounded" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredProducts.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).length > 0 ? (
-                filteredProducts.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).map((product) => {
+              ) : filteredProductsForTable.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).length > 0 ? (
+                filteredProductsForTable.filter(p => Array.isArray(p.reviews) && p.reviews.length > 0).map((product) => {
                   const productReviews = Array.isArray(product.reviews) ? product.reviews : [];
                   const avg = productReviews.reduce((acc, r) => acc + r.rating, 0) || 0;
                   const score = productReviews.length ? (avg / productReviews.length).toFixed(1) : 0;

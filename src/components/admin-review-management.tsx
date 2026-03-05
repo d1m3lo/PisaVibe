@@ -61,7 +61,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +82,6 @@ export default function AdminReviewManagement() {
     userName: '',
     rating: '5',
     comment: '',
-    userAvatar: '',
   });
 
   useEffect(() => {
@@ -175,7 +174,6 @@ export default function AdminReviewManagement() {
         userName: formData.userName,
         rating: parseInt(formData.rating),
         comment: formData.comment,
-        userAvatar: formData.userAvatar || `https://i.pravatar.cc/150?u=${Date.now()}`,
         date: new Date().toISOString(),
       };
 
@@ -193,7 +191,6 @@ export default function AdminReviewManagement() {
         userName: '',
         rating: '5',
         comment: '',
-        userAvatar: '',
       });
       setSelectedProductId('');
       setProductSearchTerm('');
@@ -333,30 +330,20 @@ export default function AdminReviewManagement() {
                       onChange={e => setFormData(prev => ({...prev, userName: e.target.value}))}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Estrelas (1-5)</Label>
-                      <Select value={formData.rating} onValueChange={val => setFormData(prev => ({...prev, rating: val}))}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5">5 Estrelas</SelectItem>
-                          <SelectItem value="4">4 Estrelas</SelectItem>
-                          <SelectItem value="3">3 Estrelas</SelectItem>
-                          <SelectItem value="2">2 Estrelas</SelectItem>
-                          <SelectItem value="1">1 Estrela</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>URL Avatar (Opcional)</Label>
-                      <Input 
-                        placeholder="https://..." 
-                        value={formData.userAvatar}
-                        onChange={e => setFormData(prev => ({...prev, userAvatar: e.target.value}))}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Estrelas (1-5)</Label>
+                    <Select value={formData.rating} onValueChange={val => setFormData(prev => ({...prev, rating: val}))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 Estrelas</SelectItem>
+                        <SelectItem value="4">4 Estrelas</SelectItem>
+                        <SelectItem value="3">3 Estrelas</SelectItem>
+                        <SelectItem value="2">2 Estrelas</SelectItem>
+                        <SelectItem value="1">1 Estrela</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -453,7 +440,6 @@ export default function AdminReviewManagement() {
                               {productReviews.map((review) => (
                                 <div key={review.id} className="flex items-start gap-4 p-3 bg-background rounded-lg border shadow-sm">
                                   <Avatar className="h-8 w-8 border">
-                                    <AvatarImage src={review.userAvatar} />
                                     <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">

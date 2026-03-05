@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Star, StarHalf, User } from 'lucide-react';
 import { Review } from '@/lib/types';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -78,7 +78,6 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border">
-                      <AvatarImage src={review.userAvatar} alt={review.userName} />
                       <AvatarFallback>
                         <User className="h-5 w-5 text-muted-foreground" />
                       </AvatarFallback>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare, ShieldCheck, BellRing, BellOff, Loader2 } from 'lucide-react';
+import { LogOut, Package, Users, ShoppingCart, LayoutDashboard, TicketPercent, CheckSquare, ShieldCheck, BellRing, BellOff, Loader2, MessageSquare } from 'lucide-react';
 import ProductManagement from './admin-product-management';
 import CustomerManagement from './admin-customer-management';
 import AdminOrderManagement from './admin-order-management';
@@ -11,6 +11,7 @@ import AdminMainDashboard from './admin-main-dashboard';
 import AdminCouponManagement from './admin-coupon-management';
 import AdminCentralControle from './admin-central-controle';
 import AdminPixVerification from './admin-pix-verification';
+import AdminReviewManagement from './admin-review-management';
 import { useFirestore } from '@/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
@@ -272,6 +273,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <TicketPercent className="h-5 w-5" />
               Cupons
             </Button>
+            <Button
+              variant={activeTab === 'reviews' ? 'secondary' : 'ghost'}
+              className="justify-start gap-2"
+              onClick={() => setActiveTab('reviews')}
+            >
+              <MessageSquare className="h-5 w-5" />
+              Avaliações
+            </Button>
           </nav>
         </div>
         <div className="space-y-2">
@@ -290,6 +299,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         {activeTab === 'customers' && <CustomerManagement />}
         {activeTab === 'orders' && <AdminOrderManagement />}
         {activeTab === 'coupons' && <AdminCouponManagement />}
+        {activeTab === 'reviews' && <AdminReviewManagement />}
       </main>
     </div>
   );

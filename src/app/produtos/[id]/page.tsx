@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SecuritySeal } from "@/components/security-seal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { ProductReviews } from "@/components/product-reviews";
 
 
 const ProductPageSkeleton = () => (
@@ -732,9 +733,10 @@ export default function ProductPage() {
             )}
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <ProductReviews reviews={product.reviews} />
       </div>
     </>
   );
 }
-
-    

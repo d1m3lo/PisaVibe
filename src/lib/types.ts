@@ -4,6 +4,15 @@ export type SizeInfo = {
   stock: number;
 };
 
+export type Review = {
+  id: string;
+  userName: string;
+  userAvatar?: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
+
 export type Variant = {
   id: string;
   color: string;
@@ -27,7 +36,8 @@ export type Product = {
   subCategory?: string;
   variants: Variant[];
   rating: number;
-  reviews: number;
+  reviewsCount?: number;
+  reviews?: Review[];
   status: 'ativo' | 'inativo';
   tags?: string[];
   quality?: 'Essential' | 'Select' | 'Elite' | 'Ultra';

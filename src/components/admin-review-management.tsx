@@ -334,9 +334,7 @@ export default function AdminReviewManagement() {
                                             <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
                                           </AlertDialogHeader>
                                           <AlertDialogFooter>
-                                            <AccordionTrigger asChild>
-                                                <AlertDialogCancel>Cancelar</AccordionTrigger>
-                                            </AccordionTrigger>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                             <AlertDialogAction onClick={() => handleDeleteReview(product.id, review)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
                                           </AlertDialogFooter>
                                         </AlertDialogContent>

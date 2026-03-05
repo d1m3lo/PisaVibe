@@ -65,12 +65,14 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+type ProductWithId = Product & { firestoreId: string };
+
 export default function AdminReviewManagement() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [productSearchTerm, setProductSearchTerm] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<string>(''); // Este será o firestoreId
   const [isAddingReview, setIsAddingReview] = useState(false);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const { toast } = useToast();
@@ -89,8 +91,8 @@ export default function AdminReviewManagement() {
     const q = query(collection(firestore, 'products'), orderBy('name', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const productsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Product, 'id'>),
+        firestoreId: doc.id,
+        ...(doc.data() as Product),
       }));
       setProducts(productsData);
       setLoading(false);
@@ -114,7 +116,7 @@ export default function AdminReviewManagement() {
   }, [products, productSearchTerm]);
 
   const selectedProduct = useMemo(() => 
-    products.find(p => p.id === selectedProductId), 
+    products.find(p => p.firestoreId === selectedProductId), 
   [products, selectedProductId]);
 
   const handleGenerateComment = () => {
@@ -207,10 +209,10 @@ export default function AdminReviewManagement() {
     }
   };
 
-  const handleDeleteReview = async (productId: string, review: Review) => {
+  const handleDeleteReview = async (firestoreId: string, review: Review) => {
     if (!firestore) return;
     try {
-      const productRef = doc(firestore, 'products', productId);
+      const productRef = doc(firestore, 'products', firestoreId);
       await updateDoc(productRef, {
         reviews: arrayRemove(review)
       });
@@ -253,7 +255,7 @@ export default function AdminReviewManagement() {
                       >
                         <span className="truncate pr-4">
                           {selectedProductId
-                            ? products.find((p) => p.id === selectedProductId)?.name
+                            ? products.find((p) => p.firestoreId === selectedProductId)?.name
                             : "Escolha um produto..."}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -290,14 +292,14 @@ export default function AdminReviewManagement() {
                                 {activeProductsForSelection.length > 0 ? (
                                   activeProductsForSelection.map((p) => (
                                     <button
-                                      key={p.id}
+                                      key={p.firestoreId}
                                       type="button"
                                       className={cn(
                                         "flex w-full items-center px-2 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left transition-colors",
-                                        selectedProductId === p.id && "bg-accent"
+                                        selectedProductId === p.firestoreId && "bg-accent"
                                       )}
                                       onClick={() => {
-                                        setSelectedProductId(p.id);
+                                        setSelectedProductId(p.firestoreId);
                                         setIsProductSelectorOpen(false);
                                         setProductSearchTerm('');
                                       }}
@@ -305,7 +307,7 @@ export default function AdminReviewManagement() {
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4 shrink-0",
-                                          selectedProductId === p.id ? "opacity-100" : "opacity-0"
+                                          selectedProductId === p.firestoreId ? "opacity-100" : "opacity-0"
                                         )}
                                       />
                                       <span className="truncate">{p.name}</span>
@@ -428,7 +430,7 @@ export default function AdminReviewManagement() {
                   const avg = productReviews.reduce((acc, r) => acc + r.rating, 0) || 0;
                   const score = productReviews.length ? (avg / productReviews.length).toFixed(1) : 0;
                   return (
-                    <React.Fragment key={product.id}>
+                    <React.Fragment key={product.firestoreId}>
                       <TableRow>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{productReviews.length}</TableCell>
@@ -439,12 +441,12 @@ export default function AdminReviewManagement() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedProductId(selectedProductId === product.id ? '' : product.id)}>
-                            {selectedProductId === product.id ? 'Fechar' : 'Ver Detalhes'}
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedProductId(selectedProductId === product.firestoreId ? '' : product.firestoreId)}>
+                            {selectedProductId === product.firestoreId ? 'Fechar' : 'Ver Detalhes'}
                           </Button>
                         </TableCell>
                       </TableRow>
-                      {selectedProductId === product.id && (
+                      {selectedProductId === product.firestoreId && (
                         <TableRow className="bg-secondary/20">
                           <TableCell colSpan={4} className="p-4">
                             <div className="space-y-4">
@@ -470,7 +472,7 @@ export default function AdminReviewManagement() {
                                           </AlertDialogHeader>
                                           <AlertDialogFooter>
                                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteReview(product.id, review)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
+                                            <AlertDialogAction onClick={() => handleDeleteReview(product.firestoreId, review)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
                                           </AlertDialogFooter>
                                         </AlertDialogContent>
                                       </AlertDialog>

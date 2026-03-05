@@ -101,7 +101,7 @@ export default function AdminReviewManagement() {
 
   const filteredProductsForTable = useMemo(() => {
     return products.filter(p => 
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
@@ -109,7 +109,7 @@ export default function AdminReviewManagement() {
   const activeProductsForSelection = useMemo(() => {
     return products.filter(p => 
       p.status === 'ativo' && 
-      (p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || 
+      (p.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) || 
        p.brand?.toLowerCase().includes(productSearchTerm.toLowerCase()))
     );
   }, [products, productSearchTerm]);
@@ -244,7 +244,7 @@ export default function AdminReviewManagement() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Selecione o Produto (Somente Ativos)</Label>
-                    <Popover open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
+                    <Popover open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen} modal={false}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -258,7 +258,11 @@ export default function AdminReviewManagement() {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                      <PopoverContent 
+                        className="w-[var(--radix-popover-trigger-width)] p-0 z-[100]" 
+                        align="start"
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
                         <div className="p-2 border-b">
                           <div className="relative">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -267,6 +271,7 @@ export default function AdminReviewManagement() {
                               value={productSearchTerm}
                               onChange={(e) => setProductSearchTerm(e.target.value)}
                               className="pl-8 h-9"
+                              autoFocus
                             />
                           </div>
                         </div>
@@ -276,11 +281,14 @@ export default function AdminReviewManagement() {
                               activeProductsForSelection.map((p) => (
                                 <button
                                   key={p.id}
+                                  type="button"
                                   className={cn(
                                     "flex w-full items-center px-2 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left",
                                     selectedProductId === p.id && "bg-accent"
                                   )}
-                                  onClick={() => {
+                                  onPointerDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setSelectedProductId(p.id);
                                     setIsProductSelectorOpen(false);
                                   }}

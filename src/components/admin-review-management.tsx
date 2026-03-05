@@ -63,7 +63,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { cn } from '@/lib/utils';
 
 export default function AdminReviewManagement() {
@@ -231,7 +230,7 @@ export default function AdminReviewManagement() {
               <CardTitle>Gerenciamento de Avaliações</CardTitle>
               <CardDescription>Adicione avaliações manuais para criar prova social.</CardDescription>
             </div>
-            <Dialog>
+            <Dialog onOpenChange={(open) => { if(!open) setIsProductSelectorOpen(false); }}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" /> Nova Avaliação
@@ -242,75 +241,87 @@ export default function AdminReviewManagement() {
                   <DialogTitle>Adicionar Avaliação Manual</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>Selecione o Produto (Somente Ativos)</Label>
-                    <Popover open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen} modal={false}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={isProductSelectorOpen}
-                          className="w-full justify-between font-normal"
-                        >
+                    <div className="relative">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                        onClick={() => setIsProductSelectorOpen(!isProductSelectorOpen)}
+                      >
+                        <span className="truncate pr-4">
                           {selectedProductId
                             ? products.find((p) => p.id === selectedProductId)?.name
                             : "Escolha um produto..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent 
-                        className="w-[var(--radix-popover-trigger-width)] p-0 z-[100]" 
-                        align="start"
-                        onOpenAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <div className="p-2 border-b">
-                          <div className="relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Buscar produto..."
-                              value={productSearchTerm}
-                              onChange={(e) => setProductSearchTerm(e.target.value)}
-                              className="pl-8 h-9"
-                              autoFocus
-                            />
-                          </div>
-                        </div>
-                        <ScrollArea className="h-[200px]">
-                          <div className="p-1">
-                            {activeProductsForSelection.length > 0 ? (
-                              activeProductsForSelection.map((p) => (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  className={cn(
-                                    "flex w-full items-center px-2 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left",
-                                    selectedProductId === p.id && "bg-accent"
-                                  )}
-                                  onPointerDown={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setSelectedProductId(p.id);
-                                    setIsProductSelectorOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedProductId === p.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <span className="truncate">{p.name}</span>
-                                </button>
-                              ))
-                            ) : (
-                              <div className="p-4 text-center text-sm text-muted-foreground">
-                                Nenhum produto ativo encontrado.
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+
+                      {isProductSelectorOpen && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-[40]" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsProductSelectorOpen(false);
+                            }} 
+                          />
+                          <div 
+                            className="absolute top-full left-0 z-[50] w-full mt-1 border bg-popover text-popover-foreground shadow-md rounded-md animate-in fade-in-0 zoom-in-95 overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="p-2 border-b">
+                              <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  placeholder="Buscar produto..."
+                                  value={productSearchTerm}
+                                  onChange={(e) => setProductSearchTerm(e.target.value)}
+                                  className="pl-8 h-9"
+                                  autoFocus
+                                />
                               </div>
-                            )}
+                            </div>
+                            <ScrollArea className="h-[200px]">
+                              <div className="p-1">
+                                {activeProductsForSelection.length > 0 ? (
+                                  activeProductsForSelection.map((p) => (
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      className={cn(
+                                        "flex w-full items-center px-2 py-2 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground text-left transition-colors",
+                                        selectedProductId === p.id && "bg-accent"
+                                      )}
+                                      onClick={() => {
+                                        setSelectedProductId(p.id);
+                                        setIsProductSelectorOpen(false);
+                                        setProductSearchTerm('');
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4 shrink-0",
+                                          selectedProductId === p.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <span className="truncate">{p.name}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-sm text-muted-foreground">
+                                    Nenhum produto ativo encontrado.
+                                  </div>
+                                )}
+                              </div>
+                            </ScrollArea>
                           </div>
-                        </ScrollArea>
-                      </PopoverContent>
-                    </Popover>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Nome do Cliente</Label>

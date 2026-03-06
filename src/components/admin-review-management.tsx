@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Review } from '@/lib/types';
-import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2, User, Sparkles, Check, ChevronsUpDown, Zap, Eraser, AlertTriangle } from 'lucide-react';
+import { Star, Trash2, PlusCircle, Search, MessageSquare, Loader2, User, Sparkles, Check, ChevronsUpDown, Zap, Eraser, AlertTriangle, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -69,67 +69,38 @@ import { cn } from '@/lib/utils';
 
 type ProductWithId = Product & { firestoreId: string };
 
-const FEMALE_NAMES = ["Mariana", "Fernanda", "Camila", "Juliana", "Patricia", "Bruna", "Aline", "Beatriz", "Letícia", "Isabela", "Carolina", "Vanessa", "Larissa", "Renata", "Tatiane", "Amanda", "Beatriz", "Gabriela", "Rafaela", "Bianca", "Jessica", "Debora", "Priscila", "Luciana", "Monica", "Silvana", "Sandra", "Andreia", "Paula", "Carla"];
-const MALE_NAMES = ["Lucas", "Rafael", "Bruno", "Carlos", "Gabriel", "Matheus", "Felipe", "Thiago", "Gustavo", "Daniel", "André", "Marcelo", "Vinícius", "Fabrício", "Leandro", "Rodrigo", "Diego", "Eduardo", "Leonardo", "Hugo", "Ricardo", "Fernando", "Alexandre", "Roberto", "Marcos", "Antonio", "João", "Paulo", "Sergio", "Luiz", "Fabio"];
-const SURNAMES = ["Souza", "Santos", "Rodrigues", "Alves", "Lima", "Carvalho", "Martins", "Oliveira", "Costa", "Almeida", "Ferreira", "Ribeiro", "Barbosa", "Rocha", "Mendes", "Vieira", "Teixeira", "Gomes", "Moreira", "Nascimento", "Pereira", "Silva", "Gonçalves", "Araújo", "Cardoso", "Freitas", "Machado", "Dias", "Castro", "Nunes", "Monteiro"];
+const FEMALE_NAMES = ["Mariana", "Fernanda", "Camila", "Juliana", "Patricia", "Bruna", "Aline", "Beatriz", "Letícia", "Isabela", "Carolina", "Vanessa", "Larissa", "Renata", "Tatiane", "Amanda", "Beatriz", "Gabriela", "Rafaela", "Bianca", "Jessica", "Debora", "Priscila", "Luciana", "Monica", "Silvana", "Sandra", "Andreia", "Paula", "Carla", "Nicole", "Tainá", "Vitória", "Yasmin"];
+const MALE_NAMES = ["Lucas", "Rafael", "Bruno", "Carlos", "Gabriel", "Matheus", "Felipe", "Thiago", "Gustavo", "Daniel", "André", "Marcelo", "Vinícius", "Fabrício", "Leandro", "Rodrigo", "Diego", "Eduardo", "Leonardo", "Hugo", "Ricardo", "Fernando", "Alexandre", "Roberto", "Marcos", "Antonio", "João", "Paulo", "Sergio", "Luiz", "Fabio", "Igor", "Murilo", "Enzo"];
+const SURNAMES = ["Souza", "Santos", "Rodrigues", "Alves", "Lima", "Carvalho", "Martins", "Oliveira", "Costa", "Almeida", "Ferreira", "Ribeiro", "Barbosa", "Rocha", "Mendes", "Vieira", "Teixeira", "Gomes", "Moreira", "Nascimento", "Pereira", "Silva", "Gonçalves", "Araújo", "Cardoso", "Freitas", "Machado", "Dias", "Castro", "Nunes", "Monteiro", "Lopes", "Pinto", "Cardoso"];
 
-const COMMENT_TEMPLATES = {
+const COMMENT_PARTS = {
   calcados: {
-    simple: ["Gostei.", "Top.", "Valeu.", "Bem bonito.", "Confortável.", "Massa.", "Curti."],
-    short: ["Muito confortável!", "Gostei muito do tênis.", "Ficou perfeito no pé.", "Bem estiloso.", "Qualidade top.", "Chegou rápido aqui.", "Tamanho certinho.", "Ficou ótimo."],
-    medium: ["O tênis é sensacional, muito mais bonito pessoalmente.", "Super confortável para o dia a dia.", "Caiu muito bem no pé, recomendo!", "Material muito bom, parece ser bem resistente.", "Excelente acabamento, superou minhas expectativas.", "entrega foi bem rápida.", "Chegou tudo certo e bem embalado.", "Cor idêntica a da foto."],
-    long: ["Comprei para treinar e me surpreendi, o amortecimento é ótimo e o design é muito moderno.", "Sempre tive receio de comprar calçado online mas esse aqui veio perfeito, segui a tabela de medidas e não teve erro.", "Melhor custo benefício que encontrei ultimamente, a qualidade do material é de primeira e o conforto nem se fala."]
+    features: ["bem confortável", "tamanho certinho", "muito macio", "estiloso demais", "leve no pé", "acabamento ótimo"],
+    satisfaction: ["gostei muito", "valeu cada centavo", "superou as expectativas", "surpreso com a qualidade", "recomendo"],
+    context: ["pra usar no dia a dia", "pra academia", "pra sair a noite", "pra trabalhar", "presente pro meu filho"]
   },
   roupas: {
-    simple: ["Curti.", "Boa.", "Massa.", "Gostei.", "Legal.", "Veste bem."],
-    short: ["Veste muito bem.", "Tecido excelente.", "Amei a peça!", "Qualidade incrível.", "Muito bonita.", "Material de primeira.", "Caimento perfeito."],
-    medium: ["O tecido é muito premium e o caimento ficou perfeito.", "Camiseta top, não desbotou após a primeira lavagem.", "O material é bem fresco e confortável para o dia a dia.", "Ficou ótimo no corpo, exatamente o que eu esperava.", "Acabamento impecável em cada detalhe da costura.", "Achei o corte muito moderno."],
-    long: ["A modelagem é bem moderna e o tecido é muito macio, dá pra ver que é de boa qualidade logo de cara. Valeu a compra!", "Comprei sem muita expectativa e me surpreendi demais, o caimento é impecável e a cor é igualzinha a do site.", "Peça essencial no guarda-roupa, combina com tudo e o conforto é o ponto alto. Recomendo muito."]
+    features: ["tecido muito bom", "caimento perfeito", "não desbotou", "costura bem feita", "fresquinho", "confortável"],
+    satisfaction: ["ficou ótimo no corpo", "cor igual a da foto", "amei a peça", "comprarei mais vezes", "muito satisfeito"],
+    context: ["ficou certinho o tamanho", "combina com tudo", "chegou bem embalado", "entrega rápida", "qualidade garantida"]
   },
   acessorios: {
-    simple: ["Valeu.", "Gostei.", "Legal.", "Bonito.", "Top."],
-    short: ["Muito bem feito.", "Gostei bastante.", "Ótimo material.", "Estiloso demais.", "Prático e bonito.", "Veio bem embalado."],
-    medium: ["Produto muito bem acabado, os detalhes fazem a diferença.", "Dá um up total no visual, gostei demais da compra.", "Excelente material, parece que vai durar muito tempo.", "Chegou antes do prazo e em perfeitas condições.", "Design moderno e material bem resistente."],
-    long: ["Procurei muito por um acessório assim e esse aqui atendeu todas as necessidades, qualidade premium e design autêntico.", "Fiquei surpreso com o cuidado na embalagem e a qualidade do item, nota-se que é um produto diferenciado.", "Uso quase todo dia e continua como novo, o acabamento é de alto padrão."]
+    features: ["muito bonito", "material resistente", "detalhes impecáveis", "bem prático", "design moderno"],
+    satisfaction: ["chegou tudo certo", "ótimo custo benefício", "recomendo a loja", "muito satisfeito", "top"],
+    context: ["veio bem protegido", "uso todo dia", "surpreendeu no acabamento", "site confiável", "dentro do prazo"]
   },
   perfumes: {
-    simple: ["Cheiroso.", "Top.", "Bom.", "Valeu."],
-    short: ["Cheiro maravilhoso!", "Fixa muito bem.", "Fragrância top.", "Amei o perfume.", "Muito cheiroso.", "Original."],
-    medium: ["Fragrância marcante e muito agradável, todo mundo pergunta.", "Fixação excelente na minha pele, durou o dia todo.", "Veio lacrado e bem protegido na caixa.", "Projeção na medida certa, muito elegante.", "Amei o perfume, virou meu favorito."],
-    long: ["Um dos melhores perfumes que já usei, a evolução da fragrância na pele é incrível e a fixação é surpreendente.", "Estava procurando por esse cheiro há tempos e finalmente encontrei, entrega rápida e produto impecável.", "Fragrância sofisticada que marca presença sem ser enjoativa, perfeita para presentear."]
-  },
-  general: {
-    delivery: ["Chegou super rápido!", "Entrega nota 10.", "Veio muito bem embalado.", "Chegou antes do prazo, parabéns.", "Tudo certo na entrega."],
-    trust: ["Primeira vez comprando e gostei muito.", "Site confiável, pode comprar sem medo.", "Atendimento excelente e produto de qualidade.", "Loja nota 10, ganhou um cliente."],
-    human: ["chegou certinho", "gostei bastante", "muito bom valeu", "entrega rapida", "material top", "veio bem embalado", "recomendo dms"],
-    neutral: [
-      "Produto ok, chegou certinho.",
-      "Gostei, só achei que demorou um pouco pra chegar.",
-      "Veio igual da foto.",
-      "Gostei mas achei que o tamanho ficou um pouco justo.",
-      "Chegou bem, qualidade média.",
-      "Tudo certo com a entrega.",
-      "Pelo preço está justo."
-    ],
-    returning: [
-      "Já comprei aqui antes e resolvi pegar esse também.",
-      "Segunda vez comprando na loja e até agora tudo certo.",
-      "Loja de confiança, comprei de novo.",
-      "Virei cliente, sempre chega tudo certo."
-    ]
-  },
-  feminino_specific: {
-    short: ["Linda e confortável!", "Ficou perfeita.", "Amei os detalhes.", "Maravilhosa!", "Muito delicada.", "Caimento mara."],
-    medium: ["A peça é linda e o material é de muita qualidade, amei.", "Comprei para um evento e recebi muitos elogios, super recomendo.", "Ficou perfeita no corpo, a tabela de medidas ajudou muito.", "Muito mais bonita pessoalmente, os detalhes são encantadores."]
-  },
-  male_gifting: [
-    "Comprei para minha esposa e ela adorou.",
-    "Peguei de presente para minha namorada e ela amou a qualidade.",
-    "Minha esposa gostou muito, o tamanho deu certinho.",
-    "Presente aprovado! Ela achou muito confortável.",
-    "Comprei para presentear e a pessoa ficou encantada."
-  ]
+    features: ["cheiro maravilhoso", "fixação excelente", "projeção muito boa", "fragrância marcante", "original"],
+    satisfaction: ["meu novo favorito", "vale muito a pena", "recomendo demais", "chegou lacrado", "perfeito"],
+    context: ["todo mundo pergunta qual é", "dura o dia todo", "ótimo para presentear", "entrega super rápida", "nota 10"]
+  }
 };
+
+const HUMAN_PHRASES = [
+  "chegou certinho", "gostei bastante", "muito bom valeu", "entrega rapida", "material top", "veio bem embalado", "recomendo dms",
+  "Top demais", "Curti o estilo", "Valeu a compra", "Bem bonito pessoalmente", "Ficou perfeito", "Chegou antes do prazo",
+  "Qualidade nota 10", "Gostei muito", "Tudo ok aqui", "Recomendo a loja", "Primeira compra de muitas", "Muito satisfeito"
+];
 
 export default function AdminReviewManagement() {
   const [products, setProducts] = useState<ProductWithId[]>([]);
@@ -140,7 +111,6 @@ export default function AdminReviewManagement() {
   const [isAddingReview, setIsAddingReview] = useState(false);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   
-  // Bulk Generation States
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkConfig, setBulkModalConfig] = useState({
     productCount: '50',
@@ -149,7 +119,6 @@ export default function AdminReviewManagement() {
   const [isGeneratingBulk, setIsGeneratingBulk] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
 
-  // Bulk Delete States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [deleteType, setDeleteType] = useState<'all' | 'auto'>('auto');
@@ -200,33 +169,30 @@ export default function AdminReviewManagement() {
     products.find(p => p.firestoreId === selectedProductId), 
   [products, selectedProductId]);
 
-  // FUNÇÃO DE GERAÇÃO INTELIGENTE E NATURAL
   const generateSmartReview = (product: Product, usedNames: Set<string>, usedComments: Set<string>): Review => {
     const isFemaleProduct = product.gender === 'feminino';
     const isMaleProduct = product.gender === 'masculino';
     
     let gender: 'female' | 'male' = 'female';
     if (isFemaleProduct) {
-      gender = Math.random() > 0.1 ? 'female' : 'male'; // 90% female
+      gender = Math.random() > 0.1 ? 'female' : 'male';
     } else if (isMaleProduct) {
-      gender = 'male';
+      gender = Math.random() > 0.1 ? 'male' : 'female';
     } else {
       gender = Math.random() > 0.5 ? 'female' : 'male';
     }
 
-    // Gerar Nome Único
     let name = "";
-    let attempts = 0;
+    let nameAttempts = 0;
     do {
       const baseNames = gender === 'female' ? FEMALE_NAMES : MALE_NAMES;
       const firstName = baseNames[Math.floor(Math.random() * baseNames.length)];
       const lastName = SURNAMES[Math.floor(Math.random() * SURNAMES.length)];
       name = `${firstName} ${lastName}`;
-      attempts++;
-    } while (usedNames.has(name) && attempts < 100);
+      nameAttempts++;
+    } while (usedNames.has(name) && nameAttempts < 100);
     usedNames.add(name);
 
-    // DETERMINAÇÃO NATURAL DA NOTA (70% 5, 20% 4, 8% 3, 2% 2)
     const starRoll = Math.random() * 100;
     let rating = 5;
     if (starRoll < 2) rating = 2;
@@ -234,74 +200,49 @@ export default function AdminReviewManagement() {
     else if (starRoll < 30) rating = 4;
     else rating = 5;
 
-    // Gerar Comentário Baseado em Estilos e Contexto
     let comment = "";
-    
-    // Se a nota for baixa (2 ou 3), usar comentários neutros
-    if (rating < 4) {
-      const neutralOptions = COMMENT_TEMPLATES.general.neutral;
-      comment = neutralOptions[Math.floor(Math.random() * neutralOptions.length)];
-    } else {
-      const styleRoll = Math.random();
-      
-      if (styleRoll < 0.05) {
-        // Raro: Cliente recorrente
-        const returningOptions = COMMENT_TEMPLATES.general.returning;
-        comment = returningOptions[Math.floor(Math.random() * returningOptions.length)];
-      } else if (styleRoll < 0.15) {
-        // Estilo Humano/Informal (minúsculo, sem pontuação)
-        const humanOptions = COMMENT_TEMPLATES.general.human;
-        comment = humanOptions[Math.floor(Math.random() * humanOptions.length)];
-      } else if (styleRoll < 0.30) {
-        // Estilo Simples (Uma ou duas palavras)
-        const category = product.category as keyof typeof COMMENT_TEMPLATES;
-        const simpleOptions = (COMMENT_TEMPLATES[category] as any)?.simple || COMMENT_TEMPLATES.calcados.simple;
-        comment = simpleOptions[Math.floor(Math.random() * simpleOptions.length)];
-      } else if (gender === 'male' && isFemaleProduct) {
-        // Caso especial: Homem presenteando
-        comment = COMMENT_TEMPLATES.male_gifting[Math.floor(Math.random() * COMMENT_TEMPLATES.male_gifting.length)];
+    const lengthRoll = Math.random();
+    const cat = (product.category as keyof typeof COMMENT_PARTS) || 'calcados';
+    const parts = COMMENT_PARTS[cat] || COMMENT_PARTS.calcados;
+
+    let attempts = 0;
+    do {
+      if (lengthRoll < 0.3) {
+        // CURTO (30%)
+        comment = HUMAN_PHRASES[Math.floor(Math.random() * HUMAN_PHRASES.length)];
+      } else if (lengthRoll < 0.8) {
+        // MÉDIO (50%)
+        const f = parts.features[Math.floor(Math.random() * parts.features.length)];
+        const s = parts.satisfaction[Math.floor(Math.random() * parts.satisfaction.length)];
+        comment = Math.random() > 0.5 ? `${f}, ${s}.` : `${s}, ${f}.`;
       } else {
-        // Comentário padrão por categoria com variação de tamanho
-        const category = product.category as keyof typeof COMMENT_TEMPLATES;
-        const templates = COMMENT_TEMPLATES[category] || COMMENT_TEMPLATES.calcados;
-        
-        const sizeTypeRoll = Math.random();
-        const sizeType = sizeTypeRoll > 0.7 ? 'long' : (sizeTypeRoll > 0.3 ? 'medium' : 'short');
-        
-        let options = (templates as any)[sizeType];
-        
-        // Adicionar chance de comentário feminino específico
-        if (gender === 'female' && isFemaleProduct && Math.random() > 0.6) {
-          options = COMMENT_TEMPLATES.feminino_specific.medium;
-        }
-
-        comment = options[Math.floor(Math.random() * options.length)];
-        
-        // 15% de chance de adicionar algo sobre entrega ou confiança (evitando excesso de "recomendo")
-        if (Math.random() > 0.85) {
-          const extraType = Math.random() > 0.5 ? 'delivery' : 'trust';
-          const extra = COMMENT_TEMPLATES.general[extraType][Math.floor(Math.random() * COMMENT_TEMPLATES.general[extraType].length)];
-          // Remove pontos finais duplicados se houver
-          comment = `${comment.replace(/\.$/, '')}. ${extra}`;
-        }
+        // LONGO (20%)
+        const f = parts.features[Math.floor(Math.random() * parts.features.length)];
+        const s = parts.satisfaction[Math.floor(Math.random() * parts.satisfaction.length)];
+        const c = parts.context[Math.floor(Math.random() * parts.context.length)];
+        comment = `${f}. ${s}, ${c}.`;
       }
-    }
 
-    // Garantir unicidade no lote
-    let finalComment = comment;
-    if (usedComments.has(finalComment)) {
-      finalComment = `${finalComment}!`;
-      if (usedComments.has(finalComment)) {
-        finalComment = `Muito bom. ${finalComment}`;
+      // Contexto especial para homens comprando produtos femininos
+      if (gender === 'male' && isFemaleProduct) {
+        const giftPhrases = ["Minha esposa gostou muito", "Peguei de presente pra patroa", "Minha namorada amou", "Comprei pra presentear e ela adorou"];
+        const gift = giftPhrases[Math.floor(Math.random() * giftPhrases.length)];
+        comment = `${gift}. ${comment}`;
       }
-    }
-    usedComments.add(finalComment);
+
+      // Humanização ocasional (minúsculo ou sem ponto)
+      if (Math.random() > 0.8) comment = comment.toLowerCase().replace(/[.!]/g, '');
+
+      attempts++;
+    } while ((usedComments.has(comment) || product.reviews?.some(r => r.comment === comment)) && attempts < 20);
+    
+    usedComments.add(comment);
 
     return {
       id: "auto_" + Math.random().toString(36).substr(2, 9),
       userName: name,
       rating,
-      comment: finalComment,
+      comment: comment,
       date: new Date(Date.now() - Math.floor(Math.random() * 45) * 24 * 60 * 60 * 1000).toISOString(),
       isAutoGenerated: true
     };
@@ -330,15 +271,13 @@ export default function AdminReviewManagement() {
         const chunk = selectedBatch.slice(i, i + chunkSize);
         
         await Promise.all(chunk.map(async (product) => {
-          // Determinar quantidade de avaliações (Modo Auto ou Fixo)
           let reviewsPerProd = 1;
           if (bulkConfig.reviewsPerProduct === 'auto') {
             const roll = Math.random();
             if (roll < 0.4) reviewsPerProd = 2;
             else if (roll < 0.7) reviewsPerProd = 3;
             else if (roll < 0.9) reviewsPerProd = 4;
-            else if (roll < 0.98) reviewsPerProd = 5;
-            else reviewsPerProd = 6;
+            else reviewsPerProd = 5;
           } else {
             reviewsPerProd = parseInt(bulkConfig.reviewsPerProduct);
           }
@@ -358,7 +297,7 @@ export default function AdminReviewManagement() {
         }));
       }
 
-      toast({ title: 'Sucesso!', description: `Prova social gerada com naturalidade.` });
+      toast({ title: 'Sucesso!', description: `Avaliações geradas sem repetição.` });
       setIsBulkModalOpen(false);
     } catch (error) {
       console.error("Bulk generation error:", error);
@@ -410,9 +349,9 @@ export default function AdminReviewManagement() {
       toast({ variant: 'destructive', title: 'Selecione um produto primeiro' });
       return;
     }
-    const tempUsed = new Set<string>();
+    const tempUsedN = new Set<string>();
     const tempUsedC = new Set<string>();
-    const review = generateSmartReview(selectedProduct!, tempUsed, tempUsedC);
+    const review = generateSmartReview(selectedProduct!, tempUsedN, tempUsedC);
     setFormData(prev => ({ ...prev, comment: review.comment }));
   };
 
@@ -465,7 +404,7 @@ export default function AdminReviewManagement() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Gerenciamento de Avaliações</CardTitle>
-              <CardDescription>Gerencie a prova social dos seus produtos ativos.</CardDescription>
+              <CardDescription>Crie prova social realista e positiva para sua loja.</CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
               <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
@@ -477,21 +416,17 @@ export default function AdminReviewManagement() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Limpeza em Massa</DialogTitle>
-                    <DialogDescription>Remova avaliações de todos os produtos da loja.</DialogDescription>
+                    <DialogTitle>Limpeza de Avaliações</DialogTitle>
+                    <DialogDescription>Remova depoimentos de forma segura.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    <div className="flex items-center gap-3 p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-sm">
-                      <AlertTriangle className="h-5 w-5 shrink-0" />
-                      Recomendado: Apagar apenas as geradas automaticamente para resetar a prova social.
-                    </div>
                     <div className="space-y-3">
                       <Label>O que deseja apagar?</Label>
                       <Select value={deleteType} onValueChange={(v: any) => setDeleteType(v)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="auto">Apenas as geradas automaticamente</SelectItem>
-                          <SelectItem value="all">TODAS as avaliações</SelectItem>
+                          <SelectItem value="all">TODAS as avaliações (Cuidado!)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -515,43 +450,40 @@ export default function AdminReviewManagement() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Geração Natural em Massa</DialogTitle>
-                    <DialogDescription>Crie prova social realista com variações de estrelas, estilo e volumes naturais.</DialogDescription>
+                    <DialogTitle>Geração Inteligente</DialogTitle>
+                    <DialogDescription>Crie centenas de avaliações exclusivas e positivas em segundos.</DialogDescription>
                   </DialogHeader>
                   
                   {isGeneratingBulk ? (
                     <div className="py-8 space-y-4 text-center">
                       <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
-                      <p className="font-medium">Processando... {bulkProgress}%</p>
+                      <p className="font-medium">Gerando... {bulkProgress}%</p>
                       <Progress value={bulkProgress} className="h-2" />
                     </div>
                   ) : (
                     <div className="space-y-6 py-4">
                       <div className="space-y-3">
-                        <Label>Produtos Ativos</Label>
+                        <Label>Para quantos produtos ativos?</Label>
                         <Select value={bulkConfig.productCount} onValueChange={(val) => setBulkModalConfig(prev => ({...prev, productCount: val}))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="20">20 produtos</SelectItem>
                             <SelectItem value="50">50 produtos</SelectItem>
                             <SelectItem value="100">100 produtos</SelectItem>
                             <SelectItem value="200">200 produtos</SelectItem>
-                            <SelectItem value="300">300 produtos</SelectItem>
                             <SelectItem value="400">400 produtos</SelectItem>
                             <SelectItem value="all">Todos ativos ({activeProducts.length})</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-3">
-                        <Label>Avaliações por Produto</Label>
+                        <Label>Quantidade de avaliações</Label>
                         <Select value={bulkConfig.reviewsPerProduct} onValueChange={(val) => setBulkModalConfig(prev => ({...prev, reviewsPerProduct: val}))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="auto">Automático (2-5 por produto)</SelectItem>
-                            <SelectItem value="1">1 fixo por produto</SelectItem>
-                            <SelectItem value="2">2 fixos por produto</SelectItem>
-                            <SelectItem value="3">3 fixos por produto</SelectItem>
-                            <SelectItem value="5">5 fixos por produto</SelectItem>
+                            <SelectItem value="auto">Automático (2 a 5 por produto)</SelectItem>
+                            <SelectItem value="1">1 por produto</SelectItem>
+                            <SelectItem value="3">3 por produto</SelectItem>
+                            <SelectItem value="5">5 por produto</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -613,16 +545,16 @@ export default function AdminReviewManagement() {
                     </div>
                     <div className="space-y-2">
                       <Label>Cliente</Label>
-                      <Input value={formData.userName} onChange={e => setFormData(prev => ({...prev, userName: e.target.value}))} />
+                      <Input value={formData.userName} onChange={e => setFormData(prev => ({...prev, userName: e.target.value}))} placeholder="Nome do cliente" />
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Comentário</Label>
                         <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-primary" onClick={handleGenerateComment} disabled={!selectedProductId}>
-                          <Sparkles className="h-3 w-3 mr-1" /> Sugerir
+                          <Sparkles className="h-3 w-3 mr-1" /> Gerar Sugestão
                         </Button>
                       </div>
-                      <Textarea value={formData.comment} onChange={e => setFormData(prev => ({...prev, comment: e.target.value}))} />
+                      <Textarea value={formData.comment} onChange={e => setFormData(prev => ({...prev, comment: e.target.value}))} placeholder="Escreva o comentário..." />
                     </div>
                   </div>
                   <DialogFooter>

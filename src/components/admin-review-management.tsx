@@ -70,7 +70,6 @@ import { cn } from '@/lib/utils';
 
 type ProductWithId = Product & { firestoreId: string };
 
-// LISTAS AMPLIADAS PARA MÁXIMA DIVERSIDADE
 const FEMALE_NAMES = ["Mariana", "Fernanda", "Camila", "Juliana", "Patricia", "Bruna", "Aline", "Beatriz", "Letícia", "Isabela", "Carolina", "Vanessa", "Larissa", "Renata", "Tatiane", "Amanda", "Beatriz", "Gabriela", "Rafaela", "Bianca", "Jessica", "Debora", "Priscila", "Luciana", "Monica", "Silvana", "Sandra", "Andreia", "Paula", "Carla"];
 const MALE_NAMES = ["Lucas", "Rafael", "Bruno", "Carlos", "Gabriel", "Matheus", "Felipe", "Thiago", "Gustavo", "Daniel", "André", "Marcelo", "Vinícius", "Fabrício", "Leandro", "Rodrigo", "Diego", "Eduardo", "Leonardo", "Hugo", "Ricardo", "Fernando", "Alexandre", "Roberto", "Marcos", "Antonio", "João", "Paulo", "Sergio", "Luiz", "Fabio"];
 const SURNAMES = ["Souza", "Santos", "Rodrigues", "Alves", "Lima", "Carvalho", "Martins", "Oliveira", "Costa", "Almeida", "Ferreira", "Ribeiro", "Barbosa", "Rocha", "Mendes", "Vieira", "Teixeira", "Gomes", "Moreira", "Nascimento", "Pereira", "Silva", "Gonçalves", "Araújo", "Cardoso", "Freitas", "Machado", "Dias", "Castro", "Nunes", "Monteiro"];
@@ -103,7 +102,23 @@ const COMMENT_TEMPLATES = {
   general: {
     delivery: ["Chegou super rápido!", "Entrega nota 10.", "Veio muito bem embalado.", "Chegou antes do prazo, parabéns.", "Tudo certo na entrega."],
     trust: ["Primeira vez comprando e gostei muito.", "Site confiável, pode comprar sem medo.", "Atendimento excelente e produto de qualidade.", "Loja nota 10, ganhou um cliente."],
-    human: ["chegou certinho", "gostei bastante", "muito bom valeu", "entrega rapida", "material top", "veio bem embalado", "recomendo dms"]
+    human: ["chegou certinho", "gostei bastante", "muito bom valeu", "entrega rapida", "material top", "veio bem embalado", "recomendo dms"],
+    neutral: [
+      "Produto ok, chegou certinho.",
+      "Gostei, só achei que demorou um pouco pra chegar.",
+      "Veio igual da foto.",
+      "Produto bom, nada de especial.",
+      "Gostei mas achei que o tamanho ficou um pouco justo.",
+      "Chegou bem, qualidade média.",
+      "Tudo certo com a entrega.",
+      "Pelo preço está justo."
+    ],
+    returning: [
+      "Já comprei aqui antes e resolvi pegar esse também.",
+      "Segunda vez comprando na loja e até agora tudo certo.",
+      "Loja de confiança, comprei de novo.",
+      "Virei cliente, sempre chega tudo certo."
+    ]
   },
   feminino_specific: {
     short: ["Linda e confortável!", "Ficou perfeita.", "Amei os detalhes.", "Maravilhosa!", "Muito delicada.", "Caimento mara."],
@@ -131,7 +146,7 @@ export default function AdminReviewManagement() {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkConfig, setBulkModalConfig] = useState({
     productCount: '50',
-    reviewsPerProduct: '3',
+    reviewsPerProduct: 'auto',
   });
   const [isGeneratingBulk, setIsGeneratingBulk] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
@@ -213,55 +228,71 @@ export default function AdminReviewManagement() {
     } while (usedNames.has(name) && attempts < 100);
     usedNames.add(name);
 
-    // Determinar Nota (70% 5, 30% 4)
-    const rating = Math.random() > 0.3 ? 5 : 4;
+    // DETERMINAÇÃO NATURAL DA NOTA (70% 5, 20% 4, 8% 3, 2% 2)
+    const starRoll = Math.random() * 100;
+    let rating = 5;
+    if (starRoll < 2) rating = 2;
+    else if (starRoll < 10) rating = 3;
+    else if (starRoll < 30) rating = 4;
+    else rating = 5;
 
     // Gerar Comentário Baseado em Estilos e Contexto
     let comment = "";
-    const styleRoll = Math.random();
     
-    if (styleRoll < 0.15) {
-      // Estilo Humano/Informal (minúsculo, sem pontuação)
-      const humanOptions = COMMENT_TEMPLATES.general.human;
-      comment = humanOptions[Math.floor(Math.random() * humanOptions.length)];
-    } else if (styleRoll < 0.30) {
-      // Estilo Simples (Uma ou duas palavras)
-      const category = product.category as keyof typeof COMMENT_TEMPLATES;
-      const simpleOptions = (COMMENT_TEMPLATES[category] as any)?.simple || COMMENT_TEMPLATES.calcados.simple;
-      comment = simpleOptions[Math.floor(Math.random() * simpleOptions.length)];
-    } else if (gender === 'male' && isFemaleProduct) {
-      // Caso especial: Homem presenteando
-      comment = COMMENT_TEMPLATES.male_gifting[Math.floor(Math.random() * COMMENT_TEMPLATES.male_gifting.length)];
+    // Se a nota for baixa (2 ou 3), usar comentários neutros
+    if (rating < 4) {
+      const neutralOptions = COMMENT_TEMPLATES.general.neutral;
+      comment = neutralOptions[Math.floor(Math.random() * neutralOptions.length)];
     } else {
-      // Comentário padrão por categoria com variação de tamanho
-      const category = product.category as keyof typeof COMMENT_TEMPLATES;
-      const templates = COMMENT_TEMPLATES[category] || COMMENT_TEMPLATES.calcados;
+      const styleRoll = Math.random();
       
-      const sizeTypeRoll = Math.random();
-      const sizeType = sizeTypeRoll > 0.7 ? 'long' : (sizeTypeRoll > 0.3 ? 'medium' : 'short');
-      
-      let options = (templates as any)[sizeType];
-      
-      // Adicionar chance de comentário feminino específico
-      if (gender === 'female' && isFemaleProduct && Math.random() > 0.6) {
-        options = COMMENT_TEMPLATES.feminino_specific.medium;
-      }
+      if (styleRoll < 0.05) {
+        // Raro: Cliente recorrente
+        const returningOptions = COMMENT_TEMPLATES.general.returning;
+        comment = returningOptions[Math.floor(Math.random() * returningOptions.length)];
+      } else if (styleRoll < 0.15) {
+        // Estilo Humano/Informal (minúsculo, sem pontuação)
+        const humanOptions = COMMENT_TEMPLATES.general.human;
+        comment = humanOptions[Math.floor(Math.random() * humanOptions.length)];
+      } else if (styleRoll < 0.30) {
+        // Estilo Simples (Uma ou duas palavras)
+        const category = product.category as keyof typeof COMMENT_TEMPLATES;
+        const simpleOptions = (COMMENT_TEMPLATES[category] as any)?.simple || COMMENT_TEMPLATES.calcados.simple;
+        comment = simpleOptions[Math.floor(Math.random() * simpleOptions.length)];
+      } else if (gender === 'male' && isFemaleProduct) {
+        // Caso especial: Homem presenteando
+        comment = COMMENT_TEMPLATES.male_gifting[Math.floor(Math.random() * COMMENT_TEMPLATES.male_gifting.length)];
+      } else {
+        // Comentário padrão por categoria com variação de tamanho
+        const category = product.category as keyof typeof COMMENT_TEMPLATES;
+        const templates = COMMENT_TEMPLATES[category] || COMMENT_TEMPLATES.calcados;
+        
+        const sizeTypeRoll = Math.random();
+        const sizeType = sizeTypeRoll > 0.7 ? 'long' : (sizeTypeRoll > 0.3 ? 'medium' : 'short');
+        
+        let options = (templates as any)[sizeType];
+        
+        // Adicionar chance de comentário feminino específico
+        if (gender === 'female' && isFemaleProduct && Math.random() > 0.6) {
+          options = COMMENT_TEMPLATES.feminino_specific.medium;
+        }
 
-      comment = options[Math.floor(Math.random() * options.length)];
-      
-      // 20% de chance de adicionar algo sobre entrega ou confiança
-      if (Math.random() > 0.8) {
-        const extraType = Math.random() > 0.5 ? 'delivery' : 'trust';
-        const extra = COMMENT_TEMPLATES.general[extraType][Math.floor(Math.random() * COMMENT_TEMPLATES.general[extraType].length)];
-        comment = `${comment} ${extra}`;
+        comment = options[Math.floor(Math.random() * options.length)];
+        
+        // 15% de chance de adicionar algo sobre entrega ou confiança (evitando excesso de "recomendo")
+        if (Math.random() > 0.85) {
+          const extraType = Math.random() > 0.5 ? 'delivery' : 'trust';
+          const extra = COMMENT_TEMPLATES.general[extraType][Math.floor(Math.random() * COMMENT_TEMPLATES.general[extraType].length)];
+          // Remove pontos finais duplicados se houver
+          comment = `${comment.replace(/\.$/, '')}. ${extra}`;
+        }
       }
     }
 
     // Garantir unicidade no lote
     let finalComment = comment;
     if (usedComments.has(finalComment)) {
-      // Tenta uma variação simples se já existir
-      finalComment = finalComment.replace('.', '!');
+      finalComment = `${finalComment}!`;
       if (usedComments.has(finalComment)) {
         finalComment = `Muito bom. ${finalComment}`;
       }
@@ -288,7 +319,6 @@ export default function AdminReviewManagement() {
       ? activeProducts.length 
       : Math.min(parseInt(bulkConfig.productCount), activeProducts.length);
     
-    const reviewsPerProd = parseInt(bulkConfig.reviewsPerProduct);
     const shuffledProducts = [...activeProducts].sort(() => 0.5 - Math.random());
     const selectedBatch = shuffledProducts.slice(0, countToGenerate);
 
@@ -302,6 +332,19 @@ export default function AdminReviewManagement() {
         const chunk = selectedBatch.slice(i, i + chunkSize);
         
         await Promise.all(chunk.map(async (product) => {
+          // Determinar quantidade de avaliações (Modo Auto ou Fixo)
+          let reviewsPerProd = 1;
+          if (bulkConfig.reviewsPerProduct === 'auto') {
+            const roll = Math.random();
+            if (roll < 0.4) reviewsPerProd = 2;
+            else if (roll < 0.7) reviewsPerProd = 3;
+            else if (roll < 0.9) reviewsPerProd = 4;
+            else if (roll < 0.98) reviewsPerProd = 5;
+            else reviewsPerProd = 6;
+          } else {
+            reviewsPerProd = parseInt(bulkConfig.reviewsPerProduct);
+          }
+
           const newReviews: Review[] = [];
           for (let j = 0; j < reviewsPerProd; j++) {
             newReviews.push(generateSmartReview(product, usedNames, usedComments));
@@ -442,7 +485,7 @@ export default function AdminReviewManagement() {
                   <div className="space-y-4 py-4">
                     <div className="flex items-center gap-3 p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-sm">
                       <AlertTriangle className="h-5 w-5 shrink-0" />
-                      Recomendado: Apagar apenas as geradas automaticamente.
+                      Recomendado: Apagar apenas as geradas automaticamente para resetar a prova social.
                     </div>
                     <div className="space-y-3">
                       <Label>O que deseja apagar?</Label>
@@ -475,7 +518,7 @@ export default function AdminReviewManagement() {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Geração Natural em Massa</DialogTitle>
-                    <DialogDescription>Crie prova social realista com variações de estilo e contexto.</DialogDescription>
+                    <DialogDescription>Crie prova social realista com variações de estrelas, estilo e volumes naturais.</DialogDescription>
                   </DialogHeader>
                   
                   {isGeneratingBulk ? (
@@ -494,6 +537,9 @@ export default function AdminReviewManagement() {
                             <SelectItem value="20">20 produtos</SelectItem>
                             <SelectItem value="50">50 produtos</SelectItem>
                             <SelectItem value="100">100 produtos</SelectItem>
+                            <SelectItem value="200">200 produtos</SelectItem>
+                            <SelectItem value="300">300 produtos</SelectItem>
+                            <SelectItem value="400">400 produtos</SelectItem>
                             <SelectItem value="all">Todos ativos ({activeProducts.length})</SelectItem>
                           </SelectContent>
                         </Select>
@@ -503,10 +549,11 @@ export default function AdminReviewManagement() {
                         <Select value={bulkConfig.reviewsPerProduct} onValueChange={(val) => setBulkModalConfig(prev => ({...prev, reviewsPerProduct: val}))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">1 por produto</SelectItem>
-                            <SelectItem value="2">2 por produto</SelectItem>
-                            <SelectItem value="3">3 por produto</SelectItem>
-                            <SelectItem value="5">5 por produto</SelectItem>
+                            <SelectItem value="auto">Automático (2-5 por produto)</SelectItem>
+                            <SelectItem value="1">1 fixo por produto</SelectItem>
+                            <SelectItem value="2">2 fixos por produto</SelectItem>
+                            <SelectItem value="3">3 fixos por produto</SelectItem>
+                            <SelectItem value="5">5 fixos por produto</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -517,7 +564,7 @@ export default function AdminReviewManagement() {
                     {!isGeneratingBulk && (
                       <>
                         <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
-                        <Button onClick={handleBulkGenerate}>Iniciar</Button>
+                        <Button onClick={handleBulkGenerate}>Iniciar Geração</Button>
                       </>
                     )}
                   </DialogFooter>
@@ -526,7 +573,7 @@ export default function AdminReviewManagement() {
 
               <Dialog onOpenChange={(open) => { if(!open) setIsProductSelectorOpen(false); }}>
                 <DialogTrigger asChild>
-                  <Button><PlusCircle className="mr-2 h-4 w-4" /> Nova</Button>
+                  <Button><PlusCircle className="mr-2 h-4 w-4" /> Nova Avaliação</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader><DialogTitle>Avaliação Manual</DialogTitle></DialogHeader>
@@ -622,7 +669,7 @@ export default function AdminReviewManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" onClick={() => setSelectedProductId(selectedProductId === product.firestoreId ? '' : product.firestoreId)}>
-                          {selectedProductId === product.firestoreId ? 'Fechar' : 'Ver'}
+                          {selectedProductId === product.firestoreId ? 'Fechar' : 'Ver Detalhes'}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -7,9 +7,9 @@ import type { Product, Variant } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import AddToCartButton from "./add-to-cart-button";
 import { QualityBadge } from "./quality-badge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn, fixImageUrl } from "@/lib/utils";
-import { Globe } from "lucide-react";
+import { Globe, Star, StarHalf } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { ColorSwatch } from "./color-swatch";
@@ -53,6 +53,33 @@ export function ProductCard({ product }: ProductCardProps) {
   const acrescimoCartao = selectedVariant?.acrescimoCartao ?? 20;
   const precoCartao = price + acrescimoCartao;
   
+  // Calculate Reviews
+  const { averageRating, totalReviews } = useMemo(() => {
+    const productReviews = Array.isArray(product.reviews) ? product.reviews : [];
+    const total = productReviews.length;
+    const avg = total > 0 
+      ? productReviews.reduce((acc, r) => acc + r.rating, 0) / total 
+      : 0;
+    return { averageRating: avg, totalReviews: total };
+  }, [product.reviews]);
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 1; i <= 5; i++) {
+      if (i <= fullStars) {
+        stars.push(<Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />);
+      } else if (i === fullStars + 1 && hasHalfStar) {
+        stars.push(<StarHalf key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />);
+      } else {
+        stars.push(<Star key={i} className="h-3 w-3 text-muted-foreground" />);
+      }
+    }
+    return stars;
+  };
+
   const handleColorClick = (e: React.MouseEvent, variant: Variant) => {
     e.preventDefault();
     e.stopPropagation();
@@ -110,8 +137,19 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </CardHeader>
         <CardContent className="flex-grow p-4">
-          <h3 className="font-semibold">{product.name}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h3 className="font-semibold line-clamp-1">{product.name}</h3>
+          
+          {/* Rating Display */}
+          {totalReviews > 0 && (
+            <div className="mt-1 flex items-center gap-1">
+              <div className="flex items-center">
+                {renderStars(averageRating)}
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">({totalReviews})</span>
+            </div>
+          )}
+
+          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
             {product.description}
           </p>
           {product.variants && product.variants.length > 1 && (

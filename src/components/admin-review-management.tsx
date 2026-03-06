@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -107,7 +106,6 @@ const COMMENT_TEMPLATES = {
       "Produto ok, chegou certinho.",
       "Gostei, só achei que demorou um pouco pra chegar.",
       "Veio igual da foto.",
-      "Produto bom, nada de especial.",
       "Gostei mas achei que o tamanho ficou um pouco justo.",
       "Chegou bem, qualidade média.",
       "Tudo certo com a entrega.",

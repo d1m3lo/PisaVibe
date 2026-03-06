@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -53,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const acrescimoCartao = selectedVariant?.acrescimoCartao ?? 20;
   const precoCartao = price + acrescimoCartao;
   
-  // Calculate Reviews
+  // Calculate Reviews safely
   const { averageRating, totalReviews } = useMemo(() => {
     const productReviews = Array.isArray(product.reviews) ? product.reviews : [];
     const total = productReviews.length;

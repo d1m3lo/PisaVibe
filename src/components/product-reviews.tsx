@@ -17,7 +17,7 @@ interface ProductReviewsProps {
 export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
   const [visibleCount, setVisibleCount] = useState(5);
 
-  // Garante que reviews seja sempre um array, mesmo se vier um número do banco de dados (legado)
+  // Garante que reviews seja sempre um array, mesmo se vier um dado inesperado (legado)
   const safeReviews = useMemo(() => {
     return Array.isArray(reviews) ? reviews : [];
   }, [reviews]);
@@ -29,7 +29,11 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
   }, [safeReviews]);
 
   const sortedReviews = useMemo(() => {
-    return [...safeReviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...safeReviews].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [safeReviews]);
 
   const displayedReviews = sortedReviews.slice(0, visibleCount);
@@ -90,7 +94,7 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
                     </div>
                   </div>
                   <time className="text-xs text-muted-foreground">
-                    {format(new Date(review.date), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                    {review.date ? format(new Date(review.date), "dd 'de' MMM, yyyy", { locale: ptBR }) : ''}
                   </time>
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">

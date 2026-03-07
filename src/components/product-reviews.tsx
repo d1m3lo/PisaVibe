@@ -7,12 +7,13 @@ import { Review, Order } from '@/lib/types';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
+import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, collectionGroup, query, where, getDocs, doc, updateDoc, arrayUnion, increment, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, increment, getDoc } from 'firebase/firestore';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 

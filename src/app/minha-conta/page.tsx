@@ -14,13 +14,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, Order } from '@/lib/types';
 import { cn, fixImageUrl } from '@/lib/utils';
-import { User, KeyRound, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff } from 'lucide-react';
+import { User, KeyRound, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 const AccountPageSkeleton = () => (
     <div className="container mx-auto max-w-5xl px-4 py-12">
@@ -52,7 +61,14 @@ const AccountPageSkeleton = () => (
 const OrderHistory = () => {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
+    const router = useRouter();
     const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+    
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const ordersQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -71,6 +87,34 @@ const OrderHistory = () => {
             default: return 'destructive';
         }
     }
+
+    const handleConfirmDeliveryClick = (order: Order) => {
+        setSelectedOrder(order);
+        setIsConfirmModalOpen(true);
+    };
+
+    const handleConfirmDelivery = async () => {
+        if (!user || !firestore || !selectedOrder) return;
+        setIsUpdating(true);
+        try {
+            const orderRef = doc(firestore, `users/${user.uid}/orders`, selectedOrder.id);
+            await updateDoc(orderRef, { status: 'Pedido entregue' });
+            
+            setIsConfirmModalOpen(false);
+            setIsInviteModalOpen(true);
+            toast({ title: "Entrega confirmada!", description: "Seu pedido foi marcado como entregue." });
+        } catch (error) {
+            toast({ variant: 'destructive', title: "Erro", description: "Não foi possível confirmar a entrega." });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleGoToReview = () => {
+        if (!selectedOrder || !selectedOrder.items[0]) return;
+        const firstProductId = selectedOrder.items[0].productId;
+        router.push(`/produtos/${firstProductId}?review=true`);
+    };
 
     if (isLoading) {
         return (
@@ -120,6 +164,16 @@ const OrderHistory = () => {
                              </div>
                         </div>
                         <div className="flex sm:flex-col items-center gap-2 w-full sm:w-auto">
+                            {(order.status === 'Pedido em transporte' || order.status === 'Saiu para entrega') && (
+                                <Button 
+                                    size="sm" 
+                                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => handleConfirmDeliveryClick(order)}
+                                >
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    Confirmar Entrega
+                                </Button>
+                            )}
                             <Button asChild variant="outline" className="w-full sm:w-auto">
                                 <Link href={`/minha-conta/acompanhar-pedido/${order.id}`}>
                                     <PackageSearch className="mr-2 h-4 w-4" />
@@ -182,6 +236,52 @@ const OrderHistory = () => {
                     )}
                 </Card>
             ))}
+
+            {/* Modal de Confirmação de Entrega */}
+            <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Recebimento</DialogTitle>
+                        <DialogDescription>
+                            Você confirma que recebeu o seu pedido #{selectedOrder?.id.slice(0,7)}?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2 sm:gap-0">
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogClose>
+                        <Button onClick={handleConfirmDelivery} disabled={isUpdating}>
+                            Confirmar Entrega
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de Convite para Avaliação */}
+            <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+                <DialogContent className="sm:max-w-md text-center">
+                    <DialogHeader>
+                        <div className="mx-auto bg-green-100 p-3 rounded-full w-fit mb-4">
+                            <ShoppingCart className="h-8 w-8 text-green-600" />
+                        </div>
+                        <DialogTitle className="text-xl">Seu produto chegou!</DialogTitle>
+                        <DialogDescription className="text-base py-2">
+                            Gostaria de deixar uma avaliação? Avaliações ajudam outros clientes a comprar com mais confiança.
+                        </DialogDescription>
+                        <p className="text-sm font-semibold text-primary">
+                            Avalie o produto e ganhe +5 pontos para desconto em uma próxima compra.
+                        </p>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
+                        <Button onClick={handleGoToReview} className="w-full">
+                            Avaliar agora
+                        </Button>
+                        <DialogClose asChild>
+                            <Button variant="ghost" className="w-full">Talvez depois</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
@@ -424,8 +524,18 @@ export default function MyAccountPage() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-12">
-      <h1 className="font-headline text-4xl font-bold">Minha Conta</h1>
-      <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações e preferências.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 className="font-headline text-4xl font-bold">Minha Conta</h1>
+            <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações e preferências.</p>
+        </div>
+        {profile.points !== undefined && (
+            <Badge variant="secondary" className="text-base py-2 px-4 flex gap-2 items-center bg-amber-100 text-amber-900 border-amber-200">
+                <ShoppingCart className="h-4 w-4" />
+                {profile.points} pontos acumulados
+            </Badge>
+        )}
+      </div>
       
         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-[240px_1fr]">
             <nav className="flex flex-col gap-2">
@@ -519,4 +629,3 @@ export default function MyAccountPage() {
     </div>
   );
 }
-

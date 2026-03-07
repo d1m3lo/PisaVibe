@@ -735,7 +735,7 @@ export default function ProductPage() {
         </div>
 
         {/* Reviews Section */}
-        <ProductReviews reviews={product.reviews} />
+        <ProductReviews reviews={product.reviews} productId={id as string} />
       </div>
     </>
   );

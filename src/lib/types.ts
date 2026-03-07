@@ -67,6 +67,7 @@ export type UserProfile = {
   address?: string;
   phone?: string;
   points?: number;
+  reviewedProductIds?: string[];
 };
 
 export type OrderItem = {

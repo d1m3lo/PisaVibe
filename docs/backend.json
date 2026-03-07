@@ -110,6 +110,17 @@
           "type": "string",
           "description": "Phone number of the user."
         },
+        "points": {
+          "type": "number",
+          "description": "Loyalty points accumulated by the user."
+        },
+        "reviewedProductIds": {
+          "type": "array",
+          "description": "List of product IDs the user has already reviewed.",
+          "items": {
+            "type": "string"
+          }
+        },
         "orderIds": {
           "type": "array",
           "description": "References to Orders. (Relationship: User 1:N Order)",

@@ -58,7 +58,7 @@ const AccountPageSkeleton = () => (
     </div>
 );
 
-const OrderHistory = () => {
+const OrderHistory = ({ profile }: { profile: UserProfile }) => {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -113,7 +113,7 @@ const OrderHistory = () => {
     const handleGoToReview = () => {
         if (!selectedOrder || !selectedOrder.items[0]) return;
         const firstProductId = selectedOrder.items[0].productId;
-        router.push(`/produtos/${firstProductId}?review=true`);
+        router.push(`/produtos/${firstProductId}?review=true#avaliacoes`);
     };
 
     if (isLoading) {
@@ -148,7 +148,7 @@ const OrderHistory = () => {
                         >
                              <div className="flex flex-col">
                                 <span className="text-xs text-muted-foreground">Pedido</span>
-                                <span className="font-mono text-sm font-semibold truncate">#{order.id.slice(0, 7)}</span>
+                                <span className="font-mono text-sm font-semibold truncate">#{order.id.slice(0, 7).toUpperCase()}</span>
                              </div>
                               <div className="flex flex-col">
                                 <span className="text-xs text-muted-foreground">Data</span>
@@ -208,6 +208,24 @@ const OrderHistory = () => {
                                                           Cor: {item.variantColor} / Tam: {item.size}
                                                       </p>
                                                   </div>
+                                                  <div className="text-right flex flex-col items-end gap-1">
+                                                      <p className="text-sm font-semibold">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                                                      {order.status === 'Pedido entregue' && (
+                                                          <div className="mt-1">
+                                                              {profile.reviewedProductIds?.includes(item.productId) ? (
+                                                                  <span className="text-[10px] text-green-600 font-medium flex items-center gap-1">
+                                                                      <CheckCircle2 className="h-3 w-3" /> Produto avaliado
+                                                                  </span>
+                                                              ) : (
+                                                                  <Button asChild size="sm" variant="link" className="h-auto p-0 text-[10px]">
+                                                                      <Link href={`/produtos/${item.productId}?review=true#avaliacoes`}>
+                                                                          Avaliar produto
+                                                                      </Link>
+                                                                  </Button>
+                                                              )}
+                                                          </div>
+                                                      )}
+                                                  </div>
                                               </div>
                                           ))}
                                       </div>
@@ -242,8 +260,14 @@ const OrderHistory = () => {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Confirmar Recebimento</DialogTitle>
-                        <DialogDescription>
-                            Você confirma que recebeu o seu pedido #{selectedOrder?.id.slice(0,7)}?
+                        <DialogDescription className="space-y-2">
+                            <span>Você confirma que recebeu o seu pedido #{selectedOrder?.id.slice(0,7).toUpperCase()}?</span>
+                            {selectedOrder?.items[0] && (
+                                <span className="block mt-2 font-medium text-foreground p-2 bg-secondary rounded-md">
+                                    Item: {selectedOrder.items[0].productName}
+                                    {selectedOrder.items.length > 1 && ` (+${selectedOrder.items.length - 1} outros)`}
+                                </span>
+                            )}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex gap-2 sm:gap-0">
@@ -605,7 +629,7 @@ export default function MyAccountPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <OrderHistory />
+                            <OrderHistory profile={profile} />
                         </CardContent>
                     </Card>
                 )}

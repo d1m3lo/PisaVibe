@@ -55,10 +55,11 @@ const ReviewForm = ({ productId, onFinish }: { productId: string, onFinish: () =
                 reviews: arrayUnion(newReview)
             });
 
-            // Adicionar pontos ao usuário
+            // Adicionar pontos ao usuário e marcar produto como avaliado
             const userRef = doc(firestore, 'users', user.uid);
             await updateDoc(userRef, {
-                points: increment(5)
+                points: increment(5),
+                reviewedProductIds: arrayUnion(productId)
             });
 
             toast({ title: "Obrigado pela sua avaliação!", description: "Sua avaliação foi enviada e será analisada. Você ganhou +5 pontos!" });
@@ -143,19 +144,25 @@ export function ProductReviews({ reviews = [], productId }: ProductReviewsProps)
 
             setIsEligible(boughtThisProduct);
 
-            // Verificar se já avaliou
-            const productRef = doc(firestore, 'products', productId);
-            const productSnap = await getDoc(productRef);
-            if (productSnap.exists()) {
-                const data = productSnap.data();
-                const existingReviews = Array.isArray(data.reviews) ? data.reviews : [];
-                const alreadyReviewed = existingReviews.some((r: any) => r.userId === user.uid);
-                setHasReviewed(alreadyReviewed);
+            // Verificar se já avaliou no perfil do usuário (mais confiável e rápido)
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const userSnap = await getDoc(userDocRef);
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const reviewedIds = userData.reviewedProductIds || [];
+                setHasReviewed(reviewedIds.includes(productId));
             }
 
             // Se vier do fluxo de convite (?review=true) e for elegível
             if (boughtThisProduct && !hasReviewed && searchParams.get('review') === 'true') {
                 setShowForm(true);
+                // Pequeno delay para garantir que o elemento existe no DOM
+                setTimeout(() => {
+                    const element = document.getElementById('avaliacoes');
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 500);
             }
         } catch (error) {
             console.error("Error checking review eligibility:", error);
@@ -168,7 +175,6 @@ export function ProductReviews({ reviews = [], productId }: ProductReviewsProps)
   }, [user, firestore, productId, searchParams, hasReviewed]);
 
   const safeReviews = useMemo(() => {
-    // Filtrar apenas aprovadas ou automáticas, exceto para o próprio autor (para ver que enviou)
     const all = Array.isArray(reviews) ? reviews : [];
     return all.filter(r => 
         r.status === 'approved' || 
@@ -247,7 +253,7 @@ export function ProductReviews({ reviews = [], productId }: ProductReviewsProps)
                     Avaliar produto
                 </Button>
                 <p className="text-[11px] md:text-xs text-muted-foreground text-center md:text-right max-w-[250px] leading-tight">
-                    {hasReviewed ? "Você já avaliou este produto." : "Somente clientes que compraram e receberam o produto podem deixar uma avaliação."}
+                    {hasReviewed ? "Você já avaliou este produto." : "Somente clientes que compraram e receberam o produto podem avaliar."}
                 </p>
               </>
           )}

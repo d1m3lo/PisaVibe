@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Star, StarHalf, User } from 'lucide-react';
+import { Star, StarHalf, User, Lock } from 'lucide-react';
 import { Review } from '@/lib/types';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -72,6 +72,17 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
             </p>
           </div>
         </div>
+
+        {/* Bloqueio visual para autenticidade */}
+        <div className="flex flex-col items-center md:items-end gap-2">
+          <Button disabled variant="outline" className="gap-2 opacity-60">
+            <Lock className="h-4 w-4" />
+            Avaliar produto
+          </Button>
+          <p className="text-[11px] md:text-xs text-muted-foreground text-center md:text-right max-w-[250px] leading-tight">
+            Somente clientes que compraram e receberam o produto podem deixar uma avaliação.
+          </p>
+        </div>
       </div>
 
       <div className="mt-10 space-y-8">
@@ -118,7 +129,7 @@ export function ProductReviews({ reviews = [] }: ProductReviewsProps) {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-lg">
             <p className="text-muted-foreground">Ainda não há avaliações para este produto.</p>
-            <p className="text-sm text-muted-foreground mt-1">Seja o primeiro a avaliar!</p>
+            <p className="text-sm text-muted-foreground mt-1">As avaliações são coletadas após a confirmação da entrega.</p>
           </div>
         )}
       </div>

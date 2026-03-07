@@ -12,7 +12,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { collectionGroup, query, where, getDocs, doc, updateDoc, arrayUnion, increment, getDoc } from 'firebase/firestore';
+import { collection, collectionGroup, query, where, getDocs, doc, updateDoc, arrayUnion, increment, getDoc } from 'firebase/firestore';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -129,10 +129,10 @@ export function ProductReviews({ reviews = [], productId }: ProductReviewsProps)
         setIsLoadingEligibility(true);
         try {
             // Verificar se o usuário comprou o produto e se está entregue
-            const ordersRef = collectionGroup(firestore, 'orders');
+            // Usando a subcoleção específica do usuário para evitar a necessidade de índices compostos globais
+            const userOrdersRef = collection(firestore, 'users', user.uid, 'orders');
             const q = query(
-                ordersRef, 
-                where('userId', '==', user.uid),
+                userOrdersRef, 
                 where('status', '==', 'Pedido entregue')
             );
             const snapshot = await getDocs(q);

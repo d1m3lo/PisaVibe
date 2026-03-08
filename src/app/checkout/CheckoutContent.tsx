@@ -116,14 +116,12 @@ export default function CheckoutContent() {
         setPixStatus('confirmed');
         clearCart();
         unsubscribeOrder();
-        // Não precisa mais do listener do unverified
       }
     });
 
     // Timeout caso o admin demore muito ou recuse
     const rejectionTimeout = setTimeout(() => {
         getDocs(q).then(snapshot => {
-             // Se depois do timeout o pedido ainda não foi criado, consideramos recusado
             if (snapshot.empty) {
                 setPixStatus('rejected');
             }
@@ -194,6 +192,13 @@ export default function CheckoutContent() {
         return;
       }
 
+      if (couponData.minSpend && cartTotal < couponData.minSpend) {
+        setCouponError(`Valor mínimo para este cupom: R$ ${couponData.minSpend}`);
+        setAppliedCoupon(null);
+        setDiscount(0);
+        return;
+      }
+
       setAppliedCoupon(couponData);
       let calculatedDiscount = 0;
       if (couponData.discountType === 'percentage') {
@@ -237,7 +242,7 @@ export default function CheckoutContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: finalTotal, // Usar o total com desconto
+            amount: finalTotal,
             email: shippingInfo.email,
           }),
         }
@@ -247,10 +252,9 @@ export default function CheckoutContent() {
       if (!res.ok) throw new Error(data.error || "Erro desconhecido");
       
       setPixData(data);
-      setLastPaymentId(data.payment_id); // Salva o ID para o listener
+      setLastPaymentId(data.payment_id);
       setPixStatus('generated');
 
-      // Create unverified order for admin control
       await createUnverifiedOrder(user.uid, 'pix', data.payment_id);
 
       toast({ title: "PIX gerado com sucesso" });
@@ -318,7 +322,6 @@ export default function CheckoutContent() {
 
     if (paymentId) {
         unverifiedOrderData.originalSessionId = paymentId;
-        console.log('[Checkout] Salvando pré-ordem PIX. originalSessionId:', paymentId, '| Tipo:', typeof paymentId);
     }
 
     if (appliedCoupon && discount > 0) {
@@ -354,7 +357,6 @@ export default function CheckoutContent() {
     });
     
     try {
-      // Create the unverified order first to get its ID
       const unverifiedOrderId = await createUnverifiedOrder(user.uid, 'card');
       if (!unverifiedOrderId) {
         throw new Error("Não foi possível criar a pré-ordem. Tente novamente.");

@@ -68,6 +68,7 @@ export type UserProfile = {
   phone?: string;
   points?: number;
   reviewedProductIds?: string[];
+  lastPointsUpdate?: string;
 };
 
 export type OrderItem = {
@@ -115,4 +116,5 @@ export type Coupon = {
   expiryDate?: string; // ISO String
   isActive: boolean;
   usageCount?: number;
+  minSpend?: number;
 }

@@ -4,7 +4,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useAuth, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy, addDoc, increment } from 'firebase/firestore';
 import { updateProfile, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,15 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { UserProfile, Order } from '@/lib/types';
+import type { UserProfile, Order, Coupon } from '@/lib/types';
 import { cn, fixImageUrl } from '@/lib/utils';
-import { User, KeyRound, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { User, KeyRound, ShoppingCart, ChevronDown, ChevronUp, LogOut, PackageSearch, Eye, EyeOff, CheckCircle2, Coins, Gift, Sparkles, Clock, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,126 @@ const AccountPageSkeleton = () => (
         </div>
     </div>
 );
+
+const PointsSection = ({ profile }: { profile: UserProfile }) => {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isRedeeming, setIsRedeeming] = useState<number | null>(null);
+    const points = profile.points || 0;
+
+    const rewards = [
+        { points: 20, value: 5, minSpend: 80, label: 'R$ 5 OFF' },
+        { points: 40, value: 10, minSpend: 120, label: 'R$ 10 OFF' },
+        { points: 70, value: 20, minSpend: 180, label: 'R$ 20 OFF' },
+    ];
+
+    const nextReward = rewards.find(r => r.points > points) || null;
+    const progress = nextReward ? (points / nextReward.points) * 100 : 100;
+
+    const handleRedeem = async (reward: typeof rewards[0], index: number) => {
+        if (!firestore || points < reward.points) return;
+        
+        setIsRedeeming(index);
+        try {
+            const code = `FIDELIDADE-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+            
+            // 1. Create the coupon
+            const couponData: Omit<Coupon, 'id'> = {
+                code,
+                discountType: 'fixed',
+                discountValue: reward.value,
+                minSpend: reward.minSpend,
+                isActive: true,
+                usageCount: 0,
+                expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days validity
+            };
+            await addDoc(collection(firestore, 'coupons'), couponData);
+
+            // 2. Deduct points from user
+            const userRef = doc(firestore, 'users', profile.uid);
+            await updateDoc(userRef, {
+                points: increment(-reward.points)
+            });
+
+            toast({
+                title: "Cupom Gerado!",
+                description: `Use o código ${code} na sua próxima compra acima de R$ ${reward.minSpend}.`,
+            });
+        } catch (error) {
+            console.error("Error redeeming points:", error);
+            toast({ variant: 'destructive', title: "Erro no resgate", description: "Não foi possível gerar seu cupom agora." });
+        } finally {
+            setIsRedeeming(null);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <Card className="bg-primary text-primary-foreground">
+                <CardContent className="pt-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="text-center md:text-left">
+                            <p className="text-sm opacity-80 uppercase tracking-wider font-semibold">Saldo Atual</p>
+                            <h3 className="text-5xl font-bold mt-1 flex items-center justify-center md:justify-start gap-3">
+                                <Coins className="h-10 w-10 text-amber-400" />
+                                {points} Pontos
+                            </h3>
+                        </div>
+                        {nextReward && (
+                            <div className="flex-1 w-full max-w-xs space-y-2">
+                                <div className="flex justify-between text-xs font-semibold">
+                                    <span>Próxima Recompensa: {nextReward.label}</span>
+                                    <span>{points}/{nextReward.points}</span>
+                                </div>
+                                <Progress value={progress} className="h-2 bg-primary-foreground/20" />
+                                <p className="text-[10px] opacity-70 text-right">Faltam {nextReward.points - points} pontos</p>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-3">
+                {rewards.map((reward, i) => {
+                    const canRedeem = points >= reward.points;
+                    return (
+                        <Card key={i} className={cn("relative overflow-hidden border-2", canRedeem ? "border-amber-200" : "opacity-60")}>
+                            <CardHeader className="pb-2">
+                                <div className="flex justify-between items-start">
+                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800">{reward.points} pontos</Badge>
+                                    <Gift className={cn("h-5 w-5", canRedeem ? "text-amber-500" : "text-muted-foreground")} />
+                                </div>
+                                <CardTitle className="text-2xl mt-2">{reward.label}</CardTitle>
+                                <CardDescription className="text-xs">Compra mínima: R$ {reward.minSpend}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button 
+                                    className="w-full mt-2" 
+                                    disabled={!canRedeem || isRedeeming !== null}
+                                    onClick={() => handleRedeem(reward, i)}
+                                >
+                                    {isRedeeming === i ? <Loader2 className="h-4 w-4 animate-spin" /> : canRedeem ? "Resgatar Agora" : `Faltam ${reward.points - points} pts`}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )
+                })}
+            </div>
+
+            <div className="rounded-lg bg-secondary/50 p-4 border flex gap-3 items-start">
+                <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div className="space-y-1">
+                    <p className="text-sm font-semibold">Informações sobre validade</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                        Seus pontos acumulados expiram em 90 dias se não forem utilizados. 
+                        Cupons gerados têm validade de 30 dias após o resgate. 
+                        Aproveite para garantir seus descontos exclusivos!
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 const OrderHistory = ({ profile }: { profile: UserProfile }) => {
     const { user } = useUser();
@@ -223,7 +344,7 @@ const OrderHistory = ({ profile }: { profile: UserProfile }) => {
                                                                         <Badge variant="secondary" className="text-[9px] h-4 py-0 bg-amber-50 text-amber-700 border-amber-200">Pendente de avaliação</Badge>
                                                                         <Button asChild size="sm" variant="link" className="h-auto p-0 text-[10px]">
                                                                             <Link href={`/produtos/${item.productId}?review=true#avaliacoes`}>
-                                                                                Avaliar agora
+                                                                                Avaliar agora (+5 pts)
                                                                             </Link>
                                                                         </Button>
                                                                     </div>
@@ -304,7 +425,7 @@ const OrderHistory = ({ profile }: { profile: UserProfile }) => {
                     </DialogHeader>
                     <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
                         <Button onClick={handleGoToReview} className="w-full">
-                            Avaliar agora
+                            Avaliar agora (+5 pts)
                         </Button>
                         <DialogClose asChild>
                             <Button variant="ghost" className="w-full">Talvez depois</Button>
@@ -540,6 +661,7 @@ export default function MyAccountPage() {
 
   const menuItems = [
       { id: 'orders', label: 'Meus Pedidos', icon: ShoppingCart },
+      { id: 'points', label: 'Meus Pontos', icon: Coins },
       { id: 'profile', label: 'Detalhes do Perfil', icon: User },
       { id: 'password', label: 'Alterar Senha', icon: KeyRound },
   ]
@@ -549,14 +671,12 @@ export default function MyAccountPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Minha Conta</h1>
-            <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações e preferências.</p>
+            <p className="mt-2 text-lg text-muted-foreground">Gerencie suas informações e fidelidade.</p>
         </div>
-        {profile.points !== undefined && (
-            <Badge variant="secondary" className="text-base py-2 px-4 flex gap-2 items-center bg-amber-100 text-amber-900 border-amber-200">
-                <ShoppingCart className="h-4 w-4" />
-                {profile.points} pontos acumulados
-            </Badge>
-        )}
+        <Badge variant="secondary" className="text-base py-2 px-4 flex gap-2 items-center bg-amber-100 text-amber-900 border-amber-200">
+            <Sparkles className="h-4 w-4 text-amber-600" />
+            {profile.points || 0} pontos PISA VIBE
+        </Badge>
       </div>
       
         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-[240px_1fr]">
@@ -628,6 +748,20 @@ export default function MyAccountPage() {
                         </CardHeader>
                         <CardContent>
                             <OrderHistory profile={profile} />
+                        </CardContent>
+                    </Card>
+                )}
+
+                {activeView === 'points' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Meus Pontos e Recompensas</CardTitle>
+                            <CardDescription>
+                                Troque seus pontos acumulados por cupons de desconto.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PointsSection profile={profile} />
                         </CardContent>
                     </Card>
                 )}

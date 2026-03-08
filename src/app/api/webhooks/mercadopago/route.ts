@@ -94,11 +94,6 @@ export async function POST(req: NextRequest) {
       const unverifiedOrderData = unverifiedOrderDoc.data() as UnverifiedOrder;
 
       console.log(`[Webhook] Pré-ordem encontrada: SIM (ID: ${unverifiedOrderDoc.id})`);
-      const storedSessionId = unverifiedOrderData.originalSessionId;
-      if (paymentMethodIdentifier === 'pix') {
-          console.log(`[Webhook] COMPARAÇÃO PIX: ID recebido (${paymentId}, tipo: ${typeof paymentId}) vs ID salvo (${storedSessionId}, tipo: ${typeof storedSessionId})`);
-          console.log(`[Webhook] ID's são estritamente iguais (===)? ${paymentId === storedSessionId}`);
-      }
       
       // Additional check: Does the amount match?
       if (payment.transaction_amount && Math.abs(unverifiedOrderData.totalAmount - payment.transaction_amount) > 0.01) {
@@ -139,19 +134,26 @@ export async function POST(req: NextRequest) {
           }
       }
 
+      // Add points to user: 1 point for every R$10
+      const pointsEarned = Math.floor(unverifiedOrderData.totalAmount / 10);
+      const userRef = db.doc(`users/${unverifiedOrderData.userId}`);
+      batch.update(userRef, { 
+        points: admin.firestore.FieldValue.increment(pointsEarned),
+        lastPointsUpdate: new Date().toISOString()
+      });
+
       batch.set(finalOrderRef, finalOrderData);
       batch.delete(unverifiedOrderDoc.ref);
       
       await batch.commit();
-      console.log(`[Webhook] SUCESSO: Pedido ${finalOrderRef.id} criado automaticamente a partir da pré-ordem ${unverifiedOrderDoc.id}.`);
+      console.log(`[Webhook] SUCESSO: Pedido ${finalOrderRef.id} criado automaticamente e ${pointsEarned} pontos adicionados.`);
 
     } else {
       console.log(`[Webhook] Pré-ordem encontrada: NÃO`);
-      console.log(`[Webhook] AVISO: Nenhuma pré-ordem encontrada para o pagamento ${paymentId}. Nenhuma ação automática será tomada.`);
     }
 
   } catch (error: any) {
-    console.error(`[Webhook] ❌ ERRO GERAL ao processar notificação para pagamento ${paymentId}:`, error);
+    console.error(`[Webhook] ❌ ERRO GERAL ao processar notificação:`, error);
     return NextResponse.json({ error: 'Falha ao processar a notificação.' }, { status: 500 });
   }
 

@@ -124,7 +124,7 @@ export default function AdminPixVerification() {
             paymentMethod: order.paymentMethod,
         };
         
-        // Increment coupon usage and add data to order object
+        // Increment coupon usage
         if (order.couponCode) {
             newOrderData.couponCode = order.couponCode;
             const couponsRef = collection(firestore, 'coupons');
@@ -144,6 +144,14 @@ export default function AdminPixVerification() {
             newOrderData.originalSessionId = order.originalSessionId;
         }
 
+        // Add points to user: 1 point for every R$10
+        const pointsEarned = Math.floor(order.totalAmount / 10);
+        const userRef = doc(firestore, 'users', order.userId);
+        batch.update(userRef, { 
+          points: increment(pointsEarned),
+          lastPointsUpdate: new Date().toISOString()
+        });
+
         batch.set(newOrderRef, newOrderData);
 
         // 2. Delete the unverified order
@@ -154,7 +162,7 @@ export default function AdminPixVerification() {
 
         toast({
             title: 'Pagamento Confirmado!',
-            description: `O pedido de ${order.customerInfo.name} foi criado com sucesso.`,
+            description: `O pedido de ${order.customerInfo.name} foi criado e ${pointsEarned} pontos foram adicionados.`,
         });
 
     } catch (error) {
@@ -195,7 +203,6 @@ export default function AdminPixVerification() {
     if (method === 'card') {
       return <CreditCard className="h-4 w-4 mr-2" />;
     }
-    // Default to PIX or other icon
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

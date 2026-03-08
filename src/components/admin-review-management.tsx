@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -55,6 +54,7 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { Progress } from './ui/progress';
+import { Skeleton } from './ui/skeleton';
 import { cn } from '@/lib/utils';
 
 type ProductWithId = Product & { firestoreId: string };

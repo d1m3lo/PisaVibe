@@ -3,7 +3,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useAuth, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useAuth, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
 import { updateProfile, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -196,38 +196,44 @@ const OrderHistory = ({ profile }: { profile: UserProfile }) => {
                                   <div>
                                       <h4 className="font-semibold mb-2">Itens</h4>
                                       <div className="space-y-4">
-                                          {order.items.map((item, index) => (
-                                              <div key={index} className="flex items-center gap-4">
-                                                  <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
-                                                  <div className="flex-grow">
-                                                      <p className="font-semibold text-sm">{item.productName}</p>
-                                                      <p className="text-xs text-muted-foreground">
-                                                          {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
-                                                      </p>
-                                                      <p className="text-xs text-muted-foreground">
-                                                          Cor: {item.variantColor} / Tam: {item.size}
-                                                      </p>
-                                                  </div>
-                                                  <div className="text-right flex flex-col items-end gap-1">
-                                                      <p className="text-sm font-semibold">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</p>
-                                                      {order.status === 'Pedido entregue' && (
-                                                          <div className="mt-1">
-                                                              {profile.reviewedProductIds?.includes(item.productId) ? (
-                                                                  <span className="text-[10px] text-green-600 font-medium flex items-center gap-1">
-                                                                      <CheckCircle2 className="h-3 w-3" /> Produto avaliado
-                                                                  </span>
-                                                              ) : (
-                                                                  <Button asChild size="sm" variant="link" className="h-auto p-0 text-[10px]">
-                                                                      <Link href={`/produtos/${item.productId}?review=true#avaliacoes`}>
-                                                                          Avaliar produto
-                                                                      </Link>
-                                                                  </Button>
-                                                              )}
-                                                          </div>
-                                                      )}
-                                                  </div>
-                                              </div>
-                                          ))}
+                                          {order.items.map((item, index) => {
+                                              const isReviewed = profile.reviewedProductIds?.includes(item.productId);
+                                              return (
+                                                <div key={index} className="flex items-center gap-4">
+                                                    <Image src={fixImageUrl(item.imageUrl)} alt={item.productName} width={50} height={50} className="rounded-md object-cover" />
+                                                    <div className="flex-grow">
+                                                        <p className="font-semibold text-sm">{item.productName}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {item.quantity} x R$ {item.price.toFixed(2).replace('.', ',')}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Cor: {item.variantColor} / Tam: {item.size}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right flex flex-col items-end gap-1">
+                                                        <p className="text-sm font-semibold">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                                                        {order.status === 'Pedido entregue' && (
+                                                            <div className="mt-1">
+                                                                {isReviewed ? (
+                                                                    <span className="text-[10px] text-green-600 font-medium flex items-center gap-1">
+                                                                        <CheckCircle2 className="h-3 w-3" /> Produto avaliado
+                                                                    </span>
+                                                                ) : (
+                                                                    <div className="flex flex-col items-end gap-1">
+                                                                        <Badge variant="secondary" className="text-[9px] h-4 py-0 bg-amber-50 text-amber-700 border-amber-200">Pendente de avaliação</Badge>
+                                                                        <Button asChild size="sm" variant="link" className="h-auto p-0 text-[10px]">
+                                                                            <Link href={`/produtos/${item.productId}?review=true#avaliacoes`}>
+                                                                                Avaliar agora
+                                                                            </Link>
+                                                                        </Button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                              )
+                                          })}
                                       </div>
                                       <Separator className="my-4" />
                                        <div className="space-y-1 text-sm">
@@ -456,12 +462,30 @@ export default function MyAccountPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [activeView, setActiveView] = useState('orders'); // Default to orders
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [activeView, setActiveView] = useState('orders'); 
+  
+  // Real-time profile listener
+  const profileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
+
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [hasInitializedForm, setHasInitializedForm] = useState(false);
+
+  useEffect(() => {
+    if (profile && !hasInitializedForm) {
+      setName(profile.name || '');
+      setAddress(profile.address || '');
+      setPhone(profile.phone || '');
+      setHasInitializedForm(true);
+    }
+  }, [profile, hasInitializedForm]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -469,31 +493,7 @@ export default function MyAccountPage() {
       router.push('/login');
       return;
     }
-
-    const fetchProfile = async () => {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const data = userDoc.data() as UserProfile;
-        setProfile(data);
-        setName(data.name || '');
-        setAddress(data.address || '');
-        setPhone(data.phone || '');
-      } else {
-         // Create a profile if it doesn't exist (e.g. for users who signed up before profile creation)
-        const newProfile = {
-            uid: user.uid,
-            name: user.displayName || '',
-            email: user.email || '',
-        };
-        await setDoc(userDocRef, newProfile);
-        setProfile(newProfile);
-        setName(newProfile.name);
-      }
-    };
-
-    fetchProfile();
-  }, [user, isUserLoading, firestore, router]);
+  }, [user, isUserLoading, router]);
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -501,7 +501,6 @@ export default function MyAccountPage() {
     setIsSaving(true);
 
     try {
-        // Update Firestore
         const userDocRef = doc(firestore, 'users', user.uid);
         await updateDoc(userDocRef, {
             name,
@@ -509,7 +508,6 @@ export default function MyAccountPage() {
             phone,
         });
 
-        // Also update Firebase Auth profile if name changed
         if (auth.currentUser && auth.currentUser.displayName !== name) {
             await updateProfile(auth.currentUser, { displayName: name });
         }
@@ -536,7 +534,7 @@ export default function MyAccountPage() {
     toast({ title: 'Você saiu da sua conta.' });
   }
   
-  if (isUserLoading || !profile) {
+  if (isUserLoading || isProfileLoading || !profile) {
     return <AccountPageSkeleton />;
   }
 

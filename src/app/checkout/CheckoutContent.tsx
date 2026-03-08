@@ -17,12 +17,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useFirestore, useUser } from "@/firebase";
-import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc } from "firebase/firestore";
+import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { addDoc, collection, query, where, onSnapshot, getDocs, getDoc, doc, updateDoc, increment } from "firebase/firestore";
 import { fixImageUrl } from "@/lib/utils";
-import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info, Gift } from "lucide-react";
+import { Loader2, Copy, CheckCircle, AlertCircle, XCircle, TicketPercent, Check, X, Truck, Info, Gift, Sparkles } from "lucide-react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
-import type { Order, Coupon, OrderItem } from "@/lib/types";
+import type { Order, Coupon, OrderItem, UserProfile } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
@@ -67,6 +67,25 @@ export default function CheckoutContent() {
   
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  // Carregar perfil para pontos
+  const profileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: profile } = useDoc<UserProfile>(profileRef);
+
+  const points = profile?.points || 0;
+
+  const loyaltyRewards = [
+    { points: 20, value: 5, minSpend: 80, label: 'R$ 5 OFF' },
+    { points: 40, value: 10, minSpend: 120, label: 'R$ 10 OFF' },
+    { points: 70, value: 20, minSpend: 180, label: 'R$ 20 OFF' },
+  ];
+
+  const availableRewards = useMemo(() => {
+    return loyaltyRewards.filter(r => points >= r.points && cartTotal >= r.minSpend);
+  }, [points, cartTotal]);
 
   const totalAcrescimoCartao = useMemo(() => {
     return cartItems.reduce((acc, item) => {
@@ -216,6 +235,52 @@ export default function CheckoutContent() {
       setDiscount(0);
     } finally {
       setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRedeemPoints = async (reward: typeof loyaltyRewards[0]) => {
+    if (!firestore || !user || !profile) return;
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+        const code = `RESGATE-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+        
+        // 1. Criar o cupom no banco
+        const couponData: Omit<Coupon, 'id'> = {
+            code,
+            discountType: 'fixed',
+            discountValue: reward.value,
+            minSpend: reward.minSpend,
+            isActive: true,
+            usageCount: 0,
+            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        };
+        const couponRef = await addDoc(collection(firestore, 'coupons'), couponData);
+
+        // 2. Descontar pontos do usuário
+        const userRef = doc(firestore, 'users', user.uid);
+        await updateDoc(userRef, {
+            points: increment(-reward.points)
+        });
+
+        // 3. Aplicar automaticamente ao checkout
+        const newCoupon = { ...couponData, id: couponRef.id } as Coupon;
+        setAppliedCoupon(newCoupon);
+        setDiscount(reward.value);
+        setCouponCode(code);
+        setCouponSuccess(`Desconto de ${reward.label} resgatado e aplicado!`);
+        
+        toast({
+            title: "Pontos Resgatados!",
+            description: `Você usou ${reward.points} pontos por um desconto de R$ ${reward.value}.`,
+        });
+    } catch (error) {
+        console.error("Error redeeming points in checkout:", error);
+        toast({ variant: 'destructive', title: "Erro no resgate", description: "Não foi possível usar seus pontos agora." });
+    } finally {
+        setIsApplyingCoupon(false);
     }
   };
 
@@ -542,6 +607,29 @@ export default function CheckoutContent() {
             </div>
              {couponError && <p className="text-sm text-destructive flex items-center gap-1"><XCircle size={14}/> {couponError}</p>}
              {couponSuccess && <p className="text-sm text-green-600 flex items-center gap-1"><Check size={14}/> {couponSuccess}</p>}
+
+             {/* Atalho para usar pontos */}
+             {availableRewards.length > 0 && !appliedCoupon && (
+                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg animate-in fade-in slide-in-from-top-2">
+                    <p className="text-[10px] font-bold text-amber-800 flex items-center gap-1 mb-2 uppercase tracking-tight">
+                        <Sparkles size={12} className="text-amber-500" /> Use seus pontos ({points} pts)
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {availableRewards.map((reward, i) => (
+                            <Button 
+                                key={i} 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 px-2 text-[10px] bg-white border-amber-300 text-amber-700 hover:bg-amber-100 font-bold"
+                                onClick={() => handleRedeemPoints(reward)}
+                                disabled={isApplyingCoupon}
+                            >
+                                {reward.label}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+             )}
           </div>
 
           <Separator className="my-4" />
@@ -553,7 +641,7 @@ export default function CheckoutContent() {
             </div>
             {discount > 0 && (
                  <div className="flex justify-between text-green-600">
-                    <span className="flex items-center gap-1"><TicketPercent size={14}/> Desconto ({appliedCoupon?.code})</span>
+                    <span className="flex items-center gap-1"><TicketPercent size={14}/> Desconto ({appliedCoupon?.code || couponCode})</span>
                     <span>- R$ {discount.toFixed(2).replace('.',',')}</span>
                 </div>
             )}
@@ -600,7 +688,7 @@ export default function CheckoutContent() {
                 </div>
                 {discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
-                        <span>Desconto ({appliedCoupon?.code})</span>
+                        <span>Desconto ({appliedCoupon?.code || couponCode})</span>
                         <span>- R$ {discount.toFixed(2).replace('.',',')}</span>
                     </div>
                 )}

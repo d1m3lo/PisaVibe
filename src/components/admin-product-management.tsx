@@ -624,15 +624,15 @@ const ProductForm = ({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`price-${variant.id}`}>Preço (Pix)</Label>
-                                <Input id={`price-${variant.id}`} type="number" value={variant.price ?? ''} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
+                                <Input id={`price-${variant.id}`} type="number" step="0.01" value={variant.price ?? ''} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`oldPrice-${variant.id}`}>Preço Antigo (Opcional)</Label>
-                                <Input id={`oldPrice-${variant.id}`} type="number" value={variant.oldPrice ?? ''} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
+                                <Input id={`oldPrice-${variant.id}`} type="number" step="0.01" value={variant.oldPrice ?? ''} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor={`acrescimo-${variant.id}`}>Acréscimo Cartão (Opcional)</Label>
-                                <Input id={`acrescimo-${variant.id}`} type="number" placeholder="Padrão: 20" value={variant.acrescimoCartao ?? ''} onChange={e => handleVariantChange(variant.id, 'acrescimoCartao', e.target.value === '' ? undefined : parseFloat(e.target.value))} />
+                                <Input id={`acrescimo-${variant.id}`} type="number" step="0.01" placeholder="Padrão: 20" value={variant.acrescimoCartao ?? ''} onChange={e => handleVariantChange(variant.id, 'acrescimoCartao', e.target.value === '' ? undefined : parseFloat(e.target.value))} />
                             </div>
                         </div>
 

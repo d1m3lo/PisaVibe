@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -129,7 +128,7 @@ const CouponForm = ({
         </div>
         <div className="space-y-2">
           <Label htmlFor="discountValue">Valor do Desconto</Label>
-          <Input id="discountValue" type="number" value={formData.discountValue} onChange={handleChange} required min="0" />
+          <Input id="discountValue" type="number" step="0.01" value={formData.discountValue} onChange={handleChange} required min="0" />
         </div>
       </div>
       <div className="space-y-2">

@@ -127,7 +127,17 @@ const ProductForm = ({
     gender: product?.gender || 'masculino',
     category: product?.category || 'calcados',
     subCategory: product?.subCategory || '',
-    variants: product?.variants || [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, acrescimoCartao: '' as any, images: [''], imageNames: [], sizes: [] }],
+    variants: (product?.variants || []).map(v => ({
+        ...v,
+        price: String(v.price),
+        oldPrice: v.oldPrice ? String(v.oldPrice) : '',
+        acrescimoCartao: v.acrescimoCartao !== undefined ? String(v.acrescimoCartao) : ''
+    })).length > 0 ? (product?.variants || []).map(v => ({
+        ...v,
+        price: String(v.price),
+        oldPrice: v.oldPrice ? String(v.oldPrice) : '',
+        acrescimoCartao: v.acrescimoCartao !== undefined ? String(v.acrescimoCartao) : ''
+    })) : [{ id: Date.now().toString(), color: '', colorHex: '#000000', price: '' as any, oldPrice: '' as any, acrescimoCartao: '' as any, images: [''], imageNames: [], sizes: [] }],
     status: product?.status || 'ativo',
     tags: product?.tags || [],
     quality: product?.quality || 'Select',
@@ -167,7 +177,7 @@ const ProductForm = ({
         }
         
         // Fallback for any other cases
-        return a.localeCompare(b);
+        return a.size.localeCompare(b.size);
     });
   };
 
@@ -236,10 +246,10 @@ const ProductForm = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { id, value, type } = e.target;
+    const { id, value } = e.target;
     setFormData((prev) => ({ 
       ...prev, 
-      [id]: type === 'number' ? parseFloat(value) || '' : value 
+      [id]: value 
     }));
   };
 
@@ -256,10 +266,10 @@ const ProductForm = ({
     });
   }
 
-  const handleVariantChange = <T extends keyof Variant>(
+  const handleVariantChange = (
     variantId: string,
-    field: T,
-    value: Variant[T]
+    field: string,
+    value: any
   ) => {
     setFormData(prev => ({
       ...prev,
@@ -358,7 +368,7 @@ const ProductForm = ({
       const variant: Partial<Variant> = {
         ...v,
         images: v.images.filter(Boolean),
-        price: parseFloat(String(v.price)) || 0,
+        price: parseFloat(String(v.price).replace(',', '.')) || 0,
         sizes: availableSizes
           .map(size => {
             const foundSize = v.sizes.find(s => s.size === size);
@@ -367,12 +377,12 @@ const ProductForm = ({
           .filter(s => s.stock >= 0)
       };
       
-      const oldPriceValue = parseFloat(String(v.oldPrice));
+      const oldPriceValue = parseFloat(String(v.oldPrice).replace(',', '.'));
         if (!isNaN(oldPriceValue) && oldPriceValue > 0) {
         variant.oldPrice = oldPriceValue;
       }
 
-      const acrescimoCartaoValue = parseFloat(String(v.acrescimoCartao));
+      const acrescimoCartaoValue = parseFloat(String(v.acrescimoCartao).replace(',', '.'));
       if (!isNaN(acrescimoCartaoValue) && acrescimoCartaoValue >= 0) {
           variant.acrescimoCartao = acrescimoCartaoValue;
       } else {
@@ -411,7 +421,6 @@ const ProductForm = ({
       variants: finalVariants,
       status: formData.status as Product['status'],
       rating: product?.rating || 0,
-      // Garante que reviews seja um array ao salvar, convertendo legados
       reviews: Array.isArray(product?.reviews) ? product.reviews : [],
       tags: formData.tags,
       quality: formData.quality as Product['quality'],
@@ -421,7 +430,7 @@ const ProductForm = ({
       hasGift: formData.hasGift,
     };
     
-    // Remove price from top-level product data if it exists from old structure
+    // Remove legacy price if it exists
     if ('price' in productData) {
       delete (productData as any).price;
     }
@@ -624,15 +633,35 @@ const ProductForm = ({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor={`price-${variant.id}`}>Preço (Pix)</Label>
-                                <Input id={`price-${variant.id}`} type="number" step="0.01" value={variant.price ?? ''} onChange={e => handleVariantChange(variant.id, 'price', parseFloat(e.target.value) || 0)} required />
+                                <Input 
+                                    id={`price-${variant.id}`} 
+                                    type="text" 
+                                    inputMode="decimal"
+                                    value={variant.price ?? ''} 
+                                    onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} 
+                                    required 
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor={`oldPrice-${variant.id}`}>Preço Antigo (Opcional)</Label>
-                                <Input id={`oldPrice-${variant.id}`} type="number" step="0.01" value={variant.oldPrice ?? ''} onChange={e => handleVariantChange(variant.id, 'oldPrice', parseFloat(e.target.value) || 0)} />
+                                <Input 
+                                    id={`oldPrice-${variant.id}`} 
+                                    type="text" 
+                                    inputMode="decimal"
+                                    value={variant.oldPrice ?? ''} 
+                                    onChange={e => handleVariantChange(variant.id, 'oldPrice', e.target.value)} 
+                                />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor={`acrescimo-${variant.id}`}>Acréscimo Cartão (Opcional)</Label>
-                                <Input id={`acrescimo-${variant.id}`} type="number" step="0.01" placeholder="Padrão: 20" value={variant.acrescimoCartao ?? ''} onChange={e => handleVariantChange(variant.id, 'acrescimoCartao', e.target.value === '' ? undefined : parseFloat(e.target.value))} />
+                                <Input 
+                                    id={`acrescimo-${variant.id}`} 
+                                    type="text" 
+                                    inputMode="decimal"
+                                    placeholder="Padrão: 20" 
+                                    value={variant.acrescimoCartao ?? ''} 
+                                    onChange={e => handleVariantChange(variant.id, 'acrescimoCartao', e.target.value)} 
+                                />
                             </div>
                         </div>
 

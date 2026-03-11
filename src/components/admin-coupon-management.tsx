@@ -75,16 +75,16 @@ const CouponForm = ({
   const [formData, setFormData] = useState({
     code: coupon?.code || '',
     discountType: coupon?.discountType || 'percentage',
-    discountValue: coupon?.discountValue || 0,
+    discountValue: coupon?.discountValue ? String(coupon.discountValue) : '',
     expiryDate: coupon?.expiryDate ? coupon.expiryDate.split('T')[0] : '',
     isActive: coupon?.isActive ?? true,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value, type } = e.target;
+    const { id, value } = e.target;
     setFormData((prev) => ({ 
       ...prev, 
-      [id]: type === 'number' ? parseFloat(value) || 0 : value 
+      [id]: value 
     }));
   };
 
@@ -98,7 +98,7 @@ const CouponForm = ({
       id: coupon?.id || new Date().getTime().toString(),
       code: formData.code.toUpperCase(),
       discountType: formData.discountType as 'percentage' | 'fixed',
-      discountValue: formData.discountValue,
+      discountValue: parseFloat(String(formData.discountValue).replace(',', '.')) || 0,
       isActive: formData.isActive,
       usageCount: coupon?.usageCount || 0,
       ...(formData.expiryDate && { expiryDate: new Date(formData.expiryDate).toISOString() }),
@@ -128,7 +128,14 @@ const CouponForm = ({
         </div>
         <div className="space-y-2">
           <Label htmlFor="discountValue">Valor do Desconto</Label>
-          <Input id="discountValue" type="number" step="0.01" value={formData.discountValue} onChange={handleChange} required min="0" />
+          <Input 
+            id="discountValue" 
+            type="text" 
+            inputMode="decimal"
+            value={formData.discountValue} 
+            onChange={handleChange} 
+            required 
+          />
         </div>
       </div>
       <div className="space-y-2">

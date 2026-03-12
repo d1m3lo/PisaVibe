@@ -31,6 +31,7 @@ export const megaMenuData: MenuCategory[] = [
         title: "Roupas",
         links: [
           { title: "Streetwear", href: "/produtos?genero=masculino&categoria=roupas&tipo=streetwear" },
+          { title: "Casual", href: "/produtos?genero=masculino&categoria=roupas&tipo=casual" },
           { title: "Moletom", href: "/produtos?genero=masculino&categoria=roupas&tipo=moletom" },
           { title: "Bermudas", href: "/produtos?genero=masculino&categoria=roupas&tipo=bermudas" },
           { title: "Calças", href: "/produtos?genero=masculino&categoria=roupas&tipo=calcas" },

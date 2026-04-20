@@ -1,10 +1,22 @@
-# Compiled JavaScript files
-lib/**/*.js
-lib/**/*.js.map
-
-# TypeScript v1 declaration files
-typings/
-
-# Node.js dependency directory
+# Dependências
 node_modules/
-*.local
+
+# Build outputs
+functions/dist/
+.next/
+
+# Firebase (removido)
+.firebase/
+firebase.json
+.firebaserc
+
+# Ambiente
+.env
+.env.*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Typescript
+*.tsbuildinfo

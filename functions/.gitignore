@@ -20,3 +20,6 @@ Thumbs.db
 
 # Typescript
 *.tsbuildinfo
+
+# Lockfile gerado automaticamente
+package-lock.json

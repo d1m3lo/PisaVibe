@@ -1,5 +1,5 @@
-
 {
+  "_migration_note": "Firebase (Firestore + Firebase Auth) foi completamente removido. Substituído por Supabase (PostgreSQL + Supabase Auth). Estrutura de coleções Firestore convertida para tabelas relacionais normalizadas.",
   "entities": {
     "Product": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -9,7 +9,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the product."
+          "description": "UUID gerado pelo Supabase (gen_random_uuid())."
         },
         "name": {
           "type": "string",
@@ -19,9 +19,9 @@
           "type": "string",
           "description": "Detailed description of the product."
         },
-        "imageUrl": {
+        "image_url": {
           "type": "string",
-          "description": "URL of the product image.",
+          "description": "URL da imagem armazenada no Supabase Storage (bucket: product-images).",
           "format": "uri"
         },
         "price": {
@@ -38,60 +38,48 @@
         },
         "sizes": {
           "type": "array",
-          "description": "Available sizes for the product.",
-          "items": {
-            "type": "string"
-          }
+          "description": "Available sizes. Armazenado como coluna text[] no PostgreSQL.",
+          "items": { "type": "string" }
         },
         "colors": {
           "type": "array",
-          "description": "Available colors for the product.",
-          "items": {
-            "type": "string"
-          }
+          "description": "Available colors. Armazenado como coluna text[] no PostgreSQL.",
+          "items": { "type": "string" }
         },
-        "stockQuantity": {
+        "stock_quantity": {
           "type": "number",
           "description": "Number of units currently in stock."
         },
-        "isImported": {
-            "type": "boolean",
-            "description": "Flag to indicate if the product is imported."
+        "is_imported": {
+          "type": "boolean",
+          "description": "Flag to indicate if the product is imported."
         },
         "origin": {
           "type": "string",
           "description": "Origin of the product for admin use (e.g., supplier name)."
         },
-        "imageNames": {
+        "image_names": {
           "type": "array",
-          "description": "Names for each image, for products like backpacks.",
-          "items": {
-            "type": "string"
-          }
+          "description": "Names for each image. Armazenado como coluna text[] no PostgreSQL.",
+          "items": { "type": "string" }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação, gerenciado automaticamente pelo Supabase."
         }
       },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "imageUrl",
-        "price",
-        "category",
-        "brand",
-        "sizes",
-        "colors",
-        "stockQuantity"
-      ]
+      "required": ["id", "name", "description", "image_url", "price", "category", "brand", "sizes", "colors", "stock_quantity"]
     },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the PISA VIBE online store.",
+      "description": "Perfil do usuário. O ID é o mesmo UUID gerado pelo Supabase Auth (auth.users.id), garantindo consistência sem Firebase.",
       "properties": {
-        "uid": {
+        "id": {
           "type": "string",
-          "description": "Unique identifier for the user, from Firebase Auth."
+          "description": "UUID do usuário — referencia auth.users.id do Supabase Auth. Substitui o Firebase Auth UID."
         },
         "name": {
           "type": "string",
@@ -112,119 +100,102 @@
         },
         "points": {
           "type": "number",
-          "description": "Loyalty points accumulated by the user."
+          "description": "Loyalty points accumulated by the user.",
+          "default": 0
         },
-        "reviewedProductIds": {
+        "reviewed_product_ids": {
           "type": "array",
-          "description": "List of product IDs the user has already reviewed.",
-          "items": {
-            "type": "string"
-          }
+          "description": "IDs de produtos já avaliados. Armazenado como uuid[] no PostgreSQL.",
+          "items": { "type": "string" }
         },
-        "orderIds": {
-          "type": "array",
-          "description": "References to Orders. (Relationship: User 1:N Order)",
-          "items": {
-            "type": "string"
-          }
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do perfil."
         }
       },
-      "required": [
-        "uid",
-        "name",
-        "email"
-      ]
+      "required": ["id", "name", "email"]
     },
     "Order": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Order",
       "type": "object",
-      "description": "Represents an order placed by a user.",
+      "description": "Represents an order placed by a user. Tabela própria com FK para users — sem subcoleção Firestore.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the order."
+          "description": "UUID do pedido."
         },
-        "userId": {
+        "user_id": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Order)"
+          "description": "FK → users.id. (Relacionamento: User 1:N Order)"
         },
-        "orderDate": {
+        "order_date": {
           "type": "string",
-          "description": "Date and time the order was placed.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Data e hora do pedido."
         },
-        "totalAmount": {
+        "total_amount": {
           "type": "number",
           "description": "Total amount of the order."
         },
-        "shippingAddress": {
+        "shipping_address": {
           "type": "string",
           "description": "Shipping address for the order."
         },
         "status": {
           "type": "string",
-          "description": "Current status of the order (e.g., 'Processing', 'Shipped', 'Delivered')."
+          "description": "Status do pedido.",
+          "enum": ["pending", "processing", "shipped", "delivered", "cancelled"]
         },
-        "orderItemIds": {
-          "type": "array",
-          "description": "References to OrderItems. (Relationship: Order 1:N OrderItem)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "couponCode": {
+        "coupon_code": {
           "type": "string",
           "description": "The coupon code applied to the order."
         },
-        "discountAmount": {
+        "discount_amount": {
           "type": "number",
-          "description": "The amount discounted from the order total."
+          "description": "The amount discounted from the order total.",
+          "default": 0
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "orderDate",
-        "totalAmount",
-        "shippingAddress",
-        "status"
-      ]
+      "required": ["id", "user_id", "order_date", "total_amount", "shipping_address", "status"]
     },
     "OrderItem": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "OrderItem",
       "type": "object",
-      "description": "Represents an item within an order.",
+      "description": "Represents an item within an order. Tabela própria com FKs — sem subcoleção Firestore.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the order item."
+          "description": "UUID do item."
         },
-        "orderId": {
+        "order_id": {
           "type": "string",
-          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
+          "description": "FK → orders.id. (Relacionamento: Order 1:N OrderItem)"
         },
-        "productId": {
+        "product_id": {
           "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N OrderItem)"
+          "description": "FK → products.id. (Relacionamento: Product 1:N OrderItem)"
         },
         "quantity": {
           "type": "number",
-          "description": "Quantity of the product in the order item."
+          "description": "Quantity of the product."
         },
         "price": {
           "type": "number",
-          "description": "Price of the product at the time of the order."
+          "description": "Price at the time of order (snapshot)."
+        },
+        "size": {
+          "type": "string",
+          "description": "Tamanho escolhido no momento da compra."
+        },
+        "color": {
+          "type": "string",
+          "description": "Cor escolhida no momento da compra."
         }
       },
-      "required": [
-        "id",
-        "orderId",
-        "productId",
-        "quantity",
-        "price"
-      ]
+      "required": ["id", "order_id", "product_id", "quantity", "price"]
     },
     "ProductRecommendation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -234,33 +205,27 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the product recommendation."
+          "description": "UUID da recomendação."
         },
-        "userId": {
+        "user_id": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N ProductRecommendation)"
+          "description": "FK → users.id."
         },
-        "productId": {
+        "product_id": {
           "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N ProductRecommendation)"
+          "description": "FK → products.id."
         },
         "score": {
           "type": "number",
           "description": "Recommendation score (higher is better)."
         },
-        "recommendationDate": {
+        "recommendation_date": {
           "type": "string",
-          "description": "Date and time the recommendation was generated.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Date the recommendation was generated."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "productId",
-        "score",
-        "recommendationDate"
-      ]
+      "required": ["id", "user_id", "product_id", "score", "recommendation_date"]
     },
     "Coupon": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -270,161 +235,131 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the coupon."
+          "description": "UUID do cupom."
         },
         "code": {
           "type": "string",
-          "description": "The coupon code that users will enter."
+          "description": "The coupon code."
         },
-        "discountType": {
+        "discount_type": {
           "type": "string",
-          "description": "The type of discount.",
           "enum": ["percentage", "fixed"]
         },
-        "discountValue": {
+        "discount_value": {
           "type": "number",
-          "description": "The value of the discount (either percentage or fixed amount)."
+          "description": "Value of the discount."
         },
-        "expiryDate": {
+        "expiry_date": {
           "type": "string",
-          "description": "The expiration date of the coupon.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Expiration date of the coupon."
         },
-        "isActive": {
+        "is_active": {
           "type": "boolean",
           "description": "Whether the coupon is currently active."
         }
       },
-      "required": [
-        "id",
-        "code",
-        "discountType",
-        "discountValue",
-        "isActive"
-      ]
+      "required": ["id", "code", "discount_type", "discount_value", "is_active"]
     }
   },
   "auth": {
+    "_note": "Firebase Auth removido. Substituído por Supabase Auth.",
+    "provider": "supabase-auth",
     "providers": [
-      "password",
-      "google.com"
-    ]
-  },
-  "firestore": {
-    "structure": [
       {
-        "path": "products/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Stores product information. Each document represents a single product.",
-          "params": [
-            {
-              "name": "productId",
-              "description": "The unique identifier of the product."
-            }
-          ]
-        }
+        "type": "email_password",
+        "description": "Login com email e senha via Supabase Auth (substitui provider 'password' do Firebase)."
       },
       {
-        "path": "users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. Each document represents a single user, keyed by their Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (matches Firebase Auth UID)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "users/{userId}/orders/{orderId}",
-        "definition": {
-          "entityName": "Order",
-          "schema": {
-            "$ref": "#/backend/entities/Order"
-          },
-          "description": "Stores order information for a specific user. Orders are subcollections of users for easy retrieval of order history.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who placed the order."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier of the order."
-            }
-          ]
-        }
-      },
-      {
-        "path": "users/{userId}/orders/{orderId}/orderItems/{orderItemId}",
-        "definition": {
-          "entityName": "OrderItem",
-          "schema": {
-            "$ref": "#/backend/entities/OrderItem"
-          },
-          "description": "Stores order items for a specific order. Order items are subcollections of orders.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who placed the order."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier of the order."
-            },
-            {
-              "name": "orderItemId",
-              "description": "The unique identifier of the order item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "users/{userId}/productRecommendations/{productRecommendationId}",
-        "definition": {
-          "entityName": "ProductRecommendation",
-          "schema": {
-            "$ref": "#/backend/entities/ProductRecommendation"
-          },
-          "description": "Stores product recommendations for a specific user. Recommendations are subcollections of users to allow for personalized recommendations.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user for whom the recommendation is generated."
-            },
-            {
-              "name": "productRecommendationId",
-              "description": "The unique identifier of the product recommendation."
-            }
-          ]
-        }
-      },
-      {
-        "path": "coupons/{couponId}",
-        "definition": {
-          "entityName": "Coupon",
-          "schema": {
-            "$ref": "#/backend/entities/Coupon"
-          },
-          "description": "Stores discount coupon information.",
-          "params": [
-            {
-              "name": "couponId",
-              "description": "The unique identifier of the coupon."
-            }
-          ]
-        }
+        "type": "oauth_google",
+        "description": "Login com Google via Supabase Auth OAuth (substitui 'google.com' do Firebase).",
+        "supabase_provider_key": "google"
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the PISA VIBE online store, focusing on products, users, orders, and product recommendations. The structure prioritizes authorization independence and QAPs by leveraging path-based ownership for user-specific data and avoiding `get()` calls in security rules. This ensures scalability and simplifies security rule management. The core principle is to make security rules as simple as possible by denormalizing security critical properties to each record. \n\nProducts are stored in a top-level `products` collection. User data, including orders and product recommendations, are stored under the `/users/{userId}` path. This structure facilitates easy retrieval of user-specific data and simplifies ownership-based security rules.\n\nOrders and order items are structured under user-specific collections (`/users/{userId}/orders/{orderId}` and `/users/{userId}/orders/{orderId}/orderItems/{orderItemId}`). This approach enables efficient querying of a user's order history and related order items.\n\nProduct recommendations are also stored under the user's document (`/users/{userId}/productRecommendations/{productRecommendationId}`), allowing for personalized recommendations based on user activity.\n\nThis design promotes Authorization Independence by avoiding hierarchical authorization dependencies. Path-based ownership (`/users/{userId}/...`) allows security rules to directly verify user identity without needing to read parent documents, enabling atomic operations and improving security. QAPs are supported through structural segregation; each collection serves a specific purpose with uniform security requirements. This segregation simplifies `list` operations, as rules can be tailored to each collection's access needs without complex filtering logic."
+    "session_management": "Sessões gerenciadas pelo Supabase Auth com JWT. No Next.js, usar @supabase/ssr com middleware para proteção de rotas server-side.",
+    "user_profile_sync": "Usar Supabase Database Webhook ou trigger PostgreSQL (on insert on auth.users) para criar automaticamente um registro em public.users quando um novo usuário se registrar."
+  },
+  "database": {
+    "_note": "Firestore removido. Substituído por PostgreSQL via Supabase.",
+    "provider": "supabase-postgresql",
+    "tables": [
+      {
+        "name": "products",
+        "entity": "Product",
+        "rls_policy": "Leitura pública. Escrita restrita a usuários com role 'admin'.",
+        "indexes": ["category", "brand", "price"]
+      },
+      {
+        "name": "users",
+        "entity": "User",
+        "rls_policy": "Usuário só acessa e edita o próprio registro (auth.uid() = id).",
+        "indexes": ["email"]
+      },
+      {
+        "name": "orders",
+        "entity": "Order",
+        "rls_policy": "Usuário só acessa os próprios pedidos (auth.uid() = user_id).",
+        "indexes": ["user_id", "status", "order_date"],
+        "note": "Substitui a subcoleção Firestore users/{userId}/orders/{orderId}. Com SQL, query por user_id é trivial e mais eficiente."
+      },
+      {
+        "name": "order_items",
+        "entity": "OrderItem",
+        "rls_policy": "Acesso via JOIN com orders onde user_id = auth.uid().",
+        "indexes": ["order_id", "product_id"],
+        "note": "Substitui a subcoleção users/{userId}/orders/{orderId}/orderItems/{orderItemId}."
+      },
+      {
+        "name": "product_recommendations",
+        "entity": "ProductRecommendation",
+        "rls_policy": "Usuário só acessa as próprias recomendações (auth.uid() = user_id).",
+        "indexes": ["user_id", "score"],
+        "note": "Substitui a subcoleção users/{userId}/productRecommendations/{productRecommendationId}."
+      },
+      {
+        "name": "coupons",
+        "entity": "Coupon",
+        "rls_policy": "Leitura pública para cupons ativos. Escrita restrita a 'admin'.",
+        "indexes": ["code", "is_active"]
+      }
+    ],
+    "reasoning": "A estrutura Firestore usava subcoleções hierárquicas (users/{id}/orders/{id}/orderItems/{id}) para simular relações. No PostgreSQL do Supabase, isso se torna tabelas planas com FKs (orders.user_id, order_items.order_id), o que é mais eficiente, permite JOINs, e simplifica queries complexas como histórico de pedidos com itens em uma única chamada. Row Level Security (RLS) substitui as Firestore Security Rules, com a vantagem de ser expressado em SQL padrão."
+  },
+  "storage": {
+    "_note": "Firebase Storage removido. Substituído por Supabase Storage.",
+    "provider": "supabase-storage",
+    "buckets": [
+      {
+        "name": "product-images",
+        "public": true,
+        "description": "Imagens dos produtos. URLs públicas usadas em products.image_url."
+      },
+      {
+        "name": "user-avatars",
+        "public": false,
+        "description": "Avatares de usuário. Acesso autenticado via Supabase Storage RLS."
+      }
+    ]
+  },
+  "background_jobs": {
+    "_note": "Cloud Functions removidas. Substituídas por Route Handlers Next.js + Inngest.",
+    "provider": "inngest",
+    "functions": [
+      {
+        "name": "on-order-created",
+        "trigger": "order/created",
+        "description": "Dispara após criação de pedido: envia e-mail de confirmação via Resend, decrementa stock_quantity em products."
+      },
+      {
+        "name": "on-payment-webhook",
+        "trigger": "POST /api/webhooks/mercadopago",
+        "description": "Route Handler Next.js que recebe webhook do MercadoPago e atualiza orders.status."
+      },
+      {
+        "name": "generate-recommendations",
+        "trigger": "schedule (daily)",
+        "description": "Job diário que lê orders + order_items do usuário e gera recomendações via Genkit AI, salvando em product_recommendations."
+      }
+    ]
   }
 }

@@ -1,54 +1,30 @@
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getMessaging } from 'firebase/messaging'; // Import getMessaging
+// ─────────────────────────────────────────────────────────────────────────────
+// @/firebase — compatibility shim
+//
+// All existing imports like:
+//   import { useFirestore, useUser, useAuth, useCollection, useDoc } from '@/firebase'
+// continue to work without touching the consuming files.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
-  if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
+export {
+  SupabaseProvider,
+  FirebaseClientProvider,
+  useSupabase,
+  useAuth,
+  useUser,
+  useFirestore,
+  useCollection,
+  useDoc,
+  useMemoFirebase,
+} from '@/supabase/provider';
 
-    return getSdks(firebaseApp);
-  }
+export type {
+  UseCollectionResult,
+  UseDocResult,
+} from '@/supabase/provider';
 
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
-}
-
-export function getSdks(firebaseApp: FirebaseApp) {
-  // Check if we are on the client side before initializing messaging
-  const messaging = typeof window !== 'undefined' ? getMessaging(firebaseApp) : null;
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    messaging: messaging, // Add messaging to the returned SDKs
-  };
-}
-
-export * from './provider';
-export * from './client-provider';
-export * from './firestore/use-collection';
-export * from './firestore/use-doc';
-export * from './non-blocking-updates';
-export * from './non-blocking-login';
-export * from './errors';
-export * from './error-emitter';
+// Re-export supabase clients for direct use
+export { getSupabaseClient } from '@/supabase/client';
+export { createServerSupabaseClient, createServiceRoleClient } from '@/supabase/server';

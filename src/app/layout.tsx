@@ -9,7 +9,6 @@ import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import ConditionalHeaderFooter from "@/components/conditional-header-footer";
 import Footer from "@/components/footer";
-import SessionTracker from "@/components/session-tracker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,7 +50,6 @@ export default function RootLayout({
             </CartProvider>
           </FirebaseClientProvider>
           <Toaster />
-          <SessionTracker />
         </ThemeProvider>
       </body>
     </html>

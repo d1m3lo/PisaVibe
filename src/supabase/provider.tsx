@@ -34,11 +34,19 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
 
+  const enhanceUser = (u: User | null) => {
+    if (!u) return null;
+    if (!('uid' in u)) {
+      Object.defineProperty(u, 'uid', { get: () => u.id, configurable: true });
+    }
+    return u;
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser(enhanceUser(session?.user ?? null));
       setIsUserLoading(false);
     });
 
@@ -46,7 +54,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(enhanceUser(session?.user ?? null));
         setIsUserLoading(false);
       }
     );

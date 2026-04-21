@@ -28,5 +28,7 @@ export type {
 // Re-export supabase client for direct use (client-side only)
 export { getSupabaseClient } from '@/supabase/client';
 
+export { initializeFirebase } from './compat-firestore';
+
 // NOTE: Do NOT re-export createServerSupabaseClient here.
 // Server components should import directly from '@/supabase/server'.

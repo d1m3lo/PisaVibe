@@ -392,5 +392,52 @@ export class Timestamp {
   }
 }
 
+// ─── Batch writing ─────────────────────────────────────────────────────────────
+
+export interface WriteBatch {
+  set(ref: DocRef, data: any, options?: { merge?: boolean }): WriteBatch;
+  update(ref: DocRef, data: any): WriteBatch;
+  delete(ref: DocRef): WriteBatch;
+  commit(): Promise<void>;
+}
+
+export function writeBatch(supabase: SupabaseClient): WriteBatch {
+  // Supabase doesn't have a direct equivalent to Firestore's client-side batching
+  // outside of RPC or raw SQL. We'll simulate it by collecting operations and
+  // executing them sequentially or via individual requests. For true atomicity,
+  // we would need an RPC function. This is a functional shim.
+  
+  const operations: Array<() => Promise<void>> = [];
+
+  return {
+    set(ref: DocRef, data: any, options?: { merge?: boolean }) {
+      operations.push(() => setDoc(ref, data, options));
+      return this;
+    },
+    update(ref: DocRef, data: any) {
+      operations.push(() => updateDoc(ref, data));
+      return this;
+    },
+    delete(ref: DocRef) {
+      operations.push(() => deleteDoc(ref));
+      return this;
+    },
+    async commit() {
+      // Execute all operations
+      // In a real transactional system this would be atomic
+      for (const op of operations) {
+        await op();
+      }
+    }
+  };
+}
+
 // Re-export Firestore type alias so `Firestore` type references don't break
 export type Firestore = SupabaseClient;
+
+// Compatibility for initializeFirebase
+export function initializeFirebase() {
+  // This is a no-op in the Supabase world since we initialize differently,
+  // but we provide it so existing imports don't break.
+  return {};
+}

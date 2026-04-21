@@ -25,6 +25,8 @@ export type {
   UseDocResult,
 } from '@/supabase/provider';
 
-// Re-export supabase clients for direct use
+// Re-export supabase client for direct use (client-side only)
 export { getSupabaseClient } from '@/supabase/client';
-export { createServerSupabaseClient, createServiceRoleClient } from '@/supabase/server';
+
+// NOTE: Do NOT re-export createServerSupabaseClient here.
+// Server components should import directly from '@/supabase/server'.

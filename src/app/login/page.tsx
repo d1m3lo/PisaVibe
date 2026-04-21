@@ -13,11 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useFirestore } from "@/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { useAuth, useUser, useSupabase } from "@/firebase";
 import { useState, useEffect } from "react";
-import { useUser } from "@/firebase";
 import { Eye, EyeOff } from "lucide-react";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -34,8 +31,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const auth = useAuth();
-  const firestore = useFirestore();
+  const supabase = useSupabase();
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useUser();
@@ -51,7 +47,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
       toast({
         title: "Login bem-sucedido!",
         description: "Bem-vindo de volta à PISA VIBE.",
@@ -59,18 +61,12 @@ export default function LoginPage() {
       router.push("/");
     } catch (err: any) {
       let errorMessage = "Ocorreu um erro desconhecido.";
-      switch (err.code) {
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          errorMessage = 'Email ou senha inválidos.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'O formato do email é inválido.';
-          break;
-        default:
-          errorMessage = 'Falha no login. Por favor, tente novamente.';
-          break;
+      if (err.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Email ou senha inválidos.';
+      } else if (err.message?.includes('Email not confirmed')) {
+        errorMessage = 'Por favor, confirme seu email antes de fazer login.';
+      } else {
+        errorMessage = 'Falha no login. Por favor, tente novamente.';
       }
        setError(errorMessage);
       toast({
@@ -82,31 +78,18 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Check if user exists in Firestore
-      const userDocRef = doc(firestore, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        // Create user profile in Firestore
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          name: user.displayName,
-          email: user.email,
-          address: "",
-          phone: "",
-        });
-      }
-
-      toast({
-        title: "Login bem-sucedido!",
-        description: "Bem-vindo à PISA VIBE.",
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
       });
-      router.push("/");
+
+      if (authError) throw authError;
+
+      // Note: After OAuth redirect, user creation in the DB
+      // should be handled via a Supabase trigger or in the auth callback
     } catch (error: any) {
        toast({
         variant: "destructive",

@@ -193,7 +193,7 @@ export async function getDoc(ref: DocRef): Promise<DocSnapshot> {
   }
 
   const { data, error } = await q.maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(error.message || JSON.stringify(error));
 
   return wrapDoc(data);
 }
@@ -218,7 +218,7 @@ export async function getDocs(ref: CollectionRef | QueryRef): Promise<QuerySnaps
   }
 
   const { data, error } = await q;
-  if (error) throw error;
+  if (error && error.code !== 'PGRST116') throw new Error(error.message || JSON.stringify(error));
 
   const docs = (data ?? []).map(wrapDoc);
   return {
@@ -243,7 +243,7 @@ export async function setDoc(ref: DocRef, data: any, options?: { merge?: boolean
   }
 
   const { error } = await supabase.from(table).upsert(row);
-  if (error) throw error;
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 export async function addDoc(ref: CollectionRef, data: any): Promise<DocRef> {
@@ -259,7 +259,7 @@ export async function addDoc(ref: CollectionRef, data: any): Promise<DocRef> {
   }
 
   const { data: inserted, error } = await supabase.from(table).insert(row).select('id').single();
-  if (error) throw error;
+  if (error) throw new Error(error.message || JSON.stringify(error));
 
   return { __type: 'doc', table, id: inserted.id, parentPath: ref.parentPath };
 }
@@ -296,7 +296,7 @@ export async function updateDoc(ref: DocRef, data: any) {
   }
 
   const { error } = await q;
-  if (error) throw error;
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 export async function deleteDoc(ref: DocRef) {
@@ -312,7 +312,7 @@ export async function deleteDoc(ref: DocRef) {
   }
 
   const { error } = await q;
-  if (error) throw error;
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 // ─── Realtime (onSnapshot) ─────────────────────────────────────────────────────
@@ -329,9 +329,9 @@ export function onSnapshot(
 
   // Initial fetch
   if (ref.__type === 'doc') {
-    getDoc(ref).then(snapshot => callback(snapshot));
+    getDoc(ref).then(snapshot => callback(snapshot)).catch(err => console.error('onSnapshot initial getDoc error:', err));
   } else {
-    getDocs(ref as CollectionRef | QueryRef).then(snapshot => callback(snapshot));
+    getDocs(ref as CollectionRef | QueryRef).then(snapshot => callback(snapshot)).catch(err => console.error('onSnapshot initial getDocs error:', err));
   }
 
   // Subscribe to realtime
@@ -340,9 +340,9 @@ export function onSnapshot(
     .on('postgres_changes', { event: '*', schema: 'public', table }, () => {
       // Re-fetch on any change
       if (ref.__type === 'doc') {
-        getDoc(ref).then(snapshot => callback(snapshot));
+        getDoc(ref).then(snapshot => callback(snapshot)).catch(err => console.error('onSnapshot realtime getDoc error:', err));
       } else {
-        getDocs(ref as CollectionRef | QueryRef).then(snapshot => callback(snapshot));
+        getDocs(ref as CollectionRef | QueryRef).then(snapshot => callback(snapshot)).catch(err => console.error('onSnapshot realtime getDocs error:', err));
       }
     })
     .subscribe();

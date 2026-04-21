@@ -395,7 +395,7 @@ export default function CheckoutContent() {
     }
   
     try {
-      const docRef = await addDoc(collection(firestore, 'unverified-orders'), unverifiedOrderData);
+      const docRef = await addDoc(collection(firestore, 'unverified_orders'), unverifiedOrderData);
       return docRef.id;
     } catch (error) {
       console.error(`Falha ao criar pré-ordem para ${method}:`, error);

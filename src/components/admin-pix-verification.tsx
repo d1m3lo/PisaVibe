@@ -79,7 +79,7 @@ export default function AdminPixVerification() {
   useEffect(() => {
     if (!firestore) return;
     setLoading(true);
-    const q = query(collection(firestore, 'unverified-orders'));
+    const q = query(collection(firestore, 'unverified_orders'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -155,7 +155,7 @@ export default function AdminPixVerification() {
         batch.set(newOrderRef, newOrderData);
 
         // 2. Delete the unverified order
-        const unverifiedOrderRef = doc(firestore, 'unverified-orders', order.id);
+        const unverifiedOrderRef = doc(firestore, 'unverified_orders', order.id);
         batch.delete(unverifiedOrderRef);
         
         await batch.commit();
@@ -181,7 +181,7 @@ export default function AdminPixVerification() {
      if (!firestore) return;
      setProcessingId(orderId);
      try {
-        await deleteDoc(doc(firestore, 'unverified-orders', orderId));
+        await deleteDoc(doc(firestore, 'unverified_orders', orderId));
         toast({
             title: 'Pagamento Recusado',
             description: 'A solicitação de pagamento foi removida.',

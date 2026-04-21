@@ -198,7 +198,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   useEffect(() => {
     if (!firestore) return;
-    const q = collection(firestore, 'unverified-orders');
+    const q = collection(firestore, 'unverified_orders');
     const unsubscribe = onSnapshot(q, (snapshot) => {
         setPendingOrdersCount(snapshot.size);
     });

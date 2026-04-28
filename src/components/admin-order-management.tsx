@@ -321,7 +321,7 @@ export default function AdminOrderManagement() {
           .map((doc) => ({
             ...(doc.data() as Order),
             id: doc.id,
-            path: doc.ref.path,
+            path: `users/${(doc.data() as Order).user_id}/orders/${doc.id}`,
           }))
           .filter(
             (order): order is OrderWithId =>

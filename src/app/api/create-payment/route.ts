@@ -74,39 +74,43 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    const preference = new Preference(client);
-    const result = await preference.create({
-      body: {
-        items: finalItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            description: item.description || item.title,
-            picture_url: item.picture_url,
-        })),
-        payer: {
-          name: shippingInfo.name,
-          email: shippingInfo.email,
-          phone: {
-            number: shippingInfo.phone,
-          },
-          address: {
-            street_name: shippingInfo.street,
-            street_number: shippingInfo.number,
-            zip_code: shippingInfo.zipCode,
-          }
-        },
-        back_urls: {
-            success: "https://pisavibe.shop/pagamento/retorno",
-            failure: "https://pisavibe.shop/pagamento/retorno",
-            pending: "https://pisavibe.shop/pagamento/retorno",
-        },
+        const baseUrl = process.env.NODE_ENV === 'development' 
+            ? 'http://localhost:3000' 
+            : (process.env.NEXT_PUBLIC_BASE_URL || 'https://pisavibe.shop');
+
+        const preference = new Preference(client);
+        const result = await preference.create({
+          body: {
+            items: finalItems.map(item => ({
+                id: item.id,
+                title: item.title,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                description: item.description || item.title,
+                picture_url: item.picture_url,
+            })),
+            payer: {
+              name: shippingInfo.name,
+              email: shippingInfo.email,
+              phone: {
+                number: shippingInfo.phone,
+              },
+              address: {
+                street_name: shippingInfo.street,
+                street_number: shippingInfo.number,
+                zip_code: shippingInfo.zipCode,
+              }
+            },
+            back_urls: {
+                success: `${baseUrl}/pagamento/retorno`,
+                failure: `${baseUrl}/pagamento/retorno`,
+                pending: `${baseUrl}/pagamento/retorno`,
+            },
         auto_return: "approved",
         external_reference: unverifiedOrderId,
-        notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
+        notification_url: `${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/api/webhooks/mercadopago`,
         metadata: {
-            userId: userId,
+            user_id: userId,
             unverifiedOrderId: unverifiedOrderId,
             shippingInfo: JSON.stringify(shippingInfo),
             cartItems: JSON.stringify(items.map(item => ({

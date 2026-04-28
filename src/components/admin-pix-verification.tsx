@@ -56,7 +56,7 @@ import {
 
 interface UnverifiedOrder {
   id: string;
-  userId: string;
+  user_id: string;
   originalSessionId?: string;
   customerInfo: { name: string; email: string; };
   items: OrderItem[];
@@ -112,9 +112,9 @@ export default function AdminPixVerification() {
         const batch = writeBatch(firestore);
 
         // 1. Define the new order in the user's subcollection
-        const newOrderRef = doc(collection(firestore, `users/${order.userId}/orders`));
+        const newOrderRef = doc(collection(firestore, `users/${order.user_id}/orders`));
         const newOrderData: any = {
-            userId: order.userId,
+            user_id: order.user_id,
             customerInfo: order.customerInfo,
             items: order.items,
             orderDate: new Date().toISOString(),
@@ -146,7 +146,7 @@ export default function AdminPixVerification() {
 
         // Add points to user: 1 point for every R$10
         const pointsEarned = Math.floor(order.totalAmount / 10);
-        const userRef = doc(firestore, 'users', order.userId);
+        const userRef = doc(firestore, 'users', order.user_id);
         batch.update(userRef, { 
           points: increment(pointsEarned),
           lastPointsUpdate: new Date().toISOString()

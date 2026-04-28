@@ -72,14 +72,14 @@ export default function AdminCentralControle() {
   
   const handleCreateManualOrder = async (customer: Customer) => {
     if (!firestore) return;
-    setProcessingId(customer.uid);
+    setProcessingId(customer.firestoreId);
 
     try {
-        const userOrdersCollection = collection(firestore, 'users', customer.uid, 'orders');
+        const userOrdersCollection = collection(firestore, 'users', customer.firestoreId, 'orders');
         
         // Dados de um pedido de exemplo. O admin deverá editar isso depois.
         const exampleOrderData: Omit<Order, 'id'> = {
-            userId: customer.uid,
+            user_id: customer.firestoreId,
             customerInfo: {
                 name: customer.name,
                 email: customer.email,
@@ -148,7 +148,7 @@ export default function AdminCentralControle() {
               ))
             ) : customers.length > 0 ? (
               customers.map((customer) => (
-                <TableRow key={customer.uid}>
+                <TableRow key={customer.firestoreId}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.email}</TableCell>
                     <TableCell className="text-right">
@@ -156,9 +156,9 @@ export default function AdminCentralControle() {
                             <AlertDialogTrigger asChild>
                                 <Button
                                     size="sm"
-                                    disabled={processingId === customer.uid}
+                                    disabled={processingId === customer.firestoreId}
                                 >
-                                    {processingId === customer.uid ? (
+                                    {processingId === customer.firestoreId ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
                                         <PlusCircle className="mr-2 h-4 w-4" />

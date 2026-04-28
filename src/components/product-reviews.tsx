@@ -42,7 +42,7 @@ const ReviewForm = ({ productId, onFinish }: { productId: string, onFinish: () =
         try {
             const newReview: Review = {
                 id: `user_${Date.now()}`,
-                userId: user.uid,
+                user_id: user.uid,
                 userName: user.displayName || 'Cliente PISA VIBE',
                 rating,
                 comment,

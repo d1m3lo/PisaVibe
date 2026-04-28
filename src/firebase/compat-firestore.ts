@@ -45,12 +45,38 @@ export interface QueryRef {
  *   doc(supabase, 'users/abc/orders', 'xyz')
  *   doc(supabase, 'users', 'abc', 'orders', 'xyz')
  */
-export function doc(supabase: SupabaseClient, ...pathSegments: string[]): DocRef {
-  const segments = pathSegments.flatMap(s => s.split('/'));
-  // Last segment is the ID, second-to-last is the table
-  const id = segments[segments.length - 1];
-  const table = segments[segments.length - 2];
-  const parentPath = segments.length > 2 ? segments.slice(0, -2).join('/') : undefined;
+export function doc(supabaseOrRef: any, ...pathSegments: string[]): DocRef {
+  let table: string;
+  let id: string;
+  let parentPath: string | undefined;
+
+  if (supabaseOrRef && typeof supabaseOrRef === 'object' && supabaseOrRef.__type === 'collection') {
+    // Called as doc(collectionRef, id?)
+    table = supabaseOrRef.table;
+    parentPath = supabaseOrRef.parentPath;
+    
+    if (pathSegments.length > 0) {
+      const segments = pathSegments.flatMap(s => s.split('/'));
+      // If passing segments to a collection ref, the first one is the ID
+      if (segments.length === 1) {
+        id = segments[0];
+      } else {
+        id = segments[segments.length - 1];
+        table = segments[segments.length - 2];
+        parentPath = segments.length > 2 ? segments.slice(0, -2).join('/') : parentPath;
+      }
+    } else {
+      // Auto-generate ID
+      id = crypto.randomUUID();
+    }
+  } else {
+    // Called as doc(supabase, path...)
+    const segments = pathSegments.flatMap(s => s.split('/'));
+    id = segments[segments.length - 1];
+    table = segments[segments.length - 2];
+    parentPath = segments.length > 2 ? segments.slice(0, -2).join('/') : undefined;
+  }
+
   return { __type: 'doc', table, id, parentPath };
 }
 

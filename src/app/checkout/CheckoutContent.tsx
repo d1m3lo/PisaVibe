@@ -355,7 +355,7 @@ export default function CheckoutContent() {
     if (!firestore) return null;
   
     const unverifiedOrderData: any = {
-      userId: userId,
+      user_id: userId,
       customerInfo: {
         name: shippingInfo.name,
         email: shippingInfo.email,

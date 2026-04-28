@@ -2,16 +2,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-
-if (!accessToken) {
-  throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
-}
-
-const client = new MercadoPagoConfig({ accessToken });
-
 export async function POST(req: NextRequest) {
   try {
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
+    }
+
+    const client = new MercadoPagoConfig({ accessToken });
     const { amount, email } = await req.json();
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {

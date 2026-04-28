@@ -3,18 +3,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import type { Coupon } from '@/lib/types';
 
-const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-
-if (!accessToken) {
-  throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
-}
-
-const client = new MercadoPagoConfig({ 
-    accessToken,
-});
-
 export async function POST(req: NextRequest) {
   try {
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");
+    }
+
+    const client = new MercadoPagoConfig({ accessToken });
     const { items, shippingInfo, coupon, userId, shippingCost, unverifiedOrderId, totalAcrescimoCartao } = await req.json();
 
     if (!items || !Array.isArray(items) || items.length === 0 || !shippingInfo || !userId || !unverifiedOrderId) {

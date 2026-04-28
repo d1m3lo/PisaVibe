@@ -20,20 +20,20 @@ interface UnverifiedOrder {
   discountAmount?: number;
 }
 
-// Initialize Supabase Admin (service role) client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
-
-// Configure Mercado Pago client
-const client = new MercadoPagoConfig({ 
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-});
-const paymentClient = new Payment(client);
-
 export async function POST(req: NextRequest) {
+  // Initialize Supabase Admin (service role) client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  // Configure Mercado Pago client
+  const client = new MercadoPagoConfig({ 
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+  });
+  const paymentClient = new Payment(client);
+
   console.log("--- [Webhook Acionado] ---");
   const body = await req.json();
   const topic = body.topic || body.type;

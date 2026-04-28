@@ -3,9 +3,9 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useAuth, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useAuth, useSupabase, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, orderBy, addDoc, increment } from 'firebase/firestore';
-import { updateProfile, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { updateProfile, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -439,27 +439,24 @@ const OrderHistory = ({ profile }: { profile: UserProfile }) => {
 
 const PasswordChangeForm = () => {
     const { user } = useUser();
-    const auth = useAuth();
+    const supabase = useSupabase();
     const { toast } = useToast();
 
-    const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     
-    const isEmailProvider = user?.providerData.some(
-        (provider) => provider.providerId === EmailAuthProvider.PROVIDER_ID
-    );
+    // Check if user logged in with email (not OAuth)
+    const isEmailProvider = user?.app_metadata?.provider === 'email';
 
     const handlePasswordChange = async (e: FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        if (!user || !user.email) {
+        if (!user) {
             setError("Usuário não encontrado.");
             return;
         }
@@ -475,32 +472,25 @@ const PasswordChangeForm = () => {
 
         setIsSaving(true);
         try {
-            const credential = EmailAuthProvider.credential(user.email, currentPassword);
-            await reauthenticateWithCredential(user, credential);
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: newPassword,
+            });
 
-            await updatePassword(user, newPassword);
+            if (updateError) throw updateError;
 
             toast({
                 title: "Senha alterada!",
                 description: "Sua senha foi atualizada com sucesso.",
             });
-            setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
 
         } catch (error: any) {
-             let errorMessage = "Ocorreu um erro desconhecido.";
-            switch (error.code) {
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    errorMessage = 'A senha atual está incorreta.';
-                    break;
-                case 'auth/weak-password':
-                    errorMessage = 'A nova senha é muito fraca.';
-                    break;
-                default:
-                    errorMessage = 'Falha ao alterar a senha. Tente novamente.';
-                    break;
+            let errorMessage = "Falha ao alterar a senha. Tente novamente.";
+            if (error.message?.includes('same_password')) {
+                errorMessage = 'A nova senha deve ser diferente da senha atual.';
+            } else if (error.message?.includes('weak_password')) {
+                errorMessage = 'A nova senha é muito fraca.';
             }
             setError(errorMessage);
             toast({
@@ -523,21 +513,6 @@ const PasswordChangeForm = () => {
 
     return (
         <form onSubmit={handlePasswordChange} className="space-y-4">
-             <div className="space-y-2">
-                <Label htmlFor="current-password">Senha Atual</Label>
-                <div className="relative">
-                    <Input 
-                        id="current-password" 
-                        type={showCurrent ? "text" : "password"}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        required
-                    />
-                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground" onClick={() => setShowCurrent(!showCurrent)}>
-                        {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                </div>
-            </div>
              <div className="space-y-2">
                 <Label htmlFor="new-password">Nova Senha</Label>
                  <div className="relative">

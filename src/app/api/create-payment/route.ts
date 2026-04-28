@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import type { Coupon } from '@/lib/types';
 
-const accessToken = "APP_USR-4471136097030537-122919-8fbdd981af51d484d5cc90907b5574ba-481737354";
+const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
 
 if (!accessToken) {
   throw new Error("MERCADOPAGO_ACCESS_TOKEN não está definida no ambiente.");

@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useSupabase } from "@/firebase";
 import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 48 48" {...props}>
@@ -31,6 +31,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const supabase = useSupabase();
   const { toast } = useToast();
   const router = useRouter();
@@ -100,6 +103,32 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setIsSendingReset(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (resetError) throw resetError;
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setShowForgotPassword(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível enviar o email de recuperação. Verifique o endereço e tente novamente.",
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center bg-background px-4">
@@ -125,15 +154,7 @@ export default function LoginPage() {
                 />
                 </div>
                 <div className="grid gap-2">
-                <div className="flex items-center">
-                    <Label htmlFor="password">Senha</Label>
-                    <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                    >
-                    Esqueceu sua senha?
-                    </Link>
-                </div>
+                <Label htmlFor="password">Senha</Label>
                 <div className="relative">
                     <Input 
                     id="password" 
@@ -152,6 +173,13 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                 </div>
+                <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(true); setForgotEmail(email); }}
+                    className="text-sm underline text-muted-foreground hover:text-foreground text-left w-fit transition-colors"
+                >
+                    Esqueceu sua senha?
+                </button>
                 </div>
                 {error && <p className="text-sm font-medium text-destructive">{error}</p>}
                 <Button type="submit" className="w-full">
@@ -179,6 +207,41 @@ export default function LoginPage() {
               Registre-se
             </Link>
           </div>
+
+          {/* Modal de Esqueceu Senha */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowForgotPassword(false)}>
+              <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+                <h3 className="font-headline text-lg font-semibold mb-1">Recuperar Senha</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Informe seu email e enviaremos um link para redefinir sua senha.
+                </p>
+                <form onSubmit={handleForgotPassword} className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSendingReset}>
+                    {isSendingReset ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
+                    ) : (
+                      "Enviar Link de Recuperação"
+                    )}
+                  </Button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => setShowForgotPassword(false)}>
+                    Voltar ao Login
+                  </Button>
+                </form>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -9,6 +9,7 @@ import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import ConditionalHeaderFooter from "@/components/conditional-header-footer";
 import Footer from "@/components/footer";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
             </CartProvider>
           </FirebaseClientProvider>
           <Toaster />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
